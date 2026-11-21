@@ -24,5 +24,9 @@
       "Write the backend in Go and the pages in React. Tifa compiles the whole site into one executable that you copy to a small VPS and run. No Node in production, no process manager, no reverse proxy, no Redis.",
       "It is for Go developers whose business logic and data already live in Go, who want to write pages with the React ecosystem, and who do not want to keep a Node service running in production just for server-side rendering."
     ]
+  },
+  "docs": {
+    "version": "Docs for Tifa {{version}}",
+    "copyPage": "Copy page"
   }
 }

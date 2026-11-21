@@ -6,7 +6,7 @@ import (
 
 	"github.com/liustack/tifa"
 
-	"github.com/liustack/tifa-web/app/docs"
+	tifaweb "github.com/liustack/tifa-web"
 )
 
 // Result is one line of the search list.
@@ -23,7 +23,7 @@ type Input struct {
 	Query string `json:"query"`
 }
 
-// GET finds docs by title and headings that contain every word of the query.
+// GET finds docs, in the language of the URL (/zh-CN/api/search for Chinese), by title and headings that contain every word of the query.
 func GET(c *tifa.Ctx, in Input) ([]Result, error) {
 	words := strings.Fields(strings.ToLower(in.Query))
 	out := []Result{}
@@ -39,8 +39,8 @@ func GET(c *tifa.Ctx, in Input) ([]Result, error) {
 		}
 		return true
 	}
-	for _, d := range docs.Sorted() {
-		url := docs.URL(d)
+	for _, d := range tifaweb.SortedDocs(c.Language()) {
+		url := tifaweb.DocURL(d.Doc)
 		if match(d.Title) {
 			out = append(out, Result{ID: d.ID, URL: url, Type: "page", Content: d.Title})
 		}
