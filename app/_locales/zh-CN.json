@@ -98,7 +98,7 @@
     "demo": {
       "title": "写起来是什么样",
       "intro": "每个页面一个目录，Go 负责取数，React 负责显示：",
-      "from": "代码来自 [examples/shop](https://github.com/liustack/tifa/tree/v0.1.13/examples/shop)。"
+      "from": "代码来自 [examples/shop](https://github.com/liustack/tifa/tree/v0.1.14/examples/shop)。"
     },
     "vps": {
       "header": [
@@ -161,11 +161,11 @@
       "method": "前三行是出厂设置的框架。参考行各改一个设置，说明这个默认设置花掉或换来多少。版本：Tifa v0.1.0，slowjs v0.31.6，Next.js 16.4.6，TanStack Start 1.169.3，Node 24.13.0。每个服务器只用 Google Cloud `t2d-standard-4` 虚拟机（AMD EPYC 7B13）的一个核。访问配比、各家默认设置的代价和这些数字的含义见[整站访问](/docs/reference/performance#whole-visits-to-the-shop-2026-11-18)。",
       "cost": [
         "Tifa 在 slowjs 里渲染页面，slowjs 是编译成 Go 汇编的 QuickJS。它没有 JIT，所以一次渲染比在 Node 里更久。",
-        "每个请求都要渲染，一次一个（2026-11-18）：Next.js 每秒答出的页面请求是 Tifa 的 1.17 倍，TanStack Start 是 1.57 倍，峰值内存分别是 Tifa 的 7 倍和 6 倍。见[研究报告（英文）](https://github.com/liustack/tifa/blob/v0.1.13/docs/studies/nextjs-and-tanstack-start.md#conclusions)。"
+        "每个请求都要渲染，一次一个（2026-11-18）：Next.js 每秒答出的页面请求是 Tifa 的 1.17 倍，TanStack Start 是 1.57 倍，峰值内存分别是 Tifa 的 7 倍和 6 倍。见[研究报告（英文）](https://github.com/liustack/tifa/blob/v0.1.14/docs/studies/nextjs-and-tanstack-start.md#conclusions)。"
       ],
       "performance": "性能",
       "capacity": "容量测量（英文）",
-      "capacityUrl": "https://github.com/liustack/tifa/blob/v0.1.13/docs/studies/capacity.md"
+      "capacityUrl": "https://github.com/liustack/tifa/blob/v0.1.14/docs/studies/capacity.md"
     },
     "status": {
       "title": "现状",
@@ -173,7 +173,7 @@
       "policy": "Tifa 不接受 pull request。这类框架同时牵动编译器、打包、服务端渲染和开发体验，改一处会牵动别处，做对需要大量上下文，所以每一行都由作者一个人写和审。可以这样帮忙：",
       "help": [
         "**[提 issue](https://github.com/liustack/tifa/issues/new/choose)。** bug、想法、看不懂的报错、写得不清楚的文档。一个带复现步骤的清楚 issue 比一个补丁更有用，issue 决定接下来做什么。",
-        "**fork 它。** 按 MIT 许可，你的副本随你改、随你发布。在 fork 上开发的说明见 [CONTRIBUTING.md](https://github.com/liustack/tifa/blob/v0.1.13/CONTRIBUTING.md)（英文）。"
+        "**fork 它。** 按 MIT 许可，你的副本随你改、随你发布。在 fork 上开发的说明见 [CONTRIBUTING.md](https://github.com/liustack/tifa/blob/v0.1.14/CONTRIBUTING.md)（英文）。"
       ]
     },
     "doors": {

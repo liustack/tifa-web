@@ -37,7 +37,7 @@
     "demo": {
       "title": "What it looks like",
       "intro": "One folder per page. Go loads the data, React shows it:",
-      "from": "From [examples/shop](https://github.com/liustack/tifa/tree/v0.1.13/examples/shop)."
+      "from": "From [examples/shop](https://github.com/liustack/tifa/tree/v0.1.14/examples/shop)."
     },
     "vps": {
       "header": [
@@ -100,11 +100,11 @@
       "method": "The first three rows are the frameworks as shipped. Each reference row changes one setting, to show what that default costs or buys. Versions: Tifa v0.1.0, slowjs v0.31.6, Next.js 16.4.6, TanStack Start 1.169.3, Node 24.13.0. Each server on one core of a Google Cloud `t2d-standard-4` VM (AMD EPYC 7B13). [Whole visits](/docs/reference/performance#whole-visits-to-the-shop-2026-11-18) has the mix, what each default costs and what the numbers mean.",
       "cost": [
         "Tifa renders pages in slowjs, QuickJS compiled to Go assembly. It has no JIT, so one render takes longer than in Node.",
-        "Every request renders, one at a time (2026-11-18): Next.js answers 1.17 times as many page requests as Tifa and TanStack Start 1.57 times, at 7 and 6 times Tifa's peak memory. See [the study](https://github.com/liustack/tifa/blob/v0.1.13/docs/studies/nextjs-and-tanstack-start.md#conclusions)."
+        "Every request renders, one at a time (2026-11-18): Next.js answers 1.17 times as many page requests as Tifa and TanStack Start 1.57 times, at 7 and 6 times Tifa's peak memory. See [the study](https://github.com/liustack/tifa/blob/v0.1.14/docs/studies/nextjs-and-tanstack-start.md#conclusions)."
       ],
       "performance": "Performance",
       "capacity": "Capacity measurements",
-      "capacityUrl": "https://github.com/liustack/tifa/blob/v0.1.13/docs/studies/capacity.md"
+      "capacityUrl": "https://github.com/liustack/tifa/blob/v0.1.14/docs/studies/capacity.md"
     },
     "status": {
       "title": "Status",
@@ -112,7 +112,7 @@
       "policy": "Tifa does not accept pull requests. A framework like this touches the compiler, the bundler, server rendering and developer experience at once, and a change in one pulls on the others. Getting that right takes a lot of context, so every line is written and reviewed by one author. Two ways to help:",
       "help": [
         "**[Open an issue](https://github.com/liustack/tifa/issues/new/choose).** Bugs, ideas, confusing errors, unclear docs. A clear issue with steps to reproduce helps more than a patch, and issues shape what gets built next.",
-        "**Fork it.** Under MIT your copy is yours to change and publish. [CONTRIBUTING.md](https://github.com/liustack/tifa/blob/v0.1.13/CONTRIBUTING.md) has the notes for working on a fork."
+        "**Fork it.** Under MIT your copy is yours to change and publish. [CONTRIBUTING.md](https://github.com/liustack/tifa/blob/v0.1.14/CONTRIBUTING.md) has the notes for working on a fork."
       ]
     },
     "doors": {

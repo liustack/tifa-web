@@ -48,7 +48,7 @@ go tool tifa check
 
 ## GitHub 上的代码
 
-- [examples/shop](https://github.com/liustack/tifa/tree/v0.1.13/examples/shop)
-- [店面](https://github.com/liustack/tifa/tree/v0.1.13/examples/shop/app/store)
-- [工作台](https://github.com/liustack/tifa/tree/v0.1.13/examples/shop/app/projects)
-- [示例的 README](https://github.com/liustack/tifa/blob/v0.1.13/examples/shop/README.zh-CN.md)
+- [examples/shop](https://github.com/liustack/tifa/tree/v0.1.14/examples/shop)
+- [店面](https://github.com/liustack/tifa/tree/v0.1.14/examples/shop/app/store)
+- [工作台](https://github.com/liustack/tifa/tree/v0.1.14/examples/shop/app/projects)
+- [示例的 README](https://github.com/liustack/tifa/blob/v0.1.14/examples/shop/README.zh-CN.md)
