@@ -49,13 +49,13 @@ jobs:
           sudo dpkg -i "$RUNNER_TEMP/cloudflared.deb"
       - name: Set up ssh
         env:
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          TIFA_DEPLOY_SSH_KEY: ${{ secrets.TIFA_DEPLOY_SSH_KEY }}
+          TIFA_DEPLOY_KNOWN_HOSTS: ${{ secrets.TIFA_DEPLOY_KNOWN_HOSTS }}
         run: |
           install -d -m 700 ~/.ssh
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$TIFA_DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf '%s\n' "$TIFA_DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           cat > ~/.ssh/config <<'EOF'
           Host *
             IdentityFile ~/.ssh/deploy_key
@@ -66,14 +66,14 @@ jobs:
       - name: Deploy
         env:
           ACTION: ${{ inputs.action }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          CF_CACHE_PURGE_TOKEN: ${{ secrets.CF_CACHE_PURGE_TOKEN }}
-          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
-          TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-          TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          TIFA_DEPLOY_HOST: ${{ secrets.TIFA_DEPLOY_HOST }}
+          TIFA_DEPLOY_CF_PURGE_TOKEN: ${{ secrets.TIFA_DEPLOY_CF_PURGE_TOKEN }}
+          TIFA_DEPLOY_CF_ZONE_ID: ${{ secrets.TIFA_DEPLOY_CF_ZONE_ID }}
+          TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.TIFA_DEPLOY_CF_ACCESS_ID }}
+          TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.TIFA_DEPLOY_CF_ACCESS_SECRET }}
         run: |
           if [ "$ACTION" = rollback ]; then
-            go tool tifa deploy rollback --host "$DEPLOY_HOST"
+            go tool tifa deploy rollback --host "$TIFA_DEPLOY_HOST"
           else
-            go tool tifa deploy --host "$DEPLOY_HOST"
+            go tool tifa deploy --host "$TIFA_DEPLOY_HOST"
           fi
