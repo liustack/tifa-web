@@ -26,7 +26,7 @@ export const documentHead = {
 // The title and description of a page that sets none of its own.
 export const head = () => {
   const title = `${site.name} | ${i18n.t('hero.tagline')}`
-  const description = i18n.t('hero.intro.0')
+  const description = i18n.t('hero.description')
   return {
     meta: [
       { title },

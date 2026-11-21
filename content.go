@@ -35,7 +35,3 @@ var DocsZH = content.Define[Doc](content.Source{Dir: "docs-zh"})
 // Pages is the pages of the site that are written by hand, in each language of the site: Why and
 // Examples.
 var Pages = content.Define[Doc](content.Source{Dir: "pages", Languages: tifa.Languages()})
-
-// Demo is the code files the home page shows, as they are in examples/shop of Tifa. One entry
-// holds one file in a code block, and its title is the path of the file.
-var Demo = content.Define[Doc](content.Source{Dir: "demo"})

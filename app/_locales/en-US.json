@@ -24,32 +24,30 @@
   },
   "fumadocs": {},
   "hero": {
-    "tagline": "The full-stack Go framework for Gophers.",
-    "intro": [
-      "Write the backend in Go and the pages in React. Tifa compiles the whole site into one executable that you copy to a small VPS and run. No Node in production, no process manager, no reverse proxy, no Redis.",
-      "It is for Go developers whose business logic and data already live in Go, who want to write pages with the React ecosystem, and who do not want to keep a Node service running in production just for server-side rendering."
-    ],
+    "eyebrow": "For indie hackers and bootstrapped teams",
+    "tagline": "Your whole app on one small server.",
+    "sub": "Go for the backend, React for the pages, compiled into one executable. It runs on a 1 CPU / 1 GB VPS with no Node, no Redis and no reverse proxy, and `tifa deploy` puts it live.",
+    "description": "Go for the backend, React for the pages, compiled into one executable. It runs on a 1 CPU / 1 GB VPS with no Node, no Redis and no reverse proxy, and tifa deploy puts it live.",
     "start": "Get started",
     "github": "GitHub",
-    "status": "Tifa is very early. APIs will change, and many compiler optimizations are not done yet.",
-    "command": "Start an app"
+    "status": "very early: APIs will change",
+    "copy": "Copy the command",
+    "terminal": "Terminal: creating and running a new app"
   },
   "docs": {
     "version": "Docs for Tifa {{version}}",
     "copyPage": "Copy page"
   },
   "home": {
-    "demo": {
-      "title": "What it looks like",
-      "intro": "One folder per page. Go loads the data, React shows it:",
-      "from": "From [examples/shop](https://github.com/liustack/tifa/tree/v0.1.14/examples/shop)."
-    },
-    "vps": {
-      "header": [
-        "On a 1 CPU / 1 GB VPS",
-        "The usual stack",
-        "With Tifa"
-      ],
+    "stack": {
+      "rail": "The stack",
+      "title": "One file instead of a stack",
+      "lead": "No Node in production, no process manager, no reverse proxy, no Redis. The browser bundle, styles and server renderer are embedded in the executable.",
+      "usual": "The usual stack",
+      "with": "With Tifa",
+      "vps": "1 CPU / 1 GB VPS",
+      "binary": "bin/myapp",
+      "one": "one executable",
       "rows": [
         [
           "Reverse proxy and certificates",
@@ -84,89 +82,123 @@
       ]
     },
     "numbers": {
-      "title": "One small server is enough",
-      "memo": "The **[render memo](/docs/reference/memo)** is on for every page, signed-in ones like a cart or a bill included. Every request fetches fresh data first and reuses the last render only when nothing changed, so a page is never stale. A render is reused only for the same data and the same session, so one person's page never reaches another. The app writes no caching code.",
-      "visits": "Whole visits, played back from real browsers on the example shop: shoppers, staff and crawlers on one server at once, every server as shipped and warmed up with the same visits first (2026-11-18).",
-      "caption": "Throughput at 8 concurrent sessions with no pause between pages, the median of 3 rounds:",
-      "columns": [
-        "Page views/s",
-        "Full loads/s",
-        "Client navigations/s"
-      ],
-      "rows": {
-        "tifa": "Tifa",
-        "next": "Next.js",
-        "tanstack": "TanStack Start, uncompressed",
-        "tifaNoMemo": "For reference: Tifa with the render memo off",
-        "tanstackGzip": "For reference: TanStack Start with gzip",
-        "nextNoPrefetch": "For reference: Next.js with prefetch off"
-      },
-      "definition": "A full load is a request the server answers with a whole page: the landing of a visit, and a search or another action that loads a page. A client navigation is one the router answers with data alone. Every server plays the same visits, so about a third of the page views of every row are full loads.",
-      "method": "The first three rows are the frameworks as shipped. Each reference row changes one setting, to show what that default costs or buys. Versions: Tifa v0.1.0, slowjs v0.31.6, Next.js 16.4.6, TanStack Start 1.169.3, Node 24.13.0. Each server on one core of a Google Cloud `t2d-standard-4` VM (AMD EPYC 7B13). [Whole visits](/docs/reference/performance#whole-visits-to-the-shop-2026-11-18) has the mix, what each default costs and what the numbers mean.",
+      "rail": "Numbers",
+      "title": "On one core",
+      "lead": "Whole visits to the example shop, recorded from real browsers and played back against each server: shoppers, staff and crawlers at once.",
+      "tifa": "Tifa",
+      "tanstack": "TanStack Start, uncompressed",
+      "next": "Next.js",
+      "views": "Page views a second",
+      "views_hint": "higher is better",
+      "memory": "Peak memory",
+      "memory_hint": "lower is better",
+      "cpu": "CPU per page view",
+      "cpu_hint": "lower is better",
+      "caption": "Each framework as shipped and warmed up with the same visits, one process on one core of a Google Cloud `t2d-standard-4` VM (AMD EPYC 7B13), 8 concurrent sessions with no think time, the median of 3 rounds, 2026-11-18. Tifa v0.1.0 with slowjs v0.31.6, Next.js 16.4.6, TanStack Start 1.169.3, Node 24.13.0. Not yet measured on a 1 CPU / 1 GB VPS.",
+      "method": "How this was measured",
+      "costTitle": "The cost",
       "cost": [
         "Tifa renders pages in slowjs, QuickJS compiled to Go assembly. It has no JIT, so one render takes longer than in Node.",
-        "Every request renders, one at a time (2026-11-18): Next.js answers 1.17 times as many page requests as Tifa and TanStack Start 1.57 times, at 7 and 6 times Tifa's peak memory. See [the study](https://github.com/liustack/tifa/blob/v0.1.14/docs/studies/nextjs-and-tanstack-start.md#conclusions)."
-      ],
-      "performance": "Performance",
-      "capacity": "Capacity measurements",
-      "capacityUrl": "https://github.com/liustack/tifa/blob/v0.1.14/docs/studies/capacity.md"
-    },
-    "status": {
-      "title": "Status",
-      "note": "Tifa is very early. APIs will change, and many compiler optimizations are not done yet.",
-      "policy": "Tifa does not accept pull requests. A framework like this touches the compiler, the bundler, server rendering and developer experience at once, and a change in one pulls on the others. Getting that right takes a lot of context, so every line is written and reviewed by one author. Two ways to help:",
-      "help": [
-        "**[Open an issue](https://github.com/liustack/tifa/issues/new/choose).** Bugs, ideas, confusing errors, unclear docs. A clear issue with steps to reproduce helps more than a patch, and issues shape what gets built next.",
-        "**Fork it.** Under MIT your copy is yours to change and publish. [CONTRIBUTING.md](https://github.com/liustack/tifa/blob/v0.1.14/CONTRIBUTING.md) has the notes for working on a fork."
+        "With every request rendering, Next.js answers 1.17 times as many page requests as Tifa and TanStack Start 1.57 times, at 7 and 6 times Tifa's peak memory. See [the study](https://github.com/liustack/tifa/blob/v0.1.14/docs/studies/nextjs-and-tanstack-start.md#conclusions)."
       ]
     },
-    "doors": {
-      "title": "Documentation",
-      "items": [
+    "pages": {
+      "rail": "Pages",
+      "title": "Go loads, React renders",
+      "lead": "One folder per page. Go runs the page's `Load` first, then React renders complete HTML inside the process. The TypeScript type of the page's data is generated from what `Load` returns.",
+      "react": "React",
+      "legend": "Fields Go returns, typed in React",
+      "tutorial": "Read the tutorial",
+      "notes": [
+        [
+          "Real HTML on the first request",
+          "Search engines and link previews see the content, title and meta tags."
+        ],
+        [
+          "Fast after the first page",
+          "TanStack Router takes over in the browser. Each navigation is one request for data."
+        ],
+        [
+          "Mistakes caught at build time",
+          "A `Load` result that cannot become TypeScript stops the build and names the file and line."
+        ]
+      ]
+    },
+    "deploy": {
+      "rail": "Deploy",
+      "title": "Push to deploy",
+      "lead": "`tifa deploy setup` sets up the server, Cloudflare and GitHub Actions in one command. After that every push is checked and goes live, and a release that fails its health check rolls back by itself.",
+      "stages": [
         {
-          "to": "/docs/start/tutorial",
-          "label": "New to Tifa",
-          "text": "You are new to Tifa and want to build a small app from the first folder to a running program."
+          "node": "git push",
+          "where": "your machine",
+          "text": "To the default branch of your repository."
         },
         {
-          "to": "/docs/start/app#coming-from-another-framework",
-          "label": "Coming from Next.js",
-          "text": "`tifa check`, `tifa build` and `tifa dev` recognize code written for Next.js, Remix, React Router, TanStack Start and SvelteKit, and for Go web frameworks."
+          "node": "CI checks",
+          "where": "GitHub Actions",
+          "text": "Runs `go tool tifa check` on the push."
         },
         {
-          "to": "/docs/guides/forms",
-          "label": "Adding a feature",
-          "text": "Adding a common feature and you want a tested way to do it."
+          "node": "build, deploy",
+          "where": "GitHub Actions",
+          "text": "When CI passes, builds the app for your server and runs `go tool tifa deploy`."
         },
         {
-          "to": "/docs/ship/deploy",
-          "label": "Deploying",
-          "text": "Putting the program on a server or in a container, or behind a CDN or proxy."
-        },
-        {
-          "to": "/docs/reference/performance",
-          "label": "Sizing a server",
-          "text": "You want to know whether a small VPS can carry your traffic."
-        },
-        {
-          "to": "/docs/start/philosophy",
-          "label": "Philosophy",
-          "text": "You want to know why a Tifa app is organized the way it is."
+          "node": "live",
+          "where": "your server",
+          "text": "Through a Cloudflare Tunnel. The server opens no port: cloudflared on the server connects out to Cloudflare."
         }
+      ],
+      "terminal": "Terminal: a deploy from GitHub Actions",
+      "facts": [
+        "Builds on your machine or in CI. Nothing is built on the server.",
+        "Restarts the app without refusing a request.",
+        "Checks `GET /healthz` once a second for up to 30 seconds, until it answers with a status below 500, and goes back to the release before when it does not.",
+        "The server needs no Docker, no Node and no deploy program of its own.",
+        "Several apps can share one server."
       ]
     },
-    "why": {
+    "story": {
+      "rail": "Story",
       "title": "Why it exists",
       "text": [
         "I wanted to ship a small product on TanStack Start. My other VPSes were full, Black Friday was still weeks away and I did not feel like buying another one, so I dug out an old box with 1 CPU and 1 GB of RAM. I had Codex set up the usual stack in one go: nginx, Node.js, PM2, TanStack Start, Redis, BullMQ, cron and SQLite.",
         "It did not really run. It crawled.",
         "So I started hacking on Tifa. Once it is done, deploying should mean copying one Go binary to the VPS, and that is it."
       ],
-      "more": "Why it exists"
+      "from": "From the README",
+      "more": "Why Tifa"
+    },
+    "status": {
+      "rail": "MIT",
+      "title": "Status",
+      "rows": [
+        [
+          "warn",
+          "Very early",
+          "APIs will change, and many compiler optimizations are not done yet."
+        ],
+        [
+          "",
+          "No pull requests",
+          "A framework like this touches the compiler, the bundler, server rendering and developer experience at once. Every line is written and reviewed by one author."
+        ],
+        [
+          "ok",
+          "Issues welcome",
+          "Bugs, ideas, confusing errors, unclear docs. A clear issue with steps to reproduce helps more than a patch. [Open an issue](https://github.com/liustack/tifa/issues/new/choose)"
+        ],
+        [
+          "ok",
+          "Fork it",
+          "Under MIT your copy is yours to change and publish."
+        ]
+      ]
     },
     "start": {
       "title": "Start an app",
-      "note": "You need Go 1.27, Node 20.19 or 22.12 and later, and [pnpm](https://pnpm.io). Node only builds the front end. The executable you ship never needs it."
+      "req": "You need Go 1.27 and Node 20.19 or 22.12 and later. Node only builds the front end: the program you deploy never needs it."
     }
   }
 }
