@@ -123,7 +123,7 @@
         [
           "React SSR",
           "TanStack Start",
-          "TanStack Router，由 Go 进程内的[纯 Go QuickJS](https://github.com/liustack/slowjs)渲染"
+          "TanStack Router，由 Go 进程内的 [slowjs](https://github.com/liustack/slowjs) 渲染，它是渲染 React 最快的纯 Go JavaScript 引擎"
         ],
         [
           "缓存",

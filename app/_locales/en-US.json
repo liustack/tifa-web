@@ -62,7 +62,7 @@
         [
           "React SSR",
           "TanStack Start",
-          "TanStack Router, rendered by a [pure Go QuickJS](https://github.com/liustack/slowjs) inside the Go process"
+          "TanStack Router, rendered inside the Go process by [slowjs](https://github.com/liustack/slowjs), the fastest pure Go JavaScript engine for rendering React"
         ],
         [
           "Cache",
