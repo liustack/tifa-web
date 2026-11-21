@@ -26,3 +26,10 @@ pre.shiki {
 pre.shiki code {
   @apply block w-max min-w-full border-0 bg-transparent p-0 text-[inherit];
 }
+
+/* A wide table of a doc or a page of Markdown scrolls sideways inside its own box. */
+.prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}

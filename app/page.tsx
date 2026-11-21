@@ -127,8 +127,8 @@ export default function HomePage() {
             <p>{t('home.numbers.caption')}</p>
           </div>
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[34rem] border-collapse text-left text-sm leading-6">
-              <thead>
+            <table className="w-full border-collapse text-left text-sm leading-6">
+              <thead className="max-sm:hidden">
                 <tr className="border-b border-fd-border">
                   <th className="py-3 pr-4" />
                   {numbers.columns.map((h) => (
@@ -140,12 +140,16 @@ export default function HomePage() {
               </thead>
               <tbody>
                 {site.throughput.map(([key, ...values]) => (
-                  <tr key={key} className={'border-b border-fd-border ' + (referenceRows.has(key) ? 'text-fd-muted-foreground' : 'font-medium')}>
-                    <th scope="row" className="py-3 pr-4 text-left font-[inherit]">
+                  <tr key={key} className={'border-b border-fd-border max-sm:block max-sm:py-3 ' + (referenceRows.has(key) ? 'text-fd-muted-foreground' : 'font-medium')}>
+                    <th scope="row" className="py-3 pr-4 text-left font-[inherit] max-sm:block max-sm:py-1">
                       {numbers.rows[key]}
                     </th>
                     {values.map((v, i) => (
-                      <td key={i} className="px-4 py-3 text-right font-mono tabular-nums">
+                      <td
+                        key={i}
+                        data-label={numbers.columns[i]}
+                        className="px-4 py-3 text-right font-mono tabular-nums max-sm:flex max-sm:justify-between max-sm:px-0 max-sm:py-0.5 max-sm:before:font-sans max-sm:before:text-fd-muted-foreground max-sm:before:content-[attr(data-label)]"
+                      >
                         {v.toFixed(1)}
                       </td>
                     ))}
