@@ -1,10 +1,9 @@
 import { Outlet } from '@tanstack/react-router'
 import { TifaError, useLanguage } from 'tifa/client'
 import { I18nProvider, i18n, useTranslation } from 'tifa/i18n'
-import { HomeLayout } from 'fumadocs-ui/layouts/home'
 import { RootProvider } from 'fumadocs-ui/provider/tanstack'
 import { Link } from '@tanstack/react-router'
-import { useBaseOptions } from '@/components/layout-options'
+import { SiteShell } from '@/components/site-shell'
 import { site } from '@/components/site'
 import icon from '@/components/brand/tifa-icon.svg'
 import './styles.css'
@@ -48,6 +47,7 @@ function Providers({ children }: { children: React.ReactNode }) {
     // search answers in that language.
     <RootProvider
       i18n={{ locale: language, translations }}
+      theme={{ defaultTheme: 'dark' }}
       search={{ options: { api: language === 'en-US' ? '/api/search' : `/${language}/api/search` } }}
     >
       {children}
@@ -69,10 +69,9 @@ export default function Root() {
 // own, and for a URL that matches no page, as a TifaError with status 404.
 export function ErrorBoundary({ error }: { error: unknown }) {
   const { t } = useTranslation()
-  const options = useBaseOptions()
   const notFound = error instanceof TifaError && error.status === 404
   return (
-    <HomeLayout {...options}>
+    <SiteShell>
       <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-4 px-4 py-24">
         <h1 className="text-2xl font-semibold">{notFound ? t('error.notFound') : t('error.failed')}</h1>
         <p>
@@ -81,6 +80,6 @@ export function ErrorBoundary({ error }: { error: unknown }) {
           </Link>
         </p>
       </main>
-    </HomeLayout>
+    </SiteShell>
   )
 }

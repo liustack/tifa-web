@@ -3,14 +3,19 @@
     "docs": "文档",
     "examples": "示例",
     "changelog": "更新日志",
-    "why": "为什么"
+    "why": "为什么",
+    "menu": "菜单"
   },
   "language": {
     "label": "语言"
   },
   "footer": {
     "license": "MIT 许可",
-    "source": "本站源码"
+    "source": "本站源码",
+    "theme": "主题",
+    "system": "跟随系统",
+    "light": "浅色",
+    "dark": "深色"
   },
   "error": {
     "notFound": "页面不存在",

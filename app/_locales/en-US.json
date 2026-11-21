@@ -3,14 +3,19 @@
     "docs": "Docs",
     "examples": "Examples",
     "changelog": "Changelog",
-    "why": "Why"
+    "why": "Why",
+    "menu": "Menu"
   },
   "language": {
     "label": "Language"
   },
   "footer": {
     "license": "MIT license",
-    "source": "Source of this site"
+    "source": "Source of this site",
+    "theme": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
   },
   "error": {
     "notFound": "Page not found",

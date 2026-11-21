@@ -1,13 +1,10 @@
 import { Link } from '@tanstack/react-router'
 import { CodeBlock, Pre } from 'fumadocs-ui/components/codeblock'
-import { HomeLayout } from 'fumadocs-ui/layouts/home'
 import { HTML } from 'tifa/client'
 import { useTranslation } from 'tifa/i18n'
-import { useBaseOptions } from '@/components/layout-options'
 import { Inline } from '@/components/inline'
-import { SiteFooter } from '@/components/site-footer'
+import { SiteShell } from '@/components/site-shell'
 import { referenceRows, site } from '@/components/site'
-import icon from '@/components/brand/tifa-icon.svg'
 import { page } from './route.gen'
 
 // The words of the page are in app/_locales, under home and hero. t returns an array or an object
@@ -30,7 +27,6 @@ const button = 'rounded-lg px-5 py-2.5 text-sm font-medium'
 export default function HomePage() {
   const { version, demo } = page.useLoaderData()
   const { t } = useTranslation()
-  const options = useBaseOptions()
   const intro = useList<string[]>('hero.intro')
   const vps = useList<{ header: string[]; rows: string[][] }>('home.vps')
   const numbers = useList<{ columns: string[]; rows: Record<string, string>; cost: string[] }>('home.numbers')
@@ -38,10 +34,9 @@ export default function HomePage() {
   const doors = useList<{ to: string; label: string; text: string }[]>('home.doors.items')
   const why = useList<string[]>('home.why.text')
   return (
-    <HomeLayout {...options}>
+    <SiteShell>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-16 sm:pt-24">
         <section className="max-w-3xl">
-          <img src={icon} alt="" width={72} height={72} className="mb-8 size-[72px]" />
           <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">{t('hero.tagline')}</h1>
           <div className="mt-8 space-y-5 text-lg leading-8 text-fd-muted-foreground">
             {intro.map((p) => (
@@ -243,7 +238,6 @@ export default function HomePage() {
           </CodeBlock>
         </section>
       </main>
-      <SiteFooter wide />
-    </HomeLayout>
+    </SiteShell>
   )
 }
