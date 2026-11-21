@@ -57,8 +57,8 @@ site:
 #   max_age: 720h           # how long a session lasts from the moment tifa.SetSession makes it
 #   memory_limit: 64MiB     # bytes the default in-memory session store may hold
 
-# deploy:
-#   host: ""                # server for tifa deploy: an ssh alias (a Host of ~/.ssh/config, so the address stays on each machine) or an address
-#   cdn: none               # the CDN visitors come through: none or cloudflare (Tunnel, DNS and cache of the host of site.url, and deploys clear its CDN cache)
-#   ssh: direct             # how the GitHub Actions runner reaches the server over ssh: direct, cloudflare or tailscale
-#   ci: none                # who deploys automatically: none or github (set up by tifa deploy setup)
+deploy:
+  front: cloudflare   # visitors come through a Cloudflare Tunnel at tifago.com
+  ssh: cloudflare     # GitHub Actions reaches the server through the same tunnel
+  ci: github          # every push to main that passes CI deploys
+  # The server is DEPLOY_HOST in .env (git ignores it), or --host.
