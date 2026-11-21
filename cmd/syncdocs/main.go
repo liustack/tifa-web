@@ -3,7 +3,7 @@
 // The site has no copy of the docs. Every run reads docs/ from the Tifa module in the Go module
 // cache, keeps the docs written for people who build apps (front matter audience: app), and
 // turns each into a page of the site: its own front matter, links that point at pages of the
-// site or at the Tifa repository. content/docs is generated and git-ignored. Run it with
+// site or at the Tifa repository. content/docs is generated and committed, so a build needs no step of its own, and CI checks it matches. Run it with
 // go generate, after pnpm install and whenever the Tifa version changes.
 package main
 

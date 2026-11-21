@@ -25,4 +25,6 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts
       # The docs come from the Tifa module: write them into content/docs, which tifa check reads.
       - run: go generate ./...
+      # content/docs is committed: it must be what go generate writes for the Tifa version in go.mod.
+      - run: git add -N content/docs && git diff --exit-code -- content/docs
       - run: go tool tifa check
