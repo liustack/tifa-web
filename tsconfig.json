@@ -1,0 +1,10 @@
+{
+  "extends": "./.tifa/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"],
+      "tifa/*": ["./.tifa/tifa/*"]
+    }
+  },
+  "include": ["**/*", ".tifa/**/*"]
+}

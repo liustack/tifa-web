@@ -1,0 +1,64 @@
+# Settings of tifa. tifa build checks this file and builds its values into the program. Every
+# setting is shown at its default, with an example where the default depends on the machine.
+# Remove the "# " in front of a line (and its section) to change it. When the program starts,
+# flags, environment variables, a .env file and a file given with -c override this file, such
+# as --server-addr 0.0.0.0:9527 or SERVER_ADDR=0.0.0.0:9527. The options of the app are
+# defined in options.go.
+# More: https://github.com/liustack/tifa/blob/main/docs/config.md
+
+# build:
+#   target: es2020          # JavaScript target of the browser bundle, such as es2019,chrome90
+#   public: public          # folder of static files served from /
+#   skip_tanstack_check: false  # true builds with a TanStack Router version tifa is not tested with
+#   debug_info: false       # true keeps the DWARF debug info in the program, for debuggers such as Delve
+#   i18next_cache: true     # false stops the server render from keeping the strings i18next translates
+
+# i18n:
+#   default: ""             # default language of an app with _locales folders, such as zh-CN, needed when it has several
+#   prefix: off             # always puts the language in the URL of every route that has languages, the default one too
+
+site:
+  url: https://tifago.com  # scheme and host the site is served at. Turns on canonical links, /sitemap.xml, /robots.txt and /llms.txt
+
+# server:
+#   addr: 127.0.0.1:9527    # address to listen on, 0.0.0.0:9527 in a container
+#   body_limit: 1MiB        # largest request body, a bigger one gets 413
+#   read_timeout: 10s       # time to read a whole request, body included
+#   write_timeout: 10s      # time from the end of a request header to the end of the answer
+#   shutdown_timeout: 10s   # after a stop signal, time for requests in flight, then for OnShutdown
+#   compress: true          # gzip or zstd for text answers, false when a proxy in front compresses
+#   tls_domains: ""         # HTTPS with Let's Encrypt certificates for these domains, such as example.com,www.example.com
+#   tls_email: ""           # contact address given to Let's Encrypt, optional
+#   tls_cache: ""           # folder that keeps those certificates across restarts, needed with tls_domains
+#   tls_ca: https://acme-v02.api.letsencrypt.org/directory  # where tls_domains get their certificates
+#   tls_cert: ""            # HTTPS with your own certificate file (PEM) instead, reloaded when it changes
+#   tls_key: ""             # private key file of tls_cert
+#   http_addr: ":80"        # with HTTPS: plain HTTP that answers Let's Encrypt and redirects, off for none
+#   hsts: false             # true tells browsers to keep to HTTPS for a year
+#   csp: "off"              # on lets only the site's own scripts run, report-only only reports
+#   csp_policy: "script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'self'"
+#   trusted_origins: ""     # origins whose pages may send cross-site writes, such as https://admin.example.com
+#   cross_site_paths: ""    # path patterns that accept cross-site writes, such as POST /auth/apple/callback
+
+# ssr:
+#   vms: 4                  # example: pages that render at once, one JavaScript VM each (default: GOMAXPROCS, at most 4)
+#   vm_memory: 128MiB       # memory limit of each VM
+#   vm_stack_depth: 10000   # how deep JavaScript calls may nest in each VM, 1 to 10000
+#   timeout: 3s             # time limit of one render
+#   queue_limit: 32         # renders waiting for a VM, 0 rejects when all VMs are busy
+#   wait_timeout: 3s        # maximum wait for a VM, then 503 with Retry-After: 1
+#   memo_size: 64MiB        # render memo of rendered pages, 0 turns it off
+
+# cache:
+#   s_maxage: 1m            # how long a shared cache such as a CDN may keep a page that writes const Cache = true
+
+# session:
+#   cookie: __Host-tifa_session  # name of the session cookie, tifa dev drops the __Host- prefix
+#   max_age: 720h           # how long a session lasts from the moment tifa.SetSession makes it
+#   memory_limit: 64MiB     # bytes the default in-memory session store may hold
+
+# deploy:
+#   host: ""                # server for tifa deploy: an ssh alias (a Host of ~/.ssh/config, so the address stays on each machine) or an address
+#   cdn: none               # the CDN visitors come through: none or cloudflare (Tunnel, DNS and cache of the host of site.url, and deploys clear its CDN cache)
+#   ssh: direct             # how the GitHub Actions runner reaches the server over ssh: direct, cloudflare or tailscale
+#   ci: none                # who deploys automatically: none or github (set up by tifa deploy setup)

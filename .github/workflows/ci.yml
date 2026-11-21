@@ -1,0 +1,28 @@
+# tifa wrote this file once and never changes it. It is yours to edit.
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      # The prepare script is skipped: tifa check writes .tifa/ itself, in a step whose findings
+      # GitHub can mark on the files.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      # The docs come from the Tifa module: write them into content/docs, which tifa check reads.
+      - run: go generate ./...
+      - run: go tool tifa check

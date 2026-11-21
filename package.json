@@ -1,0 +1,32 @@
+{
+  "name": "tifaweb",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "go generate ./... && go tool tifa gen",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "1.170.46",
+    "fumadocs-core": "^16.19.4",
+    "fumadocs-ui": "^16.19.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@shikijs/rehype": "^3.0.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "rehype-raw": "^7.0.0",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "tailwindcss": "^4.3.5",
+    "typescript": "6.0.3",
+    "unified": "^11.0.5",
+    "vite": "8.3.4"
+  }
+}
