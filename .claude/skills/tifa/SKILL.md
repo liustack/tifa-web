@@ -2,7 +2,7 @@
 name: tifa
 description: Build, change, test and deploy apps with Tifa, a full-stack Go framework where Go routes requests and loads data, React pages are rendered to HTML inside the Go process by a pure Go QuickJS, and the whole app ships as one executable with no Node at run time. Use this whenever the project imports github.com/liustack/tifa, has an app/ folder with route.go, page.tsx or layout.tsx files, a .tifa/ folder or a tifa.yaml, or the user mentions Tifa, `go tool tifa`, `tifa dev`, `tifa build`, `tifa check`, route.gen, or asks for a Go plus React SSR app that deploys as a single binary on a small VPS or container. Read it before writing routes, pages, Layouts, hooks.go, API handlers, tests or deploy config, even for small edits, because the build rejects many ordinary-looking patterns and server rendering has rules that browser-only React does not.
 ---
-<!-- Written by Tifa v0.1.13 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.1.14 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 
 # Tifa
 
