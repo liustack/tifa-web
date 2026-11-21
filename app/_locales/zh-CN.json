@@ -84,7 +84,7 @@
     "View as Markdown(page actions)": "查看 Markdown"
   },
   "hero": {
-    "eyebrow": "给独立开发者和自力更生的团队",
+    "eyebrow": "给独立开发者和初创团队",
     "tagline": "一台小服务器，装下你的整个应用。",
     "sub": "后端用 Go，页面用 React，编译成一个可执行文件。1 核 1 GB 的 VPS 就能跑，不要 Node，不要 Redis，不要反向代理，用 `tifa deploy` 上线。",
     "description": "后端用 Go，页面用 React，编译成一个可执行文件。1 核 1 GB 的 VPS 就能跑，不要 Node，不要 Redis，不要反向代理，用 tifa deploy 上线。",

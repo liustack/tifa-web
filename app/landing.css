@@ -99,6 +99,12 @@
 .lp .status-line { margin: 28px 0 0; display: inline-flex; align-items: center; gap: 10px; font: 400 13px var(--font-mono); color: var(--muted); }
 .lp .status-line .tag { color: var(--wafer); border: 1px solid color-mix(in srgb, var(--wafer) 40%, transparent); border-radius: 4px; padding: 1px 6px; }
 
+/* A headline that has a comma breaks there, and a line is never split: in Chinese a break inside
+   it would cut a word. The Chinese headline is set smaller so that its longer line fits. */
+.lp .h1-line { display: inline-block; white-space: nowrap; }
+.lp .h1-line + .h1-line { display: block; }
+html:lang(zh-CN) .lp h1 { font-size: clamp(36px, 4.4vw, 58px); letter-spacing: -0.02em; line-height: 1.15; }
+
 /* Terminal window */
 .lp .win { border: 1px solid var(--line-strong); border-radius: 12px; background: var(--bg-sunk); overflow: hidden; box-shadow: var(--shadow); }
 .lp .win-head { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; border-bottom: 1px solid var(--line); font: 400 12px var(--font-mono); color: var(--muted); }
@@ -241,6 +247,7 @@
   .lp .spec-row { grid-template-columns: 1fr; gap: 12px; }
 }
 @media (max-width: 900px) {
+  html:lang(zh-CN) .lp h1 { font-size: clamp(30px, calc((100vw - 32px) / 9.4), 56px); }
   .lp .hero-grid, .lp .closing-grid { grid-template-columns: 1fr; }
   .lp .hero .win pre { min-height: 0; }
   .lp .servers { grid-template-columns: 1fr; gap: 0; }

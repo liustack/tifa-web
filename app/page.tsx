@@ -45,6 +45,13 @@ function useReveal() {
   }, [])
 }
 
+// headlineLines breaks the headline after its first comma, the full-width one of the Chinese
+// headline too, so that it never breaks inside a word. Each line is one unit (see .h1-line).
+function headlineLines(text: string): string[] {
+  const at = text.search(/[，,]/)
+  return at < 0 ? [text] : [text.slice(0, at + 1), text.slice(at + 1).trim()]
+}
+
 function SectionHead({ rail, children, no }: { rail: ReactNode; children: ReactNode; no: string }) {
   return (
     <div className="sec-head" data-reveal>
@@ -89,7 +96,17 @@ export default function HomePage() {
           <div className="wrap hero-grid">
             <div>
               <p className="eyebrow">{t('hero.eyebrow')}</p>
-              <h1>{t('hero.tagline')}</h1>
+              <h1>
+                {headlineLines(t('hero.tagline')).map((line, _, lines) =>
+                  lines.length > 1 ? (
+                    <span key={line} className="h1-line">
+                      {line}
+                    </span>
+                  ) : (
+                    line
+                  ),
+                )}
+              </h1>
               <p className="sub">
                 <Inline text={t('hero.sub')} />
               </p>
