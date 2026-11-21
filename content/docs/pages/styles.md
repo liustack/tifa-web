@@ -1,6 +1,7 @@
 ---
 title: Styles
 description: How to add CSS, Tailwind CSS and shadcn/ui to an app
+source: docs/styles.md
 group: Pages and data
 groupOrder: 2
 order: 3

@@ -1,6 +1,7 @@
 ---
 title: The server render
 description: What the server render has and lacks
+source: docs/server-render.md
 group: Pages and data
 groupOrder: 2
 order: 7

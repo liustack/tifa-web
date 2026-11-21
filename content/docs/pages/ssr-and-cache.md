@@ -1,6 +1,7 @@
 ---
 title: Render switches and caches
 description: How a page is rendered and kept
+source: docs/ssr-and-cache.md
 group: Pages and data
 groupOrder: 2
 order: 8

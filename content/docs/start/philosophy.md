@@ -1,6 +1,7 @@
 ---
 title: Philosophy
 description: The ideas behind how a Tifa app is organized and what each one gives you
+source: docs/philosophy.md
 group: Start
 groupOrder: 1
 order: 3

@@ -1,6 +1,7 @@
 ---
 title: Uploads
 description: How to let visitors upload a file in a Tifa app
+source: docs/guides/uploads.md
 group: Guides
 groupOrder: 3
 order: 4

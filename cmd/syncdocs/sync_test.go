@@ -174,3 +174,34 @@ func TestFirstDocIsTheTutorial(t *testing.T) {
 		t.Errorf("the tutorial is at %s: update links.docs in components/site.ts", got)
 	}
 }
+
+func TestSyncChangelog(t *testing.T) {
+	dir, out := t.TempDir(), t.TempDir()
+	src := "# Changelog\n\nWhat changed in Tifa. Older changes are by date. See [Performance](docs/performance.md).\n\n## [Unreleased]\n\n- A change, see [the build](docs/build.md#x) and [the shop](examples/shop/README.md).\n"
+	if err := os.WriteFile(filepath.Join(dir, "CHANGELOG.md"), []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := SyncChangelog(dir, "v0.1.12", out); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(filepath.Join(out, "changelog.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(b)
+	for _, want := range []string{
+		"title: Changelog\n",
+		"description: What changed in Tifa.\n",
+		"source: CHANGELOG.md\n",
+		"](/docs/reference/performance)",
+		"](/docs/ship/build#x)",
+		"](https://github.com/liustack/tifa/blob/v0.1.12/examples/shop/README.md)",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("the page lacks %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "\n# Changelog") {
+		t.Errorf("the page repeats its title:\n%s", got)
+	}
+}

@@ -1,6 +1,7 @@
 ---
 title: Testing
 description: How to test an app with go test
+source: docs/testing-apps.md
 group: Pages and data
 groupOrder: 2
 order: 9

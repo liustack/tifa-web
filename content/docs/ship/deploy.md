@@ -1,6 +1,7 @@
 ---
 title: Deploying
 description: How to put a Tifa app on a server
+source: docs/deploy.md
 group: Build and deploy
 groupOrder: 4
 order: 3

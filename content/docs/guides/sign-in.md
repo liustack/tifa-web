@@ -1,6 +1,7 @@
 ---
 title: Sign in and sign out
 description: How to sign users in and out in a Tifa app with Tifa sessions
+source: docs/guides/sign-in.md
 group: Guides
 groupOrder: 3
 order: 3

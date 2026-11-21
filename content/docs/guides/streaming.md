@@ -1,6 +1,7 @@
 ---
 title: Streaming
 description: How to send an answer while it is being made in a Tifa app
+source: docs/guides/streaming.md
 group: Guides
 groupOrder: 3
 order: 9

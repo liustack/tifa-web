@@ -1,6 +1,7 @@
 ---
 title: Keeping data in SQLite
 description: How to keep data in a Tifa app with SQLite
+source: docs/guides/database.md
 group: Guides
 groupOrder: 3
 order: 2

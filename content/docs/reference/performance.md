@@ -1,6 +1,7 @@
 ---
 title: Performance
 description: What a Tifa app serves on one core against Next.js and TanStack Start, and how to size CPUs, ssr.vms and memory for it, with what happens under overload and...
+source: docs/performance.md
 group: Reference
 groupOrder: 5
 order: 2

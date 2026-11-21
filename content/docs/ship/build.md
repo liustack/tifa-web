@@ -1,6 +1,7 @@
 ---
 title: Build and generated code
 description: How tifa new starts an app, what tifa build does, what tifa check runs, what tifa gen writes, what Tifa docs prints, how tifa upgrade moves an app to a newer...
+source: docs/build.md
 group: Build and deploy
 groupOrder: 4
 order: 2

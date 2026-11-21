@@ -1,6 +1,7 @@
 ---
 title: Content
 description: How an app keeps posts, docs and other writing as Markdown files under content/ and reads them in Go
+source: docs/content.md
 group: Pages and data
 groupOrder: 2
 order: 4

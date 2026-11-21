@@ -1,6 +1,7 @@
 ---
 title: Hooks
 description: How to set up the whole app in hooks.go (OnStart, OnShutdown, OnRequest, OnError, the log handler, net/http middleware) and in hooks.ts (the setup that runs...
+source: docs/hooks.md
 group: Pages and data
 groupOrder: 2
 order: 6

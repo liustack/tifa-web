@@ -1,6 +1,7 @@
 ---
 title: Sessions
 description: How sessions work in a Tifa app
+source: docs/sessions.md
 group: Pages and data
 groupOrder: 2
 order: 5

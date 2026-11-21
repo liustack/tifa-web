@@ -159,6 +159,7 @@ func Sync(dir, version, out string) (int, error) {
 		page := Page{
 			Title:       title,
 			Description: shorten(front.Summary),
+			Source:      src,
 			Group:       place.Group.Title,
 			GroupOrder:  place.Group.Order,
 			Order:       place.Order,
@@ -182,6 +183,34 @@ func Sync(dir, version, out string) (int, error) {
 		}
 	}
 	return n, nil
+}
+
+// SyncChangelog writes the CHANGELOG.md of the module in dir as the page out/changelog.md, with
+// its links rewritten as in the docs. Sync must have run first, for the places of the docs.
+func SyncChangelog(dir, version, out string) error {
+	b, err := os.ReadFile(filepath.Join(dir, "CHANGELOG.md"))
+	if err != nil {
+		return err
+	}
+	title, body, err := takeTitle(b)
+	if err != nil {
+		return fmt.Errorf("CHANGELOG.md: %w", err)
+	}
+	// The first paragraph says what the file is. Its first sentence is the description.
+	intro, _, _ := strings.Cut(strings.TrimSpace(string(body)), "\n\n")
+	desc, _, _ := strings.Cut(intro, ". ")
+	page := Page{Title: title, Description: strings.TrimSuffix(desc, ".") + ".", Source: "CHANGELOG.md"}
+	text, err := page.render(rewriteLinks(body, ".", dir, version))
+	if err != nil {
+		return err
+	}
+	if err := os.RemoveAll(out); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(out, "changelog.md"), text, 0o644)
 }
 
 // frontMatter is what the docs of the Tifa repository say about themselves.
@@ -246,9 +275,10 @@ func shorten(summary string) string {
 type Page struct {
 	Title       string `yaml:"title"`
 	Description string `yaml:"description"`
-	Group       string `yaml:"group"`
-	GroupOrder  int    `yaml:"groupOrder"`
-	Order       int    `yaml:"order"`
+	Source      string `yaml:"source,omitempty"` // the file in the Tifa repository the page comes from
+	Group       string `yaml:"group,omitempty"`
+	GroupOrder  int    `yaml:"groupOrder,omitempty"`
+	Order       int    `yaml:"order,omitempty"`
 }
 
 func (p Page) render(body []byte) ([]byte, error) {

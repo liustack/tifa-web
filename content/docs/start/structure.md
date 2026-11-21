@@ -1,6 +1,7 @@
 ---
 title: Structuring an app
 description: Where the files of a Tifa app go
+source: docs/structure.md
 group: Start
 groupOrder: 1
 order: 4

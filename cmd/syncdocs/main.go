@@ -1,4 +1,5 @@
-// Command syncdocs writes the docs of the Tifa version this site depends on into content/docs.
+// Command syncdocs writes the docs and the changelog of the Tifa version this site depends on
+// into content/docs and content/site.
 //
 // The site has no copy of the docs. Every run reads docs/ from the Tifa module in the Go module
 // cache, keeps the docs written for people who build apps (front matter audience: app), and
@@ -18,9 +19,12 @@ import (
 const modulePath = "github.com/liustack/tifa"
 
 func main() {
-	out := "content/docs"
+	out, siteOut := "content/docs", "content/site"
 	if len(os.Args) > 1 {
 		out = os.Args[1]
+	}
+	if len(os.Args) > 2 {
+		siteOut = os.Args[2]
 	}
 	dir, version, err := tifaModule()
 	if err != nil {
@@ -30,6 +34,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("syncdocs: %v", err)
 	}
+	if err := SyncChangelog(dir, version, siteOut); err != nil {
+		log.Fatalf("syncdocs: %v", err)
+	}
+	fmt.Printf("syncdocs: the changelog of %s written to %s\n", version, siteOut)
 	fmt.Printf("syncdocs: %d docs of %s %s written to %s\n", n, modulePath, version, out)
 }
 

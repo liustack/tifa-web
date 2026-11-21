@@ -1,6 +1,7 @@
 ---
 title: Writing an app
 description: How to start a Tifa app
+source: docs/app.md
 group: Start
 groupOrder: 1
 order: 2

@@ -1,6 +1,7 @@
 ---
 title: Pages and Layouts
 description: How to write the React side of a route
+source: docs/pages.md
 group: Pages and data
 groupOrder: 2
 order: 2

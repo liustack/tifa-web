@@ -1,6 +1,7 @@
 ---
 title: Routes and Ctx
 description: How to write the Go side of a route in route.go
+source: docs/routes.md
 group: Pages and data
 groupOrder: 2
 order: 1

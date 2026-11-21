@@ -1,6 +1,7 @@
 ---
 title: Search engines and language models
 description: How a Tifa site gets found by search engines and read by language models
+source: docs/guides/seo.md
 group: Guides
 groupOrder: 3
 order: 8

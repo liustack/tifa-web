@@ -1,6 +1,7 @@
 ---
 title: 'Tutorial: a todo list in one executable'
 description: A getting-started tutorial
+source: docs/tutorial.md
 group: Start
 groupOrder: 1
 order: 1

@@ -1,6 +1,7 @@
 ---
 title: tifa dev
 description: How to use tifa dev
+source: docs/dev.md
 group: Build and deploy
 groupOrder: 4
 order: 1
