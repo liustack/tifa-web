@@ -1,51 +1,39 @@
-// The words of the home page and the links of the site, in one place. Every sentence is from
-// the README of the Tifa repository or from docs/tutorial.md. [text](url) makes a link and
-// `text` makes code, see inline.tsx.
+// The links of the site and what is the same in every language: the commands, the numbers and
+// the files of the demo. The words are in app/_locales, one file per language, and the home page
+// is app/page.tsx. The hero (key hero in those files) is the first words a visitor reads. Every
+// sentence is from the README of the Tifa repository, from its docs or from the changelog.
+
+const tifa = 'https://github.com/liustack/tifa'
 
 export const site = {
   name: 'Tifa',
   url: 'https://tifago.com',
-  tagline: 'The full-stack Go framework for Gophers.',
-  intro: [
-    'Write the backend in Go and the pages in React. Tifa compiles the whole site into one executable that you copy to a small VPS and run. No Node in production, no process manager, no reverse proxy, no Redis.',
-    'It is for Go developers whose business logic and data already live in Go, who want to write pages with the React ecosystem, and who do not want to keep a Node service running in production just for server-side rendering.',
-  ],
-  vps: {
-    header: ['On a 1 CPU / 1 GB VPS', 'The usual stack', 'With Tifa'],
-    rows: [
-      [
-        'Reverse proxy and certificates',
-        'nginx + certbot',
-        'The Go HTTP server in the binary, which gets its own Let\'s Encrypt certificate and speaks HTTP/2',
-      ],
-      ['Runtime and process manager', 'Node.js + PM2', 'One Go executable'],
-      [
-        'React SSR',
-        'TanStack Start',
-        'TanStack Router, rendered by a [pure Go QuickJS](https://github.com/liustack/slowjs) inside the Go process',
-      ],
-      [
-        'Cache',
-        'Redis',
-        'An in-process render memo for pages, a CDN in front if you want one, plus whatever you keep in Go memory',
-      ],
-      ['Queues and scheduled jobs', 'BullMQ + cron', 'Goroutines you start in `OnStart`'],
-      ['Database', 'SQLite', 'SQLite, with a [pure Go driver](https://github.com/liustack/sqlite) so CGO stays off'],
-    ],
+  links: {
+    docs: '/docs/start/tutorial', // the first doc, which /docs leads to. TestFirstDocIsTheTutorial in cmd/syncdocs keeps it right
+    github: tifa,
+    issues: `${tifa}/issues/new/choose`,
+    x: 'https://x.com/liustack',
+    source: 'https://github.com/liustack/tifa-web',
   },
-  quickstart: {
-    title: 'Start an app',
-    note: 'You need Go 1.27, Node 20.19 or 22.12 and later, and [pnpm](https://pnpm.io). Node only builds the front end. The executable you ship never needs it.',
-    commands: `go run github.com/liustack/tifa/cmd/tifa@latest new tutorial-app
+  // The command of the hero.
+  newApp: 'go run github.com/liustack/tifa/cmd/tifa@latest new myapp',
+  // The commands that close the home page, from docs/tutorial.md.
+  quickstart: `go run github.com/liustack/tifa/cmd/tifa@latest new tutorial-app
 cd tutorial-app
 go mod tidy
 pnpm install
 go tool tifa dev     # http://127.0.0.1:9527`,
-  },
-  links: {
-    docs: '/docs/start/tutorial', // the first doc, which /docs leads to. TestFirstDocIsTheTutorial in cmd/syncdocs keeps it right
-    github: 'https://github.com/liustack/tifa',
-    x: 'https://x.com/liustack',
-    source: 'https://github.com/liustack/tifa-web',
-  },
+  // Whole visits to the example shop, one core each (docs/performance.md, 2026-11-18): page views,
+  // full loads and client navigations a second. The name of each row is in the language files.
+  throughput: [
+    ['tifa', 118.8, 38.3, 80.5],
+    ['next', 28.3, 9.1, 19.2],
+    ['tanstack', 94.7, 30.5, 64.2],
+    ['tifaNoMemo', 78.0, 25.1, 52.8],
+    ['tanstackGzip', 64.5, 20.8, 43.7],
+    ['nextNoPrefetch', 61.7, 19.9, 41.8],
+  ] as const,
 }
+
+// Where a table row is one of the reference rows, which are not the frameworks as shipped.
+export const referenceRows = new Set(['tifaNoMemo', 'tanstackGzip', 'nextNoPrefetch'])

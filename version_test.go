@@ -34,7 +34,7 @@ func TestSourceURL(t *testing.T) {
 	}
 }
 
-// The pages written by hand copy text and code from the Tifa repository at the version of go.mod
+// The pages and the home page, written by hand, copy text and code from the Tifa repository at the version of go.mod
 // and link to GitHub at that version. After a Tifa upgrade this fails until they are read again
 // against the new version and their links name it.
 func TestHandWrittenPagesNameTheVersionOfGoMod(t *testing.T) {
@@ -44,7 +44,7 @@ func TestHandWrittenPagesNameTheVersionOfGoMod(t *testing.T) {
 	}
 	ref := regexp.MustCompile(`github\.com/liustack/tifa/(?:blob|tree)/([^/]+)/`)
 	found := 0
-	err = filepath.WalkDir("content/pages", func(p string, d os.DirEntry, err error) error {
+	walk := func(p string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
 		}
@@ -59,11 +59,13 @@ func TestHandWrittenPagesNameTheVersionOfGoMod(t *testing.T) {
 			}
 		}
 		return nil
-	})
-	if err != nil {
-		t.Fatal(err)
+	}
+	for _, dir := range []string{"content/pages", "app/_locales"} {
+		if err := filepath.WalkDir(dir, walk); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if found == 0 {
-		t.Error("no link to the Tifa repository found in content/pages: the check looks at nothing")
+		t.Error("no link to the Tifa repository found: the check looks at nothing")
 	}
 }

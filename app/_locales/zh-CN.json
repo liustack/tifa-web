@@ -73,11 +73,146 @@
     "intro": [
       "用 Go 写后端、React 写页面，整个网站编译成一个可执行文件，拷到一台小 VPS 上直接运行。线上不需要 Node，不需要进程管理器、反向代理和 Redis。",
       "适合这样的 Go 开发者：业务逻辑和数据都在 Go 里，页面想用 React 生态来写，又不想为了服务端渲染在生产环境多养一个 Node 服务。"
-    ]
+    ],
+    "start": "开始使用",
+    "github": "GitHub",
+    "status": "Tifa 还在非常早期的阶段，接口会变，很多编译器优化还没做。",
+    "command": "新建应用"
   },
   "docs": {
     "version": "Tifa {{version}} 的文档",
     "copyPage": "复制本页",
     "englishOnly": "文档暂时只有英文。"
+  },
+  "home": {
+    "demo": {
+      "title": "写起来是什么样",
+      "intro": "每个页面一个目录，Go 负责取数，React 负责显示：",
+      "from": "代码来自 [examples/shop](https://github.com/liustack/tifa/tree/v0.1.13/examples/shop)。"
+    },
+    "vps": {
+      "header": [
+        "在 1 核 1G 的 VPS 上",
+        "常见的一套",
+        "用 Tifa"
+      ],
+      "rows": [
+        [
+          "反向代理与证书",
+          "nginx + certbot",
+          "程序里的 Go HTTP 服务器，自己申请 Let's Encrypt 证书，支持 HTTP/2"
+        ],
+        [
+          "运行时与进程管理",
+          "Node.js + PM2",
+          "一个 Go 可执行文件"
+        ],
+        [
+          "React SSR",
+          "TanStack Start",
+          "TanStack Router，由 Go 进程内的[纯 Go QuickJS](https://github.com/liustack/slowjs)渲染"
+        ],
+        [
+          "缓存",
+          "Redis",
+          "进程内的渲染记忆，想要的话前面放 CDN，以及你放在 Go 内存里的数据"
+        ],
+        [
+          "队列与定时任务",
+          "BullMQ + cron",
+          "在 `OnStart` 里启动的 goroutine"
+        ],
+        [
+          "数据库",
+          "SQLite",
+          "SQLite，用[纯 Go 驱动](https://github.com/liustack/sqlite)，CGO 保持关闭"
+        ]
+      ]
+    },
+    "numbers": {
+      "title": "一台小服务器就够",
+      "memo": "**[渲染记忆](/docs/reference/memo)**对所有页面默认开启，购物车、个人账单这类登录后才能看的页面也一样。每个请求都先取最新数据，数据没变才复用上次渲染的结果，所以页面永远是最新的。只有数据和登录状态完全相同才会复用，一个人的页面不会发给另一个人。应用不用写一行缓存代码。",
+      "visits": "整站访问，用真实浏览器在示例商店上录下来再回放：顾客、员工和爬虫同时访问同一台服务器，每个服务器都是出厂设置，先吃同样的预热（2026-11-18）。",
+      "caption": "吞吐，8 个并发、页面之间不停顿，3 轮取中位数：",
+      "columns": [
+        "每秒页面数",
+        "每秒整页加载",
+        "每秒客户端导航"
+      ],
+      "rows": {
+        "tifa": "Tifa",
+        "next": "Next.js",
+        "tanstack": "TanStack Start，不压缩",
+        "tifaNoMemo": "参考：Tifa 关掉渲染记忆",
+        "tanstackGzip": "参考：TanStack Start 开 gzip",
+        "nextNoPrefetch": "参考：Next.js 关掉预取"
+      },
+      "definition": "整页加载是服务器回整个页面的请求：每次访问的落地页，以及搜索这类重新加载页面的动作。客户端导航是路由只取数据的请求。每个服务器回放的是同一批访问，所以每一行的页面里都有约三分之一是整页加载。",
+      "method": "前三行是出厂设置的框架。参考行各改一个设置，说明这个默认设置花掉或换来多少。版本：Tifa v0.1.0，slowjs v0.31.6，Next.js 16.4.6，TanStack Start 1.169.3，Node 24.13.0。每个服务器只用 Google Cloud `t2d-standard-4` 虚拟机（AMD EPYC 7B13）的一个核。访问配比、各家默认设置的代价和这些数字的含义见[整站访问](/docs/reference/performance#whole-visits-to-the-shop-2026-11-18)。",
+      "cost": [
+        "Tifa 在 slowjs 里渲染页面，slowjs 是编译成 Go 汇编的 QuickJS。它没有 JIT，所以一次渲染比在 Node 里更久。",
+        "每个请求都要渲染，一次一个（2026-11-18）：Next.js 每秒答出的页面请求是 Tifa 的 1.17 倍，TanStack Start 是 1.57 倍，峰值内存分别是 Tifa 的 7 倍和 6 倍。见[研究报告（英文）](https://github.com/liustack/tifa/blob/v0.1.13/docs/studies/nextjs-and-tanstack-start.md#conclusions)。"
+      ],
+      "performance": "性能",
+      "capacity": "容量测量（英文）",
+      "capacityUrl": "https://github.com/liustack/tifa/blob/v0.1.13/docs/studies/capacity.md"
+    },
+    "status": {
+      "title": "现状",
+      "note": "Tifa 还在非常早期的阶段，接口会变，很多编译器优化还没做。",
+      "policy": "Tifa 不接受 pull request。这类框架同时牵动编译器、打包、服务端渲染和开发体验，改一处会牵动别处，做对需要大量上下文，所以每一行都由作者一个人写和审。可以这样帮忙：",
+      "help": [
+        "**[提 issue](https://github.com/liustack/tifa/issues/new/choose)。** bug、想法、看不懂的报错、写得不清楚的文档。一个带复现步骤的清楚 issue 比一个补丁更有用，issue 决定接下来做什么。",
+        "**fork 它。** 按 MIT 许可，你的副本随你改、随你发布。在 fork 上开发的说明见 [CONTRIBUTING.md](https://github.com/liustack/tifa/blob/v0.1.13/CONTRIBUTING.md)（英文）。"
+      ]
+    },
+    "doors": {
+      "title": "文档",
+      "items": [
+        {
+          "to": "/docs/start/tutorial",
+          "label": "第一次用 Tifa",
+          "text": "第一次用 Tifa，想从第一个目录做到一个能跑的小应用。"
+        },
+        {
+          "to": "/docs/start/app#coming-from-another-framework",
+          "label": "从 Next.js 过来",
+          "text": "`tifa check`、`tifa build` 和 `tifa dev` 能认出为 Next.js、Remix、React Router、TanStack Start 和 SvelteKit 写的代码，也能认出为 Go Web 框架写的代码。"
+        },
+        {
+          "to": "/docs/guides/forms",
+          "label": "加一个功能",
+          "text": "要加一个常见功能，想要一套实测过的写法。"
+        },
+        {
+          "to": "/docs/ship/deploy",
+          "label": "部署",
+          "text": "把程序放到服务器或容器里，或者放在 CDN 或代理后面。"
+        },
+        {
+          "to": "/docs/reference/performance",
+          "label": "估算服务器",
+          "text": "想知道一台小 VPS 扛不扛得住你的流量。"
+        },
+        {
+          "to": "/docs/start/philosophy",
+          "label": "哲学",
+          "text": "想知道 Tifa 应用为什么这样组织。"
+        }
+      ]
+    },
+    "why": {
+      "title": "为什么有 Tifa",
+      "text": [
+        "我做它的初衷，是想让 TanStack Start 在 1 核 1G 的 VPS 上跑起来。我想做个小产品，但手上的 VPS 都跑满了，黑五还没到，我也不想去买新的，就找了台旧的 1 核 1G。我让 Codex 一把梭，部署了 nginx、Node.js、PM2、TanStack Start、Redis、BullMQ、cron 和 SQLite。",
+        "然后发现这些东西根本跑不起来，准确说是卡成狗。",
+        "所以我开始糊 Tifa 这个轮子。理论上糊完以后，我只需要在 VPS 上部署一个 Go 二进制文件就完了。"
+      ],
+      "more": "为什么有 Tifa"
+    },
+    "start": {
+      "title": "新建应用",
+      "note": "需要 Go 1.27、Node 20.19 或 22.12 及以上，以及 [pnpm](https://pnpm.io)。Node 只用来构建前端，部署出去的程序不需要它。"
+    }
   }
 }
