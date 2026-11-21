@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+@source '../node_modules/fumadocs-ui/dist/**/*.js';
+@source '../components';
+
+/* The blue of the logo for links and the active page of the sidebar. */
+:root {
+  --color-fd-primary: #0a7ea4;
+}
+.dark {
+  --color-fd-primary: #3ec3ec;
+}
+
+@layer base {
+  body {
+    @apply flex min-h-screen flex-col;
+  }
+}
+
+/* Code blocks of the docs are plain <pre class="shiki"> from the build, not Fumadocs' CodeBlock. */
+pre.shiki {
+  @apply my-6 overflow-x-auto rounded-lg border border-fd-border bg-fd-card py-3 text-[13px] leading-6;
+}
+pre.shiki code {
+  @apply block w-max min-w-full border-0 bg-transparent p-0 text-[inherit];
+}
