@@ -5,6 +5,7 @@ import { RootProvider } from 'fumadocs-ui/provider/tanstack'
 import { Link } from '@tanstack/react-router'
 import { SiteShell } from '@/components/site-shell'
 import { site } from '@/components/site'
+import { ThemeProvider, themeScript } from '@/components/theme'
 import icon from '@/components/brand/tifa-icon.svg'
 import './styles.css'
 
@@ -19,6 +20,7 @@ export const documentHead = {
     { name: 'twitter:site', content: '@liustack' },
   ],
   links: [{ rel: 'icon', href: icon, type: 'image/svg+xml' }],
+  scripts: [{ children: themeScript }],
 }
 
 // The title and description of a page that sets none of its own.
@@ -47,7 +49,7 @@ function Providers({ children }: { children: React.ReactNode }) {
     // search answers in that language.
     <RootProvider
       i18n={{ locale: language, translations }}
-      theme={{ defaultTheme: 'dark' }}
+      theme={{ enabled: false }}
       search={{ options: { api: language === 'en-US' ? '/api/search' : `/${language}/api/search` } }}
     >
       {children}
@@ -58,9 +60,11 @@ function Providers({ children }: { children: React.ReactNode }) {
 export default function Root() {
   return (
     <I18nProvider>
-      <Providers>
-        <Outlet />
-      </Providers>
+      <ThemeProvider>
+        <Providers>
+          <Outlet />
+        </Providers>
+      </ThemeProvider>
     </I18nProvider>
   )
 }

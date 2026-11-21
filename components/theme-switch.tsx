@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
-import { useTheme } from 'fumadocs-ui/provider/base'
 import { useTranslation } from 'tifa/i18n'
 import { MonitorIcon, MoonIcon, SunIcon } from './icons'
+import { useTheme } from './theme'
 
 const options = [
   { value: 'system', Icon: MonitorIcon },
@@ -10,17 +9,15 @@ const options = [
 ] as const
 
 // ThemeSwitch is the three small buttons of the footer: the system's theme, light and dark. The
-// choice is kept by the theme provider in localStorage. The server does not know it, so the
-// selected button shows once the page is in the browser.
+// choice is kept by ThemeProvider in localStorage. The server does not know it, so the selected
+// button shows once the page is in the browser.
 export function ThemeSwitch() {
   const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
   return (
     <div role="radiogroup" aria-label={t('footer.theme')} className="inline-flex rounded-full border border-fd-border p-0.5">
       {options.map(({ value, Icon }) => {
-        const selected = mounted && theme === value
+        const selected = theme === value
         return (
           <button
             key={value}
