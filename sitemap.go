@@ -11,8 +11,8 @@ import (
 const notes = "The docs on this site are the docs of Tifa %s. Every page of the docs has a Markdown version at its address with .md added, such as /docs/start/tutorial.md, and /llms-full.txt has all of them in one file. To read the docs of the Tifa version an app uses, run `go tool tifa docs` in the app."
 
 // sitemap lists the docs for /sitemap.xml, /llms.txt, /llms-full.txt and the .md version of
-// each page, in both languages. A Chinese page has a Markdown version only when it has a body of
-// its own, since the others show the English one.
+// each page, in both languages. A Chinese doc has a Markdown version only when it has a body of
+// its own, since the others show the English one. The changelog has none, since it would fill llms-full.txt.
 func sitemap(c *tifa.Ctx) (tifa.Sitemap, error) {
 	version, err := TifaVersion()
 	if err != nil {
@@ -24,6 +24,19 @@ func sitemap(c *tifa.Ctx) (tifa.Sitemap, error) {
 	}
 	for _, language := range tifa.Languages() {
 		sm.Pages = append(sm.Pages, tifa.SitemapPage{Language: language, Path: "/", Title: "Tifa"})
+		for _, id := range []string{"why", "examples"} {
+			p, err := Pages.Get(language, id)
+			if err != nil {
+				return tifa.Sitemap{}, err
+			}
+			sm.Pages = append(sm.Pages, tifa.SitemapPage{Language: language, Path: "/" + id, Title: p.Title, Description: p.Description, Content: p})
+		}
+		changelog, err := Site.Get("", "changelog")
+		if err != nil {
+			return tifa.Sitemap{}, err
+		}
+		// No Content: the changelog is long and would fill /llms-full.txt with every release.
+		sm.Pages = append(sm.Pages, tifa.SitemapPage{Language: language, Path: "/changelog", Title: changelog.Title, Description: changelog.Description})
 		for _, d := range SortedDocs(language) {
 			page := tifa.SitemapPage{
 				Language:    language,

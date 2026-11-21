@@ -46,5 +46,6 @@ go tool tifa dev     # http://127.0.0.1:9527`,
     docs: '/docs/start/tutorial', // the first doc, which /docs leads to. TestFirstDocIsTheTutorial in cmd/syncdocs keeps it right
     github: 'https://github.com/liustack/tifa',
     x: 'https://x.com/liustack',
+    source: 'https://github.com/liustack/tifa-web',
   },
 }

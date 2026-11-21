@@ -30,9 +30,13 @@ func TifaVersion() (string, error) {
 // SourceURL is the address on GitHub of a file of the Tifa repository at a version. A
 // pseudo-version such as v0.1.13-0.20261120205010-e5449dd316a7 names the commit at its end.
 func SourceURL(version, file string) string {
-	ref := version
+	return "https://github.com/liustack/tifa/blob/" + gitRef(version) + "/" + file
+}
+
+// gitRef is the tag of a release, or the commit of a pseudo-version.
+func gitRef(version string) string {
 	if i := strings.LastIndexByte(version, '-'); i >= 0 && strings.Count(version, "-") >= 2 {
-		ref = version[i+1:]
+		return version[i+1:]
 	}
-	return "https://github.com/liustack/tifa/blob/" + ref + "/" + file
+	return version
 }

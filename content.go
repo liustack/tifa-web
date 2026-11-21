@@ -1,6 +1,9 @@
 package tifaweb
 
-import "github.com/liustack/tifa/content"
+import (
+	"github.com/liustack/tifa"
+	"github.com/liustack/tifa/content"
+)
 
 // The docs are written by cmd/syncdocs from the docs of the Tifa module, into content/docs.
 // Run go generate after pnpm install and whenever the Tifa version changes.
@@ -18,7 +21,7 @@ var Site = content.Define[Doc](content.Source{Dir: "site"})
 type Doc struct {
 	content.Entry
 	Title       string `json:"title"`
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	Source      string `json:"source,omitempty"`     // the file in the Tifa repository the page comes from
 	Group       string `json:"group,omitempty"`      // the section of the sidebar
 	GroupOrder  int    `json:"groupOrder,omitempty"` // the place of the section, smaller first
@@ -28,3 +31,11 @@ type Doc struct {
 // DocsZH holds Chinese bodies of docs, in the same paths as content/docs. A doc with a file
 // here shows it in Chinese. The others show the English body with a note, see app/docs.
 var DocsZH = content.Define[Doc](content.Source{Dir: "docs-zh"})
+
+// Pages is the pages of the site that are written by hand, in each language of the site: Why and
+// Examples.
+var Pages = content.Define[Doc](content.Source{Dir: "pages", Languages: tifa.Languages()})
+
+// Demo is the code files the home page shows, as they are in examples/shop of Tifa. One entry
+// holds one file in a code block, and its title is the path of the file.
+var Demo = content.Define[Doc](content.Source{Dir: "demo"})

@@ -2,6 +2,8 @@ package tifaweb
 
 import (
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -29,5 +31,39 @@ func TestSourceURL(t *testing.T) {
 		if got := SourceURL(c.version, "docs/app.md"); got != c.want {
 			t.Errorf("SourceURL(%q) = %q, want %q", c.version, got, c.want)
 		}
+	}
+}
+
+// The pages written by hand copy text and code from the Tifa repository at the version of go.mod
+// and link to GitHub at that version. After a Tifa upgrade this fails until they are read again
+// against the new version and their links name it.
+func TestHandWrittenPagesNameTheVersionOfGoMod(t *testing.T) {
+	v, err := TifaVersion()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ref := regexp.MustCompile(`github\.com/liustack/tifa/(?:blob|tree)/([^/]+)/`)
+	found := 0
+	err = filepath.WalkDir("content/pages", func(p string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		b, err := os.ReadFile(p)
+		if err != nil {
+			return err
+		}
+		for _, m := range ref.FindAllStringSubmatch(string(b), -1) {
+			found++
+			if m[1] != gitRef(v) {
+				t.Errorf("%s links to Tifa at %s, but go.mod has %s", p, m[1], v)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found == 0 {
+		t.Error("no link to the Tifa repository found in content/pages: the check looks at nothing")
 	}
 }
