@@ -138,7 +138,7 @@
         [
           "数据库",
           "SQLite",
-          "SQLite，用[纯 Go 驱动](https://github.com/liustack/sqlite)，CGO 保持关闭"
+          "SQLite，用[全网最快的纯 Go SQLite 驱动](https://github.com/liustack/sqlite)，CGO 保持关闭"
         ]
       ]
     },

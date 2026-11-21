@@ -77,7 +77,7 @@
         [
           "Database",
           "SQLite",
-          "SQLite, with a [pure Go driver](https://github.com/liustack/sqlite) so CGO stays off"
+          "SQLite, with [the fastest pure Go SQLite driver](https://github.com/liustack/sqlite), so CGO stays off"
         ]
       ]
     },
