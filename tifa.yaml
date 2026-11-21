@@ -13,8 +13,8 @@
 #   debug_info: false       # true keeps the DWARF debug info in the program, for debuggers such as Delve
 #   i18next_cache: true     # false stops the server render from keeping the strings i18next translates
 
-# i18n:
-#   default: ""             # default language of an app with _locales folders, such as zh-CN, needed when it has several
+i18n:
+  default: en-US          # English has no prefix in the URL, Chinese is /zh-CN
 #   prefix: off             # always puts the language in the URL of every route that has languages, the default one too
 
 site:

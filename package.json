@@ -10,8 +10,10 @@
     "@tanstack/react-router": "1.170.46",
     "fumadocs-core": "^16.19.4",
     "fumadocs-ui": "^16.19.4",
+    "i18next": "^27.1.5",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-i18next": "^18.0.2"
   },
   "devDependencies": {
     "@shikijs/rehype": "^3.0.0",

@@ -1,0 +1,28 @@
+{
+  "nav": {
+    "docs": "Docs",
+    "examples": "Examples",
+    "changelog": "Changelog",
+    "why": "Why"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "footer": {
+    "license": "MIT license",
+    "source": "Source of this site"
+  },
+  "error": {
+    "notFound": "Page not found",
+    "failed": "Something went wrong",
+    "home": "Back to the home page"
+  },
+  "fumadocs": {},
+  "hero": {
+    "tagline": "The full-stack Go framework for Gophers.",
+    "intro": [
+      "Write the backend in Go and the pages in React. Tifa compiles the whole site into one executable that you copy to a small VPS and run. No Node in production, no process manager, no reverse proxy, no Redis.",
+      "It is for Go developers whose business logic and data already live in Go, who want to write pages with the React ecosystem, and who do not want to keep a Node service running in production just for server-side rendering."
+    ]
+  }
+}

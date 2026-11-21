@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { CodeBlock, Pre } from 'fumadocs-ui/components/codeblock'
 import { HomeLayout } from 'fumadocs-ui/layouts/home'
-import { baseOptions } from '@/components/layout-options'
+import { useBaseOptions } from '@/components/layout-options'
 import { Inline } from '@/components/inline'
 import { site } from '@/components/site'
 import icon from '@/components/brand/tifa-icon.svg'
@@ -14,8 +14,9 @@ const cell =
   "text-fd-muted-foreground max-sm:block max-sm:py-0 max-sm:pt-2 max-sm:before:mb-0.5 max-sm:before:block max-sm:before:text-xs max-sm:before:font-medium max-sm:before:uppercase max-sm:before:tracking-wide max-sm:before:text-fd-foreground/60 max-sm:before:content-[attr(data-label)]"
 
 export default function HomePage() {
+  const options = useBaseOptions()
   return (
-    <HomeLayout {...baseOptions} links={[{ type: 'main', text: 'Docs', url: site.links.docs }, ...(baseOptions.links ?? [])]}>
+    <HomeLayout {...options}>
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-16 sm:pt-24">
         <section>
           <img src={icon} alt="" width={72} height={72} className="mb-8 size-[72px]" />
