@@ -17,6 +17,9 @@ export default defineConfig({
               themes: { light: 'github-light', dark: 'github-dark' },
               defaultColor: false,
               fallbackLanguage: 'text',
+              // Without langs Shiki loads all of its languages before the first block, about 2 s
+              // of every build. TestCodeLanguagesAreLoaded fails when a doc uses one missing here.
+              langs: ['go', 'sh', 'tsx', 'ts', 'yaml', 'json', 'ini', 'diff', 'markdown', 'md', 'sql', 'css', 'xml'],
             },
           ],
         ],
