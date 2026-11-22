@@ -5,7 +5,7 @@ source: docs/guides/database.md
 group: Guides
 groupOrder: 3
 order: 2
-translatedFrom: 650d3deb092a
+translatedFrom: c911102a7980
 ---
 
 
@@ -15,7 +15,7 @@ Tifa 没有数据库层。你的应用在 `OnStart` 里打开一个数据库，�
 
 ## 驱动 {#the-driver}
 
-用 [`github.com/liustack/sqlite`](https://github.com/liustack/sqlite)。它把 SQLite 作为 Go 代码来运行，所以应用仍然可以用 `CGO_ENABLED=0` 构建成一个文件（[理念](/docs/start/philosophy#do-things-the-go-way)）。cgo 驱动 `github.com/mattn/go-sqlite3` 需要 C 编译器，会破坏这一点。在这个驱动自己的 [基准测试](https://github.com/liustack/sqlite#benchmarks) 里，它读取比 cgo 驱动和其他纯 Go 驱动都快，在完全留在 SQLite 内部的工作上（比如 join）则输给它们。它支持 amd64 和 arm64 上的 Linux 和 macOS，以及 amd64 上的 Windows。`tifa new` 已经在 `go.mod` 里固定了一个版本。每个发布版本都写明它测试过的 Go 版本，并且拒绝用更新的版本构建，所以升级 Go 之后，驱动也要升级。
+用 [`github.com/liustack/sqlite`](https://github.com/liustack/sqlite)。它把 SQLite 作为 Go 代码来运行，所以应用仍然可以用 `CGO_ENABLED=0` 构建成一个文件（[理念](/docs/start/philosophy#do-things-the-go-way)）。cgo 驱动 `github.com/mattn/go-sqlite3` 需要 C 编译器，会破坏这一点。在这个驱动自己的 [基准测试](https://github.com/liustack/sqlite#benchmarks) 里，它读取比 cgo 驱动和其他纯 Go 驱动都快，在完全留在 SQLite 内部的工作上（比如 join）则输给它们。它支持 amd64 和 arm64 上的 Linux、macOS 和 Windows。`tifa new` 已经在 `go.mod` 里固定了一个版本。每个发布版本都写明它测试过的 Go 版本，并且拒绝用更新的版本构建，所以升级 Go 之后，驱动也要升级。
 
 有两个习惯和其他驱动不同。DSN 里除了 `_pragma` 和 `_txlock` 以外的参数都是错误，所以其他驱动那种 `_foreign_keys=1` 的写法不起作用。另外 SQL 里的双引号只用来命名列和表，所以字符串值要写在单引号里。不要在同一个程序里导入另一个叫 `sqlite` 的驱动（比如 `modernc.org/sqlite`），因为两者注册同一个名字，程序启动时会 panic。
 

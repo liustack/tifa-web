@@ -5,7 +5,7 @@ source: docs/deploy.md
 group: Build and deploy
 groupOrder: 4
 order: 3
-translatedFrom: 6d1031f5d9d4
+translatedFrom: 71aa472b726b
 ---
 
 
@@ -48,8 +48,8 @@ deploy:
 | 输入 | 参数 | 它是什么 | 来自 |
 | --- | --- | --- | --- |
 | `TIFA_DEPLOY_HOST` | `--host` | 服务器在哪里 | 参数、环境变量、`.env` |
-| `TIFA_DEPLOY_CF_PURGE_TOKEN` | 无 | 只能清除一个 zone 的缓存的 Cloudflare 令牌 | 环境变量、`.env` |
-| `TIFA_DEPLOY_CF_ZONE_ID` | 无 | 那个 zone 的 ID | 环境变量、`.env` |
+| `TIFA_DEPLOY_CF_PURGE_TOKEN` | 无 | 只能清除一个 zone 的缓存的 Cloudflare 令牌。它优先于 setup 存在服务器上的那个（见[清除 CDN 缓存](#clearing-the-cdn-cache)） | 环境变量、`.env` |
+| `TIFA_DEPLOY_CF_ZONE_ID` | 无 | 那个 zone 的 ID，和上面的令牌一起需要 | 环境变量、`.env` |
 | `TIFA_DEPLOY_GITHUB_TOKEN` | 无 | 一个细粒度的 GitHub 令牌，在没有 gh 时用于 setup 和 remove | 环境变量、`.env` |
 
 如果 `.env` 里找到较旧的名字（`DEPLOY_HOST`、`CF_CACHE_PURGE_TOKEN`、`CF_ZONE_ID`）而新的缺失，每个 `tifa deploy` 命令都会报错停下，错误里写出新名字。请把它改名。在环境变量里，旧名字不动：别的工具在用它们。`.env` 里有 tifa deploy 不读的 `TIFA_DEPLOY_` 名字时，命令同样会停下，错误里写出最接近的那个名字。
@@ -75,14 +75,15 @@ Plan for shop on vps
   add     cloudflare: cache rules for shop.example.com
   add     cloudflare: HTML rewriting off for shop.example.com
   add     github: a key for acme/shop that may log in as tifa, kept as the secret TIFA_DEPLOY_SSH_KEY
-  add     github: where CI logs in (direct) and the host keys it trusts, the secrets TIFA_DEPLOY_HOST, TIFA_DEPLOY_KNOWN_HOSTS and TIFA_DEPLOY_CF_ZONE_ID
+  add     github: where CI logs in (direct) and the host keys it trusts, the secrets TIFA_DEPLOY_HOST and TIFA_DEPLOY_KNOWN_HOSTS
   add     github: .github/workflows/tifa-deploy.yml, which you commit and push
 
 Already right: server 1 (--all lists them)
 
 You need to do 1 thing that setup cannot:
-  1. cloudflare: a token that can only clear the cache of shop.example.com, pasted by you and kept as TIFA_DEPLOY_CF_PURGE_TOKEN (optional)
+  1. server: a token that can only clear the cache of example.com, pasted by you and kept in /srv/tifa/.config/tifa/cloudflare-purge, which only tifa can read (optional)
      There is no terminal to paste on.
+     go tool tifa deploy setup --yes --cache-purge-token opens a page in your browser for it.
      Without it a deploy still works, but ... (the rest says what going without costs, and to add it later with tifa deploy setup --cache-purge-token)
 
 Apply this plan? [y/N]
@@ -111,7 +112,7 @@ Apply this plan? [y/N]
 
 当有留给你的事，或者某个可能失败的步骤失败了（比如 Cloudflare 拒绝了三次的缓存清除令牌）时，setup 在做完其余的一切之后，以错误退出。标着 `(optional)` 的事项（比如缓存清除令牌）不会让它失败。脚本可以依赖退出码：照列表做完之后，再运行一次 setup。`tifa.yaml` 每次变化后都再运行它：它只做有差别的事。
 
-setup 只删除 Tifa 自己创建并做了标记的东西（它没法删掉你创建的 Cloudflare 令牌：方案会说明要在控制台里删掉它）：`authorized_keys` 里注释为 `tifa-github <owner>/<repo>` 的行，名字以 `tifa` 开头的 Cloudflare 对象，它添加的域名的路由和 DNS 记录，仓库变量 `TIFA_DEPLOY_FINGERPRINT` 和随它设置的 secret（`TIFA_DEPLOY_HOST`、`TIFA_DEPLOY_KNOWN_HOSTS`、`TIFA_DEPLOY_CF_ZONE_ID` 和其他的），旧版 tifa 的名字下的同样东西（见[从 GitHub Actions 部署](#deploy-from-github-actions)），以及以 Tifa 那一行开头的工作流文件。设置 `front: none` 或 `ci: none` 后，方案会在动手之前列出这些删除。
+setup 只删除 Tifa 自己创建并做了标记的东西（它没法删掉你创建的 Cloudflare 令牌：方案会说明要在控制台里删掉它）：`authorized_keys` 里注释为 `tifa-github <owner>/<repo>` 的行，名字以 `tifa` 开头的 Cloudflare 对象，它添加的域名的路由和 DNS 记录，仓库变量 `TIFA_DEPLOY_FINGERPRINT` 和随它设置的 secret（`TIFA_DEPLOY_HOST`、`TIFA_DEPLOY_KNOWN_HOSTS` 和其他的），旧版 tifa 的名字下的同样东西（见[从 GitHub Actions 部署](#deploy-from-github-actions)），以及以 Tifa 那一行开头的工作流文件。设置 `front: none` 或 `ci: none` 后，方案会在动手之前列出这些删除。
 
 方案的各层：
 
@@ -119,15 +120,15 @@ setup 只删除 Tifa 自己创建并做了标记的东西（它没法删掉你�
 | --- | --- | --- |
 | server | 用户 `tifa`，它拥有并运行服务器上的每个应用，可以用 root 的密钥登录（home 是 `/srv/tifa`），以及 linger，让它的 systemd 在开机时运行 | `ssh root@<TIFA_DEPLOY_HOST>`，只在第一次 |
 | app | `/srv/tifa/<app>`、它空的 `shared/.env`、数据文件夹 `shared`、它在 `port` 里的端口（从 9527 起第一个空闲的），以及用户单元 `tifa-<app>.socket` 和 `.service` | 以 `tifa` 身份 ssh |
-| front | Cloudflare Tunnel、服务器上的 cloudflared、`site.url` 主机的路由、被代理的 DNS 记录和缓存规则 | cf |
-| ci | 仓库的一把密钥、secret（CI 在哪里登录、主机密钥、zone ID）、清除缓存的令牌，以及工作流 | gh 或 `TIFA_DEPLOY_GITHUB_TOKEN`，zone 还需要 cf |
+| front | Cloudflare Tunnel、服务器上的 cloudflared、`site.url` 主机的路由、被代理的 DNS 记录和缓存规则，以及服务器上清除这些缓存的令牌 | cf |
+| ci | 仓库的一把密钥、secret（CI 在哪里登录、主机密钥），以及工作流 | gh 或 `TIFA_DEPLOY_GITHUB_TOKEN` |
 | ssh: cloudflare | tunnel 上的一个 ssh 主机名、一个 Access 应用和一个服务令牌 | cf |
 
 `<app>` 是 `go.mod` 里模块路径的最后一段，也就是 `tifa build` 给程序起的名字。在服务器上以 `tifa` 或 root 填好 `.env`：应用每次启动时都会读它。
 
 应用只监听回环地址，所以服务器上必须有东西把访客带到它那里：`front: cloudflare` 的 Tunnel，或者你自己的代理。
 
-**Cloudflare Tunnel**（`front: cloudflare`）。服务器不开任何端口：服务器上的 cloudflared 主动连出到 Cloudflare，一个 tunnel 服务服务器上的每个应用。setup 用你的 cf 登录。Tifa 不保存 Cloudflare 令牌：tunnel 的令牌只从 cf 到服务器。
+**Cloudflare Tunnel**（`front: cloudflare`）。服务器不开任何端口：服务器上的 cloudflared 主动连出到 Cloudflare，一个 tunnel 服务服务器上的每个应用。setup 用你的 cf 登录。Tifa 用到的 Cloudflare 令牌都留在你的服务器上：tunnel 的令牌只从 cf 到服务器，清除缓存的令牌只从你的粘贴到服务器。
 
 1. 在你的账号里找到这个域名的 zone。
 2. 服务器还没有 tunnel 时，创建服务器的 tunnel，名字是 `tifa-<host name>-<start of its machine ID>`，并把它的 ID 保存在 `/etc/tifa/tunnel`。
@@ -135,8 +136,9 @@ setup 只删除 Tifa 自己创建并做了标记的东西（它没法删掉你�
 4. 往 tunnel 里添加路由 `<domain> -> http://127.0.0.1:<port>`，保留其他应用的路由。
 5. 添加一条被代理的 CNAME 记录，把域名指向 `<tunnel ID>.cfargotunnel.com`。域名上已经有指向别处的记录时，不会动它，setup 会停下。
 6. 添加只对这个主机名生效的规则，如 [CDN 设置](#cdn-settings)所说：一条缓存规则，缓存应用的 `Cache-Control` 允许缓存的内容，没有它的就不缓存，一条缓存规则，永远不缓存 `/__tifa/` 或导航数据（`?_tifa=`），还有一条配置规则，关掉 Rocket Loader、Email Address Obfuscation、Cloudflare Fonts、Zaraz 和 Web Analytics 脚本，它们都会往 HTML 里写东西。整个 zone 的设置不会改动。
+7. 请求一个令牌，这是可选的，它只能清除 zone 的缓存，并把它和 zone 的 ID 一起保存在服务器上，每次部署都能在那里找到它（见[清除 CDN 缓存](#clearing-the-cdn-cache)）。cf 的登录做不了 API 令牌，所以你要在 Cloudflare 控制台里做，在终端里 setup 会带你走一遍：它打印一个链接，指向 Cloudflare 的表单，已经填好了 Cache Purge 权限和名字 `tifa cache purge <zone>`。把 Zone Resources 设为只包含这个 zone，创建令牌，并在隐藏的提示处粘贴它。setup 通过清除一个不存在的 URL 来检查它，最多重试 3 次，然后通过 ssh 以 `tifa` 身份，用 ssh 的输入把它写到服务器上。输入空行会跳过它，setup 继续并成功。setup 在这个域名第一次设置时询问，在第一次设置 CI 时询问，也在要把旧版 setup 存在 GitHub 里的令牌挪过来时询问（见[从 GitHub Actions 部署](#deploy-from-github-actions)）。服务器上已经有这个 zone 的令牌后，setup 每次运行都用同样的方式检查它，只要 Cloudflare 接受就什么也不问：同一台服务器、同一个 zone 上的第二个应用什么也不用做。Cloudflare 拒绝的令牌，比如已过期或已被删除的，会再问一次。没有令牌时，之后用 `ci: github` 的运行，以及没有终端的第一次运行，都把它列为可选。以后要加这个令牌或替换它，请运行 `go tool tifa deploy setup --cache-purge-token`：即使服务器上已经有一个，它也会问，在终端里用隐藏的提示，没有终端时用浏览器里的一个页面，加了 `--yes` 也一样（见[没有终端时的 secret](#secrets-without-a-terminal)）。
 
-对服务器上最后一个应用运行 `tifa deploy remove`，也会删掉 tunnel（见[日志、状态和移除](#logs-status-and-remove)）。要手动移除它，运行 `systemctl disable --now tifa-tunnel tifa-tunnel-upgrade.path`，并删除服务器上的 `/etc/tifa` 和 `/etc/systemd/system/tifa-tunnel*`，然后在 Cloudflare 里删除 tunnel。cloudflared 仍然是装着的：`apt-get purge cloudflared` 再删除 `/etc/apt/sources.list.d/cloudflared.list`、`/usr/share/keyrings/cloudflare-main.gpg` 和 `/etc/apt/apt.conf.d/52tifa-cloudflared`，也能把它移除。
+对服务器上最后一个应用运行 `tifa deploy remove`，也会删掉 tunnel 和缓存令牌（见[日志、状态和移除](#logs-status-and-remove)）。要手动移除它们，运行 `systemctl disable --now tifa-tunnel tifa-tunnel-upgrade.path`，并删除服务器上的 `/etc/tifa`、`/etc/systemd/system/tifa-tunnel*` 和 `/srv/tifa/.config/tifa`，然后在 Cloudflare 里删除 tunnel 和令牌 `tifa cache purge <zone>`。cloudflared 仍然是装着的：`apt-get purge cloudflared` 再删除 `/etc/apt/sources.list.d/cloudflared.list`、`/usr/share/keyrings/cloudflare-main.gpg` 和 `/etc/apt/apt.conf.d/52tifa-cloudflared`，也能把它移除。
 
 **Caddy**，或者别的能获取证书的代理，用于服务器自己接待访客的情形：让 `front` 保持 `none`。Caddyfile 如下：
 
@@ -177,9 +179,13 @@ go tool tifa deploy rollback
 
 清除是可选的。没有任何 CDN 和任何框架能让每个访客在新构建上线的那一刻就看到它：没清除的缓存会保留它的副本，直到副本到期。没有办法清除时，带 `Cache` 的页面在部署之后，最长可能有它的 `Cache` 时间那么旧，而那份旧副本可能会请求新构建里已经没有的脚本。这是用 CDN 的代价，Tifa 在每次部署时都会这样说明，但不把它当成错误。
 
-- 在你的机器上，cf 用你的登录来做。
-- 没有 cf 登录时，用一个只能清除那一个 zone 的缓存的令牌 `TIFA_DEPLOY_CF_PURGE_TOKEN`，加上 zone 的 ID `TIFA_DEPLOY_CF_ZONE_ID` 来做。两者都是输入：环境变量，否则是应用根目录的 `.env`。在 CI 里，工作流从仓库的 secret 里取它们（zone ID 不是密码，但公开的仓库不该显示应用在哪个 zone）。Tifa 用它们调用 Cloudflare API。也要给出 zone ID，因为只能清除缓存的令牌通常没法读取 zone 来找到它。设置了令牌而没有设置 zone ID 时，部署会在它的警告里说明。Tifa 两者都不保存。setup 不会把它们写进 `.env`：请自己放进去。
-- 两者都没有时，部署会打印 `cache: not cleared for <host>`，说明这样的代价和怎么加令牌（`tifa deploy setup --cache-purge-token`），它不是警告。
+部署会用它找到的第一种办法清除缓存，在你的机器上或在 CI 里都一样：
+
+1. 输入 `TIFA_DEPLOY_CF_PURGE_TOKEN`，一个只能清除那一个 zone 的缓存的令牌，和 `TIFA_DEPLOY_CF_ZONE_ID`，zone 的 ID：环境变量，否则是应用根目录的 `.env`。它们优先于服务器上的那个。也要给出 zone ID，因为只能清除缓存的令牌通常没法读取 zone 来找到它。设置了令牌而没有设置 zone ID 时，部署会在它的警告里说明。setup 不会把它们写进 `.env`：请自己放进去。v0.1.18 的 setup 写出的工作流仍然从仓库的 secret 里把它们交过来，所以这样的应用会继续清除缓存，直到你再运行一次 setup。
+2. setup 存在服务器上的令牌（见[按方案设置](#set-up-with-a-plan)）：`/srv/tifa/.config/tifa/cloudflare-purge`，每个 zone 一行，写着 zone 的名字、它的 ID 和令牌。Tifa 把令牌放在你的服务器上，只有 `tifa` 能读：文件属于 `tifa`，权限是 600，所在文件夹的权限是 700。新发布通过检查之后，部署通过它用来部署的 ssh，以 `tifa` 身份读取它。令牌只放在内存里，从不打印，不写进日志，也不放在命令行上。所以来自 CI 的部署，以及来自任何能以 `tifa` 登录的机器的部署，都会清除缓存，一个令牌服务服务器上这个 zone 的每个应用。主机和 zone 的名字不分大小写地匹配。写这个文件时会持有它旁边的一把锁（`cloudflare-purge.lock`，用 `flock`），所以同一台服务器上的两次 setup 会保留彼此的那一行。文件读不了时，部署用一行说明，然后换下一种办法。应用也以 `tifa` 运行，所以它们的代码能读这个文件：这个令牌只能清除这个 zone 的缓存。
+3. 在你的机器上，cf 用你的登录。
+
+三种都没有时，部署会打印 `cache: not cleared for <host>`，说明这样的代价，并说明运行 `go tool tifa deploy setup --cache-purge-token`，它不是警告。
 - 清除失败不会让部署失败：它打印一条警告，以 0 退出，这次运行的摘要里会显示它。请在 Cloudflare 的 Caching、Configuration、Custom Purge 里，按主机名手动清除缓存。
 
 按主机名清除在每个 Cloudflare 套餐上都能用。
@@ -201,9 +207,11 @@ go tool tifa deploy rollback
 1. 做一把只属于这个仓库的密钥，把它的公钥加到服务器上的 `/srv/tifa/.ssh/authorized_keys`，注释为 `tifa-github <owner>/<repo>`。这把密钥不能打开终端，也不能转发端口。请让 secret `TIFA_DEPLOY_SSH_KEY` 保持它被创建时的样子：要轮换密钥，设置 `ci: none`，运行 setup，再设回去，再运行一次 setup。
 2. 通过你自己的 ssh 读取服务器的主机密钥，并保存为 secret `TIFA_DEPLOY_KNOWN_HOSTS`，这样 CI 信任这台服务器，而不信任别的。CI 从不运行 `ssh-keyscan`。
 3. 把 `TIFA_DEPLOY_HOST`（CI 要登录的完整目标）设为 secret，这样工作流文件既不显示地址，也不显示端口。用 `ssh: direct` 时，它是 `ssh://<address>:<port>`，取自 `ssh -G <your TIFA_DEPLOY_HOST>` 给出的内容，所以 `~/.ssh/config` 里的别名可以用，端口总是写出来，即使是 22。ssh 通过 `ProxyJump` 或 `ProxyCommand` 才能到达的主机，没法复制进 CI：请用下面两种方式之一。主机密钥也同样处理，端口不是 22 时前面加上 `[host]:port`。
-4. 用 `front: cloudflare` 时，把 zone 的 ID 保存为 secret `TIFA_DEPLOY_CF_ZONE_ID`，和上面的其他 secret 放在一起，所以 zone 需要 cf。工作流把它交给 Tifa，用来清除 CDN 缓存。
-5. 用 `front: cloudflare` 时，请求一个令牌，这是可选的，它只能清除 zone 的缓存，保存为 `TIFA_DEPLOY_CF_PURGE_TOKEN`。cf 的登录做不了 API 令牌，所以你要在 Cloudflare 控制台里做，在终端里 setup 会带你走一遍：它打印一个链接，指向 Cloudflare 的表单，已经填好了 Cache Purge 权限和名字 `tifa cache purge <owner>/<repo>`。把 Zone Resources 设为只包含这个域名的 zone，创建令牌，并在隐藏的提示处粘贴它。setup 通过清除一个不存在的 URL 来检查它，最多重试 3 次，然后把它交给 GitHub。输入空行会跳过它，setup 继续并成功。setup 只在第一次设置 CI 时询问。之后的运行，以及没有终端的第一次运行，都把它列为可选。以后要加这个令牌或替换它，请在终端里运行 `tifa deploy setup --cache-purge-token`：即使 secret 已经在那里，它也会问。GitHub 的 secret 是只写的，所以已经存在的 secret 被当作正确的。
-6. 保存 `TIFA_DEPLOY_FINGERPRINT`，一个仓库变量，它把这些 secret 标记为 Tifa 的，并保存连接和 zone 的指纹，这样第二次运行能看出什么是最新的。
+4. 保存 `TIFA_DEPLOY_FINGERPRINT`，一个仓库变量，它把这些 secret 标记为 Tifa 的，并保存连接的指纹，这样第二次运行能看出什么是最新的。
+
+用 `front: cloudflare` 时，CI 用 setup 存在服务器上的令牌清除 CDN 缓存，部署通过 ssh 读取它：仓库里没有 Cloudflare 令牌，也没有 zone ID。
+
+**v0.1.18 的清除令牌。** tifa v0.1.18 的 setup 把清除令牌和 zone ID 保存为 secret `TIFA_DEPLOY_CF_PURGE_TOKEN` 和 `TIFA_DEPLOY_CF_ZONE_ID`，它的工作流把它们交给 Tifa。那个工作流仍然能用。请在终端里运行一次 `go tool tifa deploy setup`：GitHub 不显示 secret，所以它会请你再粘贴一次令牌（或者一个新的），把它存在服务器上，并写出不带这两个 secret 的工作流。提交并 push 它，然后再运行一次 setup：等默认分支上的工作流不再交出它们、服务器上的令牌也能用了，它就删掉这两个 secret。在那之前它们留着，因为 CI 运行默认分支的工作流，而旧 tifa 的旧提交没有别的办法清除缓存。你做了新令牌时，请在 Cloudflare 控制台里删掉旧的那个，`tifa cache purge <owner>/<repo>`。没有终端、你跳过了粘贴，或者写到服务器失败时，setup 写出的工作流会继续交出这些 secret。setup 用 gh 读取默认分支上的工作流，在 `TIFA_DEPLOY_GITHUB_TOKEN` 这个令牌也能读仓库内容时，也可以用它读。读不了时，这些 secret 留着，方案会说明要手动删掉它们。
 
 **访问 GitHub。** setup 和 remove 会读取仓库，设置和删除它的 secret 和变量。gh 优先：它已安装并登录（`gh auth login`）时，一切都由 gh 来做。没有 gh 时，Tifa 用输入 `TIFA_DEPLOY_GITHUB_TOKEN`（环境变量，否则是 `.env`）里的细粒度个人访问令牌调用 GitHub REST API。仓库就是应用的 git remote（`origin`，否则是 github.com 上的另一个 remote）里的那个，它的默认分支来自 API。secret 的值在离开你的机器之前，会用仓库的公钥封装好，令牌只放在 `Authorization` 头里发送，从不出现在命令行上，也从不打印。
 
@@ -231,7 +239,7 @@ secret 的值通过 gh 的输入，或者封装后通过 API 交给 GitHub：它
 
 工作流从 cloudflared 的发布页面安装一个固定版本，并检查软件包的 SHA-256（apt 仓库只保留最新的，所以没法固定版本，而更新的 cloudflared 曾经不再读取 service token）。Tifa 只在经由 tunnel 的部署用这个版本通过之后，才提高版本。它用 `ProxyCommand cloudflared access ssh` 连接，把令牌放在 `TUNNEL_SERVICE_TOKEN_ID` 和 `TUNNEL_SERVICE_TOKEN_SECRET` 里交给它。
 
-**`ssh: tailscale`**。工作流用 `tailscale/github-action` 加入你的 tailnet，`TIFA_DEPLOY_HOST` 是 `ssh://` 加上服务器的 tailnet 名字和它的端口。只有 Tailscale 管理控制台能创建 OAuth 客户端：在 Trust credentials 里，创建一个带 `auth_keys` 范围、对应标签 `tag:ci` 的。在终端里 setup 会这样说明，并请你输入它的客户端 ID 和 secret，输入时隐藏。它向 Tailscale API 要一个令牌，来检查这个客户端能不能为 `tag:ci` 创建密钥，这不会创建密钥，也不会创建设备，最多重试 3 次，然后把这两个值保存为 secret `TIFA_DEPLOY_TAILSCALE_CLIENT_ID` 和 `TIFA_DEPLOY_TAILSCALE_SECRET`。没有它们，CI 连不到服务器，所以跳过它，或者在没有终端时运行，会留下一件给你的事，setup 以错误退出。以后要添加或替换它们，请在终端里运行 `tifa deploy setup --tailscale-oauth`。标签 `tag:ci` 必须存在于你的 tailnet 策略里（`tagOwners`），并且被允许连到服务器的 22 端口。
+**`ssh: tailscale`**。工作流用 `tailscale/github-action` 加入你的 tailnet，`TIFA_DEPLOY_HOST` 是 `ssh://` 加上服务器的 tailnet 名字和它的端口。只有 Tailscale 管理控制台能创建 OAuth 客户端：在 Trust credentials 里，创建一个带 `auth_keys` 范围、对应标签 `tag:ci` 的。在终端里 setup 会这样说明，并请你输入它的客户端 ID 和 secret，输入时隐藏。它向 Tailscale API 要一个令牌，来检查这个客户端能不能为 `tag:ci` 创建密钥，这不会创建密钥，也不会创建设备，最多重试 3 次，然后把这两个值保存为 secret `TIFA_DEPLOY_TAILSCALE_CLIENT_ID` 和 `TIFA_DEPLOY_TAILSCALE_SECRET`。没有它们，CI 连不到服务器，所以跳过它，或者在没有终端时运行，会留下一件给你的事，setup 以错误退出。以后要添加或替换它们，请运行 `tifa deploy setup --tailscale-oauth`，它在没有终端时会在浏览器里的一个页面上询问，加了 `--yes` 也一样。标签 `tag:ci` 必须存在于你的 tailnet 策略里（`tagOwners`），并且被允许连到服务器的 22 端口。
 
 在 Actions 里，设置了变量 `GITHUB_STEP_SUMMARY` 时，`tifa deploy` 和 `rollback` 会往运行页面写一份简短的摘要：应用、发布、提交、时间、健康检查，以及缓存有没有清除。
 
@@ -248,12 +256,23 @@ ssh-copy-id -i ~/.ssh/id_ed25519.pub tifa@vps
 ### 服务器上的设置和 secret {#settings-and-secrets-on-the-server}
 
 ```sh
-printf %s "$VALUE" | go tool tifa deploy env set API_KEY   # or run it on a terminal for a hidden prompt
+printf %s "$VALUE" | go tool tifa deploy env set API_KEY   # or on a terminal for a hidden prompt, or else a page
 go tool tifa deploy env unset API_KEY
 go tool tifa deploy env list                               # names only
 ```
 
-这些命令通过 ssh 以 `tifa` 身份编辑 `/srv/tifa/<app>/shared/.env`，也就是应用从它运行所在文件夹里读的那个文件（见 [.env](/docs/ship/config#env)）。值从标准输入或隐藏的提示读取，从不从参数读取，所以它不会出现在你的 shell 历史和进程列表里。什么也不会打印值。文件保持 600 权限，你的其他行和注释保持原样。改动之后，应用通过它的 socket 重启，并且必须通过部署的健康检查。如果没通过，旧文件会恢复，应用再重启一次，命令会说明这一点，并以 1 退出。这个文件只作为配置被应用读取：它不会放进进程或 systemd 的环境里，所以服务器上的每个应用保留它自己的。
+这些命令通过 ssh 以 `tifa` 身份编辑 `/srv/tifa/<app>/shared/.env`，也就是应用从它运行所在文件夹里读的那个文件（见 [.env](/docs/ship/config#env)）。值在终端里从隐藏的提示读取，否则从标准输入的管道或文件读取（空的输入会把值设为空），从不从参数读取，所以它不会出现在你的 shell 历史和进程列表里。什么也不会打印值。文件保持 600 权限，你的其他行和注释保持原样。改动之后，应用通过它的 socket 重启，并且必须通过部署的健康检查。如果没通过，旧文件会恢复，应用再重启一次，命令会说明这一点，并以 1 退出。这个文件只作为配置被应用读取：它不会放进进程或 systemd 的环境里，所以服务器上的每个应用保留它自己的。
+
+没有终端、管道或文件时，比如编码 agent 通常给的 `/dev/null`，`env set` 会在一个页面上询问（见下）。
+
+### 没有终端时的 secret {#secrets-without-a-terminal}
+
+编码 agent 在没有终端的情况下运行命令，而 secret 不该经过它：不经过它的聊天、它的输入和它的输出。所以 Tifa 在你浏览器里的一个页面上请你输入 secret：
+
+- `tifa deploy env set NAME`，当它的标准输入既不是终端，也不是管道或文件时。
+- `tifa deploy setup --cache-purge-token` 和 `--tailscale-oauth`，加了 `--yes` 也一样。这个参数就是请求：没有它时，没有终端的 setup 会把令牌列在你要做的事里，附上命令，并且从不等待。
+
+Tifa 打开页面并打印它的 URL，`http://127.0.0.1:<port>/<code>`，这样没有浏览器打开时，agent 可以把它转告你。页面说明需要什么，并链接到你去哪里创建它。页面只在这台机器上监听，只在 URL 里那个随机码处回答，只接收一个值，然后关闭。10 分钟内没有人提交时，命令以错误停止：再运行一次，得到新的页面。
 
 ### 日志、状态和移除 {#logs-status-and-remove}
 
@@ -286,6 +305,7 @@ shop on vps, port 9527
 
 - 在服务器上，以 `tifa` 身份：它停止并禁用 `tifa-<app>.socket` 和 `.service`，删除它们的单元文件和 `/srv/tifa/<app>`，包括它的发布、`shared/.env`、`shared/` 里的数据和 `deploys.log`。想保留数据的话，请先复制出来。其他应用、用户 `tifa`、防火墙和 sshd 保持原样。
 - 用 `front: cloudflare` 时：域名的路由、DNS 记录和规则，用 `ssh: cloudflare` 时还有仓库的 Access 应用、策略和 service token。tunnel 和 cloudflared 服务服务器上的每个应用，所以只有服务器上最后一个 Tifa 应用移除时它们才会一起走：那时 remove 以 root 停止 cloudflared，删除 `/etc/tifa`，在 cloudflared 是 setup 装的时候卸载它，并删除 tunnel。
+- 服务器上的缓存令牌，`/srv/tifa/.config/tifa`，也服务服务器上的每个应用，随服务器上最后一个 Tifa 应用一起走。remove 在删除时会在那个文件的锁下再找一次应用，所以在 remove 等你回答时刚设置好的应用，会保住它们。Cloudflare 控制台里的令牌 `tifa cache purge <zone>` 请你自己删：Tifa 做不到。
 - 用 `ci: github` 时：`authorized_keys` 里仓库的密钥，setup 设置的 secret 和变量 `TIFA_DEPLOY_FINGERPRINT`，以及旧标记担保的旧名字。`.github/workflows/tifa-deploy.yml` 是你仓库里的文件，所以它留下：在你删除它之前，每次 push 都会部署失败。
 
 和 setup 一样，remove 先打印一份方案。在终端里，它接着要你输入应用的名字，加了 `--yes` 也一样。没有终端时，除非你传 `--yes`，否则它什么也不移除。没有 cf 登录、gh 或令牌就移除不了的东西，会列在最后，带上它需要的登录。它移除其余的，并以错误退出：登录后再运行一次。某一步失败不会阻止其他步骤，但 tunnel 会留着，直到再运行一次把其余的移除。一次运行发现什么也没剩下时，会用一行说明。
@@ -301,7 +321,7 @@ shop on vps, port 9527
 
 ## 为服务器构建 {#build-for-the-server}
 
-服务端渲染引擎能在 linux 和 darwin 上运行（amd64 和 arm64），也能在 windows/amd64 上运行。在你的机器上或 CI 里设好目标再构建，然后把文件复制过去。不要在 1 GB VPS 这样的小服务器上构建：构建需要的内存比运行中的应用多，可能会内存不足。
+服务端渲染引擎能在 linux 和 darwin 上运行（amd64 和 arm64），也能在 amd64 和 arm64 的 windows 上运行。在你的机器上或 CI 里设好目标再构建，然后把文件复制过去。不要在 1 GB VPS 这样的小服务器上构建：构建需要的内存比运行中的应用多，可能会内存不足。
 
 ```sh
 GOOS=linux GOARCH=amd64 $(go tool -n tifa) build -o bin/myapp-linux
