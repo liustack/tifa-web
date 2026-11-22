@@ -24,7 +24,7 @@ export const site = {
 // or a cut (…).
 export type TerminalLine = { kind: 'cmd' | 'out' | 'ok' | 'dim'; text: string }
 
-// What `tifa new myapp` and `tifa dev` print at v0.1.16, with what the other tools print cut to
+// What `tifa new myapp` and `tifa dev` print at v0.1.17, with what the other tools print cut to
 // an ellipsis (cmd/tifa/new.go, cmd/tifa/dev.go).
 export const heroTerminal: TerminalLine[] = [
   { kind: 'cmd', text: site.newApp },

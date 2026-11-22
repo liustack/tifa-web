@@ -23,4 +23,4 @@ description: 我想让 TanStack Start 在 1 核 1G 的 VPS 上跑起来，常见
 ## 对比
 
 - [对比 Next.js 和 TanStack Start](/docs/reference/performance#against-nextjs-and-tanstack-start)
-- [Next.js 和 TanStack Start 的对比研究（GitHub，英文）](https://github.com/liustack/tifa/blob/v0.1.16/docs/studies/nextjs-and-tanstack-start.md)
+- [Next.js 和 TanStack Start 的对比研究（GitHub，英文）](https://github.com/liustack/tifa/blob/v0.1.17/docs/studies/nextjs-and-tanstack-start.md)

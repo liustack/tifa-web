@@ -23,4 +23,4 @@ I still do not know what to call it. A React SSR framework with no Node runtime?
 ## Comparisons
 
 - [Against Next.js and TanStack Start](/docs/reference/performance#against-nextjs-and-tanstack-start)
-- [Next.js and TanStack Start, the study on GitHub](https://github.com/liustack/tifa/blob/v0.1.16/docs/studies/nextjs-and-tanstack-start.md)
+- [Next.js and TanStack Start, the study on GitHub](https://github.com/liustack/tifa/blob/v0.1.17/docs/studies/nextjs-and-tanstack-start.md)
