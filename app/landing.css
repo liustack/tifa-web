@@ -55,7 +55,7 @@
 .lp *, .lp *::before, .lp *::after { box-sizing: border-box; }
 .lp a { color: inherit; }
 .lp code, .lp pre, .lp .mono { font-family: var(--font-mono); font-variant-ligatures: none; }
-.lp .wrap { width: 100%; max-width: var(--fd-layout-width); margin: 0 auto; padding: 0 32px; }
+.lp .wrap { width: 100%; max-width: 75rem; margin: 0 auto; padding: 0 32px; }
 .lp :not(pre) > code { font-size: .9em; padding: 1px 5px; border-radius: 4px; background: var(--accent-soft); white-space: nowrap; border: 0; }
 
 /* Section frame: a numbered rail on the left, like a spec sheet */

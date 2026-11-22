@@ -17,7 +17,6 @@ function DocsContainer(props: ComponentProps<'div'>) {
   return (
     <>
       <SiteHeader
-        wide
         menu={
           <SidebarTrigger
             aria-label={t('nav.menu')}
@@ -27,19 +26,7 @@ function DocsContainer(props: ComponentProps<'div'>) {
           </SidebarTrigger>
         }
       />
-      <Container
-        {...props}
-        style={{
-          ...props.style,
-          ['--fd-banner-height' as string]: '4rem',
-          // The sidebar sits at the left edge. The page and the table of contents are centered in
-          // the space to its right, the page at a readable width.
-          gridTemplate: `"sidebar . header toc toc"
-"sidebar . toc-popover toc toc"
-"sidebar . tabs toc toc"
-"sidebar . main toc toc" 1fr / var(--fd-sidebar-col) minmax(0, 1fr) minmax(0, 50rem) var(--fd-toc-width) minmax(0, 1fr)`,
-        }}
-      />
+      <Container {...props} style={{ ...props.style, ['--fd-banner-height' as string]: '4rem' }} />
     </>
   )
 }
@@ -62,7 +49,7 @@ export default function DocsFrame() {
           banner: (
             <>
               <Nav className="flex flex-col gap-1 border-b border-fd-border pb-3 md:hidden" linkClass={menuLink} />
-              <p className="rounded-lg border border-fd-border bg-fd-card px-3 py-2 text-sm text-fd-muted-foreground">
+              <p className="px-2 text-xs text-fd-muted-foreground">
                 {t('docs.version', { version })}
               </p>
             </>
