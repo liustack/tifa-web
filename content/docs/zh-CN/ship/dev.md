@@ -5,7 +5,7 @@ source: docs/dev.md
 group: Build and deploy
 groupOrder: 4
 order: 1
-translatedFrom: e07888379df4
+translatedFrom: 15ce5de82ebe
 ---
 
 
@@ -204,6 +204,7 @@ tifa dev is running in this app
 - 重启应用时，`tifa dev` 关闭应用的标准输入（应用会一直读到它结束），然后像 SIGTERM 那样关闭：`OnShutdown` 会运行。应用的代码不需要为此做任何事。
 - `tifa dev` 运行在一个 job object 里（Windows 把一组进程当作一个整体来处理的方式），应用在它里面自己的一个 job object 里。`tifa dev` 被杀掉时（从任务管理器或 `taskkill /F`），Windows 会同时结束 Node、Vite、`go build`、应用以及应用启动的东西。这时应用得不到 `OnShutdown`。如果 Windows 拒绝建立 job object，`tifa dev` 会立刻停下，报一个写出失败调用名的错误，什么也不启动。
 - `tifa dev` 要等写文件的程序把文件关掉才看得到已保存的文件。写完后仍然保持文件打开的编辑器，可能让下一个页面请求拿不到改动。
+- 保存之后，`tifa dev` 马上会读这个文件，看它有没有变。Windows 不允许别的程序把另一个文件改名覆盖到一个打开着的文件上，所以恰好在这一刻到来的保存可能失败，提示 "Access is denied"。编辑器会重试，用改名来保存的脚本也应该重试。
 - Windows 不允许覆盖正在运行的程序。每次 Go 构建之前，`tifa dev` 都会把应用运行所用的程序 `bin\tifa-dev.exe` 改名为 `bin\tifa-dev.old-<number>.exe`，并删除前几次构建留下、现在已经不在运行的那些。
 - `--background` 运行 `tifa dev` 时不带控制台窗口。Node、`go` 和应用共用它那个隐藏的控制台，所以不会弹出窗口。
 - 不带 `--addr` 时，Windows 为 Hyper-V、WSL 或 Docker 保留的端口（`netsh interface ipv4 show excludedportrange protocol=tcp`）算作被占用，`tifa dev` 会换到下一个。

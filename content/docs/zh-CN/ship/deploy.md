@@ -5,7 +5,7 @@ source: docs/deploy.md
 group: Build and deploy
 groupOrder: 4
 order: 3
-translatedFrom: 771bbfb987fc
+translatedFrom: 6d1031f5d9d4
 ---
 
 
@@ -52,9 +52,9 @@ deploy:
 | `TIFA_DEPLOY_CF_ZONE_ID` | 无 | 那个 zone 的 ID | 环境变量、`.env` |
 | `TIFA_DEPLOY_GITHUB_TOKEN` | 无 | 一个细粒度的 GitHub 令牌，在没有 gh 时用于 setup 和 remove | 环境变量、`.env` |
 
-如果 `.env` 里找到较旧的名字（`DEPLOY_HOST`、`CF_CACHE_PURGE_TOKEN`、`CF_ZONE_ID`）而新的缺失，每个 `tifa deploy` 命令都会报错停下，错误里写出新名字。请把它改名。在环境变量里，旧名字不动：别的工具在用它们。
+如果 `.env` 里找到较旧的名字（`DEPLOY_HOST`、`CF_CACHE_PURGE_TOKEN`、`CF_ZONE_ID`）而新的缺失，每个 `tifa deploy` 命令都会报错停下，错误里写出新名字。请把它改名。在环境变量里，旧名字不动：别的工具在用它们。`.env` 里有 tifa deploy 不读的 `TIFA_DEPLOY_` 名字时，命令同样会停下，错误里写出最接近的那个名字。
 
-你需要：一台带 systemd 的 Linux 服务器，x86_64 或 aarch64，你能用 `ssh root@<TIFA_DEPLOY_HOST>` 连上它一次（在 Ubuntu 24.04 上测试过）。在你的机器上，需要 `tifa build` 需要的东西（Go，带页面的应用还要 Node）和 `ssh`。对于 `front: cloudflare` 和 `ssh: cloudflare`，需要 [cf](https://developers.cloudflare.com/cf/get-started/)，即 Cloudflare CLI（测试版），并且已登录（`cf auth login`）。对于 `ci: github`，需要已登录的 [gh](https://cli.github.com/)（`gh auth login`），没有 gh 的话，需要把细粒度令牌放在 `TIFA_DEPLOY_GITHUB_TOKEN` 里（见[从 GitHub Actions 部署](#deploy-from-github-actions)）。
+你需要：一台带 systemd 的 Linux 服务器，x86_64 或 aarch64，你能用 `ssh root@<TIFA_DEPLOY_HOST>` 连上它一次（在 Ubuntu 24.04 上测试过）。在你的机器上，需要 `tifa build` 需要的东西（Go，带页面的应用还要 Node）和 `ssh`。对于 `front: cloudflare` 和 `ssh: cloudflare`，需要 [cf](https://developers.cloudflare.com/cf/get-started/)，即 Cloudflare CLI（测试版），并且已安装（`pnpm add --global cf`）、已登录（`cf auth login`）。setup 和 remove 能分清这两种情况：PATH 里没有 cf 时，它们说要先安装，装了 cf 就请你登录。对于 `ci: github`，需要已登录的 [gh](https://cli.github.com/)（`gh auth login`），没有 gh 的话，需要把细粒度令牌放在 `TIFA_DEPLOY_GITHUB_TOKEN` 里（见[从 GitHub Actions 部署](#deploy-from-github-actions)）。在终端里，setup 会替你安装并登录 cf 和 gh（见下文）。
 
 ### 按方案设置 {#set-up-with-a-plan}
 
@@ -93,6 +93,21 @@ Apply this plan? [y/N]
 ```
 shop on vps matches tifa.yaml: 9 things checked (--all lists them).
 ```
+
+**cf 和 gh。** 当 `tifa.yaml` 需要 cf（`front: cloudflare`）或 gh（没有 `TIFA_DEPLOY_GITHUB_TOKEN` 的 `ci: github`），而它缺失或没有登录时，第一份方案会安装并登录它，其余的等它好了再做，因为 setup 要靠它们读取 Cloudflare 和 GitHub：
+
+```
+Plan for shop on vps
+
+  add     this machine: install cf with pnpm add --global cf
+  add     this machine: log in to cf (opens a browser)
+
+Setup plans the rest, with the Cloudflare part, once cf is ready, and asks again.
+
+Apply this plan? [y/N]
+```
+
+你输入的 y 就是同意：setup 不会再就这件事多问。它用 `pnpm add --global cf` 安装 cf，在 macOS 上用 `brew install gh`、在 Windows 上用 `winget install --id GitHub.cli -e` 安装 gh，然后在你的终端里运行 `cf auth login` 和 `gh auth login --web`，每个都会打开浏览器。gh 登录时用 git 协议 https，不动你其他的仓库，只问一个问题：要不要也用 GitHub 登录 git。两个答案对 Tifa 都行。选是的话，git 可以用 gh 的登录来 push，工作流文件也包括在内。setup 用的是包管理器把程序放下的那个位置，即使你终端的 PATH 里还没有那个文件夹。之后它规划其余的部分，再问一次。它只用机器上已有的包管理器来安装，自己从不下载程序。带 `--yes` 时，即使在终端里，或者没有终端时，它什么也不安装、不登录，而是把命令列在你要做的事里：用 `--yes` 运行 setup 的智能体，从不会安装全局包或打开浏览器。没有 pnpm，没有 brew 或 winget，以及在 Linux 上（那里 gh 需要 root 和 [GitHub 的软件包仓库](https://github.com/cli/cli/blob/trunk/docs/install_linux.md)），它同样这么做。安装或登录失败只是一个警告，里面写着怎么手动做（pnpm 在全局安装任何东西之前，需要先运行一次 `pnpm setup`），setup 会继续做不需要那个工具的部分。
 
 当有留给你的事，或者某个可能失败的步骤失败了（比如 Cloudflare 拒绝了三次的缓存清除令牌）时，setup 在做完其余的一切之后，以错误退出。标着 `(optional)` 的事项（比如缓存清除令牌）不会让它失败。脚本可以依赖退出码：照列表做完之后，再运行一次 setup。`tifa.yaml` 每次变化后都再运行它：它只做有差别的事。
 
@@ -420,7 +435,7 @@ WantedBy=sockets.target
 
 **Cloudflare**
 
-`tifa deploy setup` 带 cf 时，会自己为它的域名添加这些规则（见[设置服务器](#set-up-the-server)）。在 2026-11-20，通过 tunnel 访问示例 shop 时，它们的效果是：`/assets/` 文件从第二或第三个请求起 `HIT`，页面 `BYPASS`，`/__tifa/session` `DYNAMIC`。
+`tifa deploy setup` 带 cf 时，会自己为它的域名添加这些规则（见[按方案设置](#set-up-with-a-plan)）。在 2026-11-20，通过 tunnel 访问示例 shop 时，它们的效果是：`/assets/` 文件从第二或第三个请求起 `HIT`，页面 `BYPASS`，`/__tifa/session` `DYNAMIC`。
 
 - **缓存。** HTML 和 JSON 默认不缓存，因为 Cloudflare 按文件扩展名来决定（[默认缓存行为](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/)）。要缓存带 `Cache` 的页面，请为它们的路径添加一条 Cache Rule，选 "Eligible for cache"，并把 Edge TTL 设为 "Use cache-control header if present, bypass cache if not"。绝不要选 "Ignore cache-control header and use this TTL"（[缓存规则设置](https://developers.cloudflare.com/cache/how-to/cache-rules/settings/)）。在同一条规则里把 Browser TTL 设为 "Respect origin TTL"：否则 zone 的 Browser Cache TTL（默认 4 小时），会在浏览器拿到的内容里替换掉带 `Cache` 的页面的 `max-age=0` 和 public 文件的 `no-cache`，浏览器就会把它们保存那么久，任何清除都够不到那里（2026-11-20 见过：`max-age=14400`）。
 - **`private` 和 `no-store`** 从不缓存。`s-maxage` 会被遵守。文档没有说明 `s-maxage=N` 和 `max-age=0`（带 `Cache` 的页面发的就是这个）放在一起时怎么工作，所以请检查这样的页面第二次请求是不是缓存命中（[Cache-Control 指令](https://developers.cloudflare.com/cache/concepts/cache-control/)）。`stale-if-error` 对 5xx 响应有效。

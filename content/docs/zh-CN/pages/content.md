@@ -5,7 +5,7 @@ source: docs/content.md
 group: Pages and data
 groupOrder: 2
 order: 4
-translatedFrom: a126a3e10cdb
+translatedFrom: ae835d8a601f
 ---
 
 
@@ -298,7 +298,7 @@ pnpm add -D unified@11 remark-parse@11 remark-gfm@4 remark-rehype@11 rehype-raw@
 3. 应用的 `remarkPlugins`。
 4. `remark-rehype` 和 `rehype-raw`：Markdown 里写的 HTML 保持原样。内容是仓库的一部分，是受信任的，所以不做任何过滤。
 5. 移除 HTML 注释，这样写给作者的备注不会出现在页面上。
-6. 每个没有 `id` 的 `h1` 到 `h6`，会得到 GitHub 给它的那个 id，和 `rehype-slug` 一样：文字转小写并去掉标点，空格变成 `-`，重复的依次加 `-1`、`-2` 等等。HTML 里写了的 `id` 保持不变。
+6. 每个 `h1` 到 `h6` 都会得到 `id`。标题末尾的 `{#id}` 就是它的 `id`，并且不留在文字里，见[标题 id](#heading-ids)。没有写的标题，得到 GitHub 给它的那个 id，和 `rehype-slug` 一样：文字转小写并去掉标点，空格变成 `-`，重复的依次加 `-1`、`-2` 等等。HTML 里写了 `id` 的标题保持原样。
 7. 应用的 `rehypePlugins`。它们在 id 之后运行，所以像 `rehype-autolink-headings` 这样的插件可以用到这些 id。
 8. 改写相对 URL，见[图片和链接](#images-and-links)。
 9. 以根路径开头的链接加上语言前缀，见[语言之间的链接](#links-between-languages)。
@@ -337,6 +337,21 @@ export function rehypeLazyImages() {
 - 每个条目的 vfile 有 `file.path`（Markdown 文件的完整路径）和 `file.data.tifa`，后者是 `{ collection, language, id, frontmatter }`，其中的 front matter 是按 schema 转成的 JSON。要读取条目旁边某个文件的插件，可以从 `file.path` 找到它。
 - 插件抛出的错误会让构建失败，并给出文件、插件给出的位置和插件的名字。它添加的警告会被打印出来。
 - 不支持 MDX：正文是 HTML，不能包含 React 组件。请把组件放在页面里。
+
+### 标题 id {#heading-ids}
+
+把 id 写在标题末尾，和 Hugo、Docusaurus、VitePress、Pandoc 的写法一样：
+
+```md
+## 图片和链接 {#images-and-links}
+```
+
+这个标题得到 `id="images-and-links"`，`{#images-and-links}` 和它前面的空格不留在文字里，所以 `Headings()` 返回这个 id 和文字 `图片和链接`。译文保留原文的 id，指向它的链接和目录就都还能用。
+
+- 只有标题最末尾的 `{#id}` 算数。id 可以包含字母（任何语言）、数字、`-`、`_`、`.` 和 `:`。其他的，比如 `{#bad id}`，仍是文字，行内代码里或文字中间的 `{#id}` 也是。
+- 这样写的 id 先分配。没有写的标题随后得到它的 GitHub id，所以一个会和页面下方某个已写 id 重复的自动 id 会得到 `-1`、`-2` 等等，已写的 id 保持原名。
+- 同样的规则也适用于两个已写的 id 重复：第二个得到 `-1`。
+- 用 HTML 写、带 `id` 的标题保持原样，文字和 id 都不动，它的 id 也不计入重复。
 
 ### 图片和链接 {#images-and-links}
 
