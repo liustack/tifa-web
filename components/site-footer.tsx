@@ -9,7 +9,7 @@ export function SiteFooter() {
   const link = 'hover:text-fd-foreground'
   return (
     <footer className="border-t border-fd-border">
-      <div className="mx-auto flex w-full max-w-[97rem] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-6 text-sm text-fd-muted-foreground md:px-6">
+      <div className="mx-auto flex w-full max-w-(--fd-layout-width) flex-wrap items-center gap-x-6 gap-y-3 px-4 py-6 text-sm text-fd-muted-foreground min-[560px]:px-8">
         <Link to={site.links.docs} className={link}>
           {t('nav.docs')}
         </Link>
