@@ -18,11 +18,11 @@
 
 /* The blue of the logo for links and the active page of the sidebar, and the page colors of the
    home page, so that the header and the footer match it. */
-/* One width for every page: the header, the footer, the home page and the grid of the docs, so
+/* One width for every page: the header, the footer and the grid of the docs, so
    their edges line up. Fumadocs reads --fd-layout-width for the docs. */
 :root {
   --color-fd-primary: #0a7ea4;
-  --fd-layout-width: 75rem;
+  --fd-layout-width: 90rem;
   --color-fd-background: #fafafa;
 }
 .dark {
