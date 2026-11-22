@@ -3,7 +3,7 @@ module github.com/liustack/tifa-web
 go 1.27.0
 
 require (
-	github.com/liustack/tifa v0.1.15
+	github.com/liustack/tifa v0.1.16
 	go.yaml.in/yaml/v3 v3.0.4
 )
 

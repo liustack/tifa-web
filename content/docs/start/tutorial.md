@@ -10,7 +10,7 @@ order: 1
 
 You start from the todo list that `tifa new` writes and make it your own: a page for finished todos, a form that renames a todo and shows field errors from Go, counts in the header, and tests. At the end you build one executable and run it. It takes 30 to 45 minutes. Each step teaches one thing, and the details live in the reference docs it links to.
 
-You need Go 1.27, Node 20.19 or 22.12 and later, and [pnpm](https://pnpm.io). Node only builds the front end. The executable you ship never needs it. `tifa new`, `tifa check` and `tifa build` run on Windows too. `tifa dev` does not run there yet, so use WSL for it.
+You need Go 1.27, Node 20.19 or 22.12 and later, and [pnpm](https://pnpm.io). Node only builds the front end. The executable you ship never needs it. `tifa new`, `tifa dev`, `tifa check` and `tifa build` run on Windows too.
 
 ## 1. Create the app
 
@@ -505,6 +505,6 @@ The program keeps its data in `app.db` in the folder it runs in, so run from the
 - Settings, HTTPS, the cache of rendered pages: [Configuration](/docs/ship/config).
 - Sign users in: [Sessions](/docs/pages/sessions). The app keeps sessions in `app.db` (`sessions.go`), so a restart signs nobody out.
 - Styles and shadcn/ui: [Styles](/docs/pages/styles). A site in several languages: [Writing an app](/docs/start/app#a-site-in-several-languages). Caching a page: [Render switches and caches](/docs/pages/ssr-and-cache#cache-for-cdns).
-- A bigger app to read: [examples/shop](https://github.com/liustack/tifa/blob/v0.1.15/examples/shop).
+- A bigger app to read: [examples/shop](https://github.com/liustack/tifa/blob/v0.1.16/examples/shop).
 - How `tifa dev` reacts to each change, and how to read its log: [Dev server](/docs/ship/dev).
 - Why the folders look the way they do: [Structuring an app](/docs/start/structure) and [Philosophy](/docs/start/philosophy).
