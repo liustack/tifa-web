@@ -49,7 +49,7 @@ export default function DocsFrame() {
           banner: (
             <>
               <Nav className="flex flex-col gap-1 border-b border-fd-border pb-3 md:hidden" linkClass={menuLink} />
-              <p className="rounded-lg border border-fd-border bg-fd-card px-3 py-2 text-sm text-fd-muted-foreground">
+              <p className="px-2 text-xs text-fd-muted-foreground">
                 {t('docs.version', { version })}
               </p>
             </>
