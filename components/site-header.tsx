@@ -50,7 +50,7 @@ export const menuLink = (active: boolean) =>
 // GitHub. On a narrow screen the links go behind one menu button. menu is that button: a page
 // with a tree of its own, the docs, passes the one that opens the tree, which holds the links
 // too. Without it the button opens a panel of the links.
-export function SiteHeader({ menu }: { menu?: ReactNode }) {
+export function SiteHeader({ menu, wide }: { menu?: ReactNode, wide?: boolean }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const path = useRouterState({ select: (s) => s.location.pathname })
@@ -62,7 +62,7 @@ export function SiteHeader({ menu }: { menu?: ReactNode }) {
   return (
     <>
       <header className="sticky top-0 z-40 h-16 border-b border-fd-border bg-fd-background">
-        <div className="mx-auto flex h-full max-w-(--fd-layout-width) items-center gap-2 px-4 min-[560px]:px-8">
+        <div className={`mx-auto flex h-full ${wide ? '' : 'max-w-(--fd-layout-width)'} items-center gap-2 px-4 ${wide ? '' : 'min-[560px]:px-8'}`}>
           <Link to="/" className="me-4 inline-flex shrink-0 items-center" aria-label={site.name}>
             <img src={logo} alt="" height={28} className="h-7 w-auto dark:hidden" />
             <img src={logoDark} alt="" height={28} className="hidden h-7 w-auto dark:block" />
