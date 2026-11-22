@@ -67,8 +67,6 @@ jobs:
         env:
           ACTION: ${{ inputs.action }}
           TIFA_DEPLOY_HOST: ${{ secrets.TIFA_DEPLOY_HOST }}
-          TIFA_DEPLOY_CF_PURGE_TOKEN: ${{ secrets.TIFA_DEPLOY_CF_PURGE_TOKEN }}
-          TIFA_DEPLOY_CF_ZONE_ID: ${{ secrets.TIFA_DEPLOY_CF_ZONE_ID }}
           TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.TIFA_DEPLOY_CF_ACCESS_ID }}
           TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.TIFA_DEPLOY_CF_ACCESS_SECRET }}
         run: |

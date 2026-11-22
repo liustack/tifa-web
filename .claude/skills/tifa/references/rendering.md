@@ -1,4 +1,4 @@
-<!-- Written by Tifa v0.1.18 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.1.19 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 # Rendering on the server
 
 Contents: how a render works, what the server has and lacks, dates and numbers that must match, Temporal, browser-only components, libraries, `head` and the document shell, `SSR` and `Memo`, styles.

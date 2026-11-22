@@ -5,7 +5,7 @@ source: docs/dev.md
 group: Build and deploy
 groupOrder: 4
 order: 1
-translatedFrom: 15ce5de82ebe
+translatedFrom: 9a5f02aee43e
 ---
 
 
@@ -37,6 +37,7 @@ tifa dev [--dir app-root] [--addr 127.0.0.1:9527] [--background]
 | 改了什么 | 运行的步骤 | 已打开的页面 |
 | --- | --- | --- |
 | `content/` 之外的 `.ts`、`.tsx`、`.js`、`.css`、`.json`，比如一个组件，或者只导出组件和 `ErrorBoundary` 的 `page.tsx` | bundle（SSR 包） | 通过 Vite 原地更新 |
+| SSR 包里某个模块导入的 `.css` 文件，在 `content/` 和 public 目录之外，编辑时没有错误在显示，并且 SSR 包导入每个样式表都只为了它的副作用（没有 CSS modules，也没有用 `?inline`、`?url` 或 `?raw` 导入的） | styles：Vite 开发服务器编译页面链接的样式表，失败时显示为构建错误。SSR 包里没有 CSS，所以保持不变。如果样式表现在导入的文件和上一个包记录的不同，bundle 也会跑 | 通过 Vite 原地更新 |
 | 导出内容不止组件的模块，比如导出 `head` 的 `page.tsx` 或 `layout.tsx`，或者带 `htmlAttributes` 或 `documentHead` 的根 `layout.tsx` | bundle（SSR 包） | 重新加载，由 Vite 触发 |
 | 应用根目录里上一个 SSR 包读过的文件，任何类型，比如用 `?raw` 导入的 Markdown 或 YAML 文件：被编辑或删除 | bundle（SSR 包） | 通过 Vite，和任何前端改动一样 |
 | 在 public 文件夹里增加或删除一个文件 | bundle（先重新生成代码） | 通过 Vite，和任何前端改动一样 |
@@ -53,7 +54,7 @@ tifa dev [--dir app-root] [--addr 127.0.0.1:9527] [--background]
 | `vite.config.ts` 或它导入的插件文件 | bundle，然后在 Vite 的开发服务器重启后做所有条目的 content。在没有页面、因而不运行开发服务器的应用里，任何前端文件（包括 `package.json`）都会转换所有条目 | 重新加载 |
 
 - 前端改动通过 Vite 到达已打开的页面：React Fast Refresh 替换被编辑的组件并保留它们的状态，新的 CSS 替换旧的。模块无法替换时（比如导出内容不止组件的模块），Vite 自己重新加载页面。改 `vite.config.ts` 会重启 Vite 的开发服务器，改 `tsconfig.json` 会重新加载页面。在 `tifa dev` 重启之前，Vite 的开发服务器可能还会继续导入一个被改过的 `paths` 条目的旧目标。
-- 同时 `tifa dev` 会重新构建 SSR 包（不跑 go build），运行中的应用从 `.tifa/dist` 加载它来替换旧的。应用不会重启：`OnStart` 不会再运行，应用放在内存里的东西保持不变。在重建出新 SSR 包的期间到达的页面请求会等它，最多 30 秒，所以重新加载看到的是新的服务端渲染结果。保存之后、文件安静下来但重建还没开始的那段时间到达的请求也会等：Vite 一看到保存就会重新加载页面，而这次重新加载拿到的是新的服务端渲染结果。如果 SSR 包在 Vite 开发服务器重启期间构建，它会等重启结束，重启导致构建失败的话就在新服务器上再构建一次。这从重建开始时就生效，也包括重做一个被上次失败的重建留下未完成的包，对 Go 改动来说，则从静态分析发现新路由清单的那一刻起，早于代码生成。
+- 同时 `tifa dev` 会重新构建 SSR 包（不跑 go build），运行中的应用从 `.tifa/dist` 加载它来替换旧的。应用不会重启：`OnStart` 不会再运行，应用放在内存里的东西保持不变。如果新的 `ssr.js` 和它的 source map 跟应用正在运行的那份逐字节相同（比如只改了一行注释），应用连 VM 也保留。在重建出新 SSR 包的期间到达的页面请求会等它，最多 30 秒，所以重新加载看到的是新的服务端渲染结果。保存之后、文件安静下来但重建还没开始的那段时间到达的请求也会等：Vite 一看到保存就会重新加载页面，而这次重新加载拿到的是新的服务端渲染结果。如果 SSR 包在 Vite 开发服务器重启期间构建，它会等重启结束，重启导致构建失败的话就在新服务器上再构建一次。这从重建开始时就生效，也包括重做一个被上次失败的重建留下未完成的包，对 Go 改动来说，则从静态分析发现新路由清单的那一刻起，早于代码生成。
 - 开发程序调用 `server.DevMain` 而不是 `server.Main`。只有它会响应 `tifa dev` 的 `POST /__tifa/dev/reload`，并且加载包用的代码和启动时是同一份。也只有它会在 `tifa dev` 结束时停止，方式是读取 `tifa dev` 用 `--lifeline-fd` 传给它的管道。`tifa build` 生成的程序调用 `server.Main`，没有这个路径，也没有这个参数。
 - 路由清单有没有变，由静态分析之后生成的 `.tifa/` 内容来判断。如果只有函数体变了，生成的内容保持不变，就会跳过生成和 bundle。
 - 每次 bundle 和每次 go build 都会把 `.tifa/` 里生成的文件和磁盘对照，被别的东西改过或删掉的会写回去。内容正确的文件不会被动。
@@ -92,7 +93,7 @@ tifa dev: 07:36:30 ready in 58.3s, open http://127.0.0.1:9527
 
 浏览器在第一次构建期间打开的页面（接受 `text/html` 的 GET 或 HEAD）会等它 2 秒。如果构建还在跑，页面会返回 503，并说明 `tifa dev` 正在构建应用，应用跑起来后会自己重新加载。其他请求，比如脚本调用 API，会像应用重启时那样等应用。
 
-步骤的名字是 `static analysis`、`code generation`、`bundle` 和 `go build`。静态分析之后还有一行 `route manifest changed` 或 `route manifest unchanged`。Vite 的警告和错误也会打印成 `tifa dev:` 行。应用自己的输出照常打印，但没有构建出来的程序那行 `tifa: listening on`，因为应用监听的端口只有 `tifa dev` 会连。它的 stderr 经过 `tifa dev`，`tifa dev` 会留下最后几行用于覆盖层（见下），所以只在终端里才给输出上色的日志库，在这里写的是纯文本。
+步骤的名字是 `static analysis`、`code generation`、`bundle`、`styles` 和 `go build`。静态分析之后还有一行 `route manifest changed` 或 `route manifest unchanged`。Vite 的警告和错误也会打印成 `tifa dev:` 行。应用自己的输出照常打印，但没有构建出来的程序那行 `tifa: listening on`，因为应用监听的端口只有 `tifa dev` 会连。它的 stderr 经过 `tifa dev`，`tifa dev` 会留下最后几行用于覆盖层（见下），所以只在终端里才给输出上色的日志库，在这里写的是纯文本。
 
 当一次渲染不带 locale 调用 Intl 或 `toLocale*` 方法，或者对日期不带 `timeZone` 时，应用会记一条 `tifa: ssr:` 警告，写出你源码里的位置，每个位置一次。页面照常渲染。见 [`tifa dev` 里的警告](/docs/pages/server-render#warnings-in-tifa-dev)。
 

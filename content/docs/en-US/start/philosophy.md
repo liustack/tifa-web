@@ -2,7 +2,7 @@
 title: Philosophy
 description: The ideas behind how a Tifa app is organized and what each one gives you
 source: docs/philosophy.md
-sourceHash: 6068ceb8932d
+sourceHash: 1ebebd97ae3c
 group: Start
 groupOrder: 1
 order: 3
@@ -52,4 +52,4 @@ What you get:
 
 - `go test ./...`, `go vet ./...` and your editor work on the app as on any Go module.
 - A build is safe to run anywhere, CI included, without the database or the secrets the app needs at run time.
-- An app builds into one file to copy, for each platform its engine, [slowjs](https://github.com/liustack/slowjs), supports: linux and darwin, on amd64 and arm64, and windows/amd64.
+- An app builds into one file to copy, for each platform its engine, [slowjs](https://github.com/liustack/slowjs), supports: linux and darwin, on amd64 and arm64, and windows on amd64 and arm64.

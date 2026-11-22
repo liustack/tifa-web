@@ -1,4 +1,4 @@
-<!-- Written by Tifa v0.1.18 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.1.19 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 # Structuring an app
 
 Contents: where code goes, which way packages may import, shared resources.
