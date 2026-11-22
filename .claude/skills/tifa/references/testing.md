@@ -1,4 +1,4 @@
-<!-- Written by Tifa v0.1.15 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.1.16 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 # Testing a Tifa app
 
 Contents: the check command, testing domain code, testing route code with `tifatest`, middleware, signed-in requests, the render clock, checking the real HTML.
