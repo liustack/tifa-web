@@ -14,6 +14,6 @@ You need Go 1.27, and Node 20.19 or 22.12 and later with [pnpm](https://pnpm.io)
 | `go tool tifa check` | Check the routes, vet and test the Go code, and type-check the TypeScript |
 | `go tool tifa build` | Build the single executable into `bin/` |
 
-The site is in English and, under `/zh-CN`, Chinese. Its words are in `app/_locales/`, one file per language, and its links and commands in `components/site.ts`. The pages Why and Examples are Markdown in `content/pages/<language>/`. A Chinese body of a doc goes in `content/docs-zh/<same path as the doc>.md`, and until there is one the Chinese site shows the English doc with a note. [AGENTS.md](AGENTS.md) says how the rest is laid out.
+The site is in English and, under `/zh-CN`, Chinese. Its words are in `app/_locales/`, one file per language, and its links and commands in `components/site.ts`. The pages Why and Examples are Markdown in `content/pages/<language>/`. The docs are one collection in two languages: the English ones in `content/docs/en-US/` are generated, and a Chinese version goes in `content/docs/zh-CN/<same path as the doc>.md`. Until there is one the Chinese site shows the English doc with a note, and when the English doc changes after a translation, the Chinese page says so. [AGENTS.md](AGENTS.md) says how the rest is laid out.
 
 This repository is open source under the [MIT license](LICENSE) and takes no pull requests, like Tifa. See [CONTRIBUTING.md](CONTRIBUTING.md).

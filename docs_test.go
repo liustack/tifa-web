@@ -1,62 +1,144 @@
 package tifaweb
 
 import (
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/liustack/tifa/tifatest"
 )
 
-// A Chinese file shows its body in place of the English doc, in the same place in the sidebar.
-func TestChineseBodyReplacesTheEnglishOne(t *testing.T) {
-	tifatest.LoadContent(t)
-	en, err := Docs.Get("", "start/tutorial")
+// doc makes an entry of the docs in a language.
+func doc(language, id, title string) Doc {
+	d := Doc{Title: title}
+	d.ID, d.Path, d.Slug, d.Language = id, id, id[len("start/"):], language
+	return d
+}
+
+func setDocs(t *testing.T, en []Doc, zh []Doc) {
+	t.Helper()
+	var all []Doc
+	all = append(all, en...)
+	all = append(all, zh...)
+	tifatest.SetContent(t, Docs, all...)
+}
+
+// A translation shows its own body in the place of the English doc in the sidebar, and a fresh
+// one has no note.
+func TestFreshTranslationReplacesTheEnglishDoc(t *testing.T) {
+	a := doc(English, "start/a", "A")
+	a.Group, a.Order, a.SourceHash = "Start", 3, "aaaaaaaaaaaa"
+	z := doc(Chinese, "start/a", "甲")
+	z.TranslatedFrom = "aaaaaaaaaaaa"
+	setDocs(t, []Doc{a}, []Doc{z})
+	got, err := FindDoc(Chinese, "start/a")
 	if err != nil {
 		t.Fatal(err)
 	}
-	zh := en
-	zh.Title = "教程"
-	tifatest.SetContent(t, DocsZH, zh)
-	got, err := FindDoc(Chinese, "start/tutorial")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !got.Own || got.Title != "教程" || got.Group != en.Group || got.Order != en.Order {
+	if !got.Own || got.Outdated || got.Title != "甲" || got.Group != "Start" || got.Order != 3 {
 		t.Errorf("Chinese doc = %+v", got)
 	}
-	if e, _ := FindDoc("en-US", "start/tutorial"); e.Title != en.Title || !e.Own {
+	if e, _ := FindDoc(English, "start/a"); e.Title != "A" || !e.Own || e.Outdated {
 		t.Errorf("English doc = %+v", e)
 	}
-	if err := CheckChinese(); err != nil {
+	if err := CheckTranslations(); err != nil {
 		t.Error(err)
 	}
 }
 
-// A doc with no Chinese file shows the English body in Chinese, and says it is not Own.
-func TestEnglishBodyInChineseSiteIsMarked(t *testing.T) {
-	tifatest.LoadContent(t)
-	got, err := FindDoc(Chinese, "start/tutorial")
+// A translation made from an older English doc is marked, so that the page shows the note.
+func TestStaleTranslationIsOutdated(t *testing.T) {
+	a := doc(English, "start/a", "A")
+	a.SourceHash = "bbbbbbbbbbbb"
+	z := doc(Chinese, "start/a", "甲")
+	z.TranslatedFrom = "aaaaaaaaaaaa"
+	setDocs(t, []Doc{a}, []Doc{z})
+	got, err := FindDoc(Chinese, "start/a")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Own {
-		t.Error("a doc with no Chinese file is not Own in Chinese")
+	if !got.Own || !got.Outdated {
+		t.Errorf("Chinese doc = %+v, want Own and Outdated", got)
+	}
+	// The English page never says it is outdated.
+	if e, _ := FindDoc(English, "start/a"); e.Outdated {
+		t.Error("the English doc is outdated")
+	}
+	if p := ProseOfDoc(got); !p.Outdated || p.EnglishURL != "/docs/start/a" {
+		t.Errorf("Prose = %+v", p)
 	}
 }
 
-func TestChineseFileWithoutADocIsAnError(t *testing.T) {
-	tifatest.LoadContent(t)
-	z := Doc{Title: "x"}
-	z.ID, z.Path, z.Slug = "nowhere/page", "nowhere/page", "page"
-	tifatest.SetContent(t, DocsZH, z)
-	if err := CheckChinese(); err == nil {
-		t.Error("CheckChinese found nothing wrong")
+// A doc with no Chinese file shows the English body in Chinese, marked as not Own, which is the
+// englishOnly note, and it is not outdated.
+func TestMissingTranslationFallsBackToEnglish(t *testing.T) {
+	a := doc(English, "start/a", "A")
+	a.SourceHash = "aaaaaaaaaaaa"
+	setDocs(t, []Doc{a}, nil)
+	got, err := FindDoc(Chinese, "start/a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Own || got.Outdated || got.Title != "A" {
+		t.Errorf("Chinese doc = %+v, want the English doc, not Own", got)
+	}
+	if p := ProseOfDoc(got); !p.English || p.Outdated {
+		t.Errorf("Prose = %+v", p)
+	}
+	if len(SortedDocs(Chinese)) != 1 {
+		t.Error("the sidebar of the Chinese site lacks the doc")
 	}
 }
 
-// With no file in content/docs-zh, which is how the site starts, the check passes.
-func TestNoChineseFilesIsFine(t *testing.T) {
+func TestTranslationWithoutADocIsAnError(t *testing.T) {
+	z := doc(Chinese, "start/nowhere", "x")
+	setDocs(t, nil, []Doc{z})
+	if err := CheckTranslations(); err == nil {
+		t.Error("CheckTranslations found nothing wrong")
+	}
+}
+
+// The files of the site: every translation has an English doc, and every English doc has the
+// sourceHash that syncdocs writes, which the stale note compares with.
+func TestDocsOfTheSiteAreConsistent(t *testing.T) {
 	tifatest.LoadContent(t)
-	if err := CheckChinese(); err != nil {
+	if err := CheckTranslations(); err != nil {
 		t.Error(err)
+	}
+	en := Docs.In(English)
+	if len(en) == 0 {
+		t.Fatal("no English docs")
+	}
+	for _, d := range en {
+		if d.SourceHash == "" {
+			t.Errorf("%s has no sourceHash: run go generate", d.ID)
+		}
+	}
+}
+
+// Tifa gives the root-relative links of a translation the prefix of its language when it converts
+// the Markdown, so the Chinese Markdown keeps /docs/... and the page leads to /zh-CN/docs/....
+// Tests have no build, so this reads the HTML that tifa build wrote, and is skipped without one.
+func TestChineseLinksGetThePrefix(t *testing.T) {
+	root := filepath.Join(".tifa", "dist", "content", "docs")
+	b, err := os.ReadFile(filepath.Join(root, Chinese, "start", "tutorial.html"))
+	if err != nil {
+		t.Skip("no build: run go tool tifa build first")
+	}
+	links := regexp.MustCompile(`href="(/docs/[^"]*)"`).FindAllStringSubmatch(string(b), -1)
+	if len(links) != 0 {
+		t.Errorf("the Chinese tutorial links to %q without the language prefix", links[0][1])
+	}
+	if !strings.Contains(string(b), `href="/zh-CN/docs/`) {
+		t.Error("the Chinese tutorial has no link with the /zh-CN prefix")
+	}
+	en, err := os.ReadFile(filepath.Join(root, English, "start", "tutorial.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(en), `href="/zh-CN/`) || !strings.Contains(string(en), `href="/docs/`) {
+		t.Error("the English tutorial links should keep /docs/ with no prefix")
 	}
 }

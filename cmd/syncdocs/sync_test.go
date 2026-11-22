@@ -205,3 +205,54 @@ func TestSyncChangelog(t *testing.T) {
 		t.Errorf("the page repeats its title:\n%s", got)
 	}
 }
+
+func TestSyncWritesTheHashOfTheSourceFile(t *testing.T) {
+	dir, version, err := tifaModule()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := t.TempDir()
+	if _, err := Sync(dir, version, out); err != nil {
+		t.Fatal(err)
+	}
+	src, err := os.ReadFile(filepath.Join(dir, "docs", "tutorial.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := readKey(filepath.Join(out, "start", "tutorial.md"), "sourceHash")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := hashOf(src); got != want || len(got) != 12 {
+		t.Errorf("sourceHash = %q, want %q", got, want)
+	}
+}
+
+func TestStaleListsTheTranslationsBehindTheirEnglishDoc(t *testing.T) {
+	en, zh := t.TempDir(), t.TempDir()
+	write := func(root, name, key, value string) {
+		t.Helper()
+		p := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte("---\ntitle: x\n"+key+": "+value+"\n---\nbody\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write(en, "start/a.md", "sourceHash", "aaaaaaaaaaaa")
+	write(en, "start/b.md", "sourceHash", "bbbbbbbbbbbb")
+	write(zh, "start/a.md", "translatedFrom", "aaaaaaaaaaaa")
+	write(zh, "start/b.md", "translatedFrom", "000000000000")
+	write(zh, "start/gone.md", "translatedFrom", "cccccccccccc")
+	got, err := Stale(en, zh)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || !strings.HasPrefix(got[0], "start/b.md:") || !strings.HasPrefix(got[1], "start/gone.md:") {
+		t.Errorf("Stale = %q", got)
+	}
+	if got, err := Stale(en, filepath.Join(zh, "nowhere")); err != nil || got != nil {
+		t.Errorf("a folder that is not there has no stale files: %q, %v", got, err)
+	}
+}

@@ -23,7 +23,7 @@ type Tree struct {
 }
 
 // groupNames are the sections of the sidebar in Chinese. The titles of the docs follow their
-// bodies, which are English until a file in content/docs-zh says otherwise.
+// bodies, which are English until a file in content/docs/zh-CN says otherwise.
 var groupNames = map[string]string{
 	"Start":            "开始",
 	"Pages and data":   "页面与数据",
@@ -57,7 +57,7 @@ func BuildTree(language string) Tree {
 }
 
 // First is the doc /docs leads to.
-func First() tifaweb.Doc { return tifaweb.SortedDocs("")[0].Doc }
+func First() tifaweb.Doc { return tifaweb.SortedDocs(tifaweb.English)[0].Doc }
 
 // Find returns the doc at a path below /docs, as a language shows it.
 func Find(language, path string) (tifaweb.DocView, error) {

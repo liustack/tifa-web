@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path"
@@ -71,6 +73,13 @@ var Places = map[string]Place{
 	"docs/compatibility.md":      {details, 3},
 }
 
+// hashOf is the sourceHash of a file of the Tifa repository: the first 12 hex digits of the
+// SHA-256 of its bytes.
+func hashOf(b []byte) string {
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:])[:12]
+}
+
 // titleSlugs is the anchor of the title of each doc, by its path in the Tifa repository, set by Sync.
 var titleSlugs map[string]string
 
@@ -87,8 +96,8 @@ func siteURL(src string) string {
 	return "/docs/" + p.Group.Slug + "/" + strings.TrimSuffix(path.Base(src), ".md")
 }
 
-// Sync reads the docs of the module in dir and writes the pages into out, which it empties
-// first. version is the Tifa version that links to other files of the repository name.
+// Sync reads the docs of the module in dir and writes the pages into out, the folder of the
+// English docs, which it empties first. version is the Tifa version that links to other files of the repository name.
 func Sync(dir, version, out string) (int, error) {
 	found, err := filepath.Glob(filepath.Join(dir, "docs", "*.md"))
 	if err != nil {
@@ -158,6 +167,7 @@ func Sync(dir, version, out string) (int, error) {
 		}
 		page := Page{
 			Title:       title,
+			SourceHash:  hashOf(b),
 			Description: shorten(front.Summary),
 			Source:      src,
 			Group:       place.Group.Title,
@@ -276,9 +286,12 @@ type Page struct {
 	Title       string `yaml:"title"`
 	Description string `yaml:"description"`
 	Source      string `yaml:"source,omitempty"` // the file in the Tifa repository the page comes from
-	Group       string `yaml:"group,omitempty"`
-	GroupOrder  int    `yaml:"groupOrder,omitempty"`
-	Order       int    `yaml:"order,omitempty"`
+	// SourceHash is the first 12 hex digits of the SHA-256 of that file, before it is changed
+	// here. A translation records it as translatedFrom, and one that differs is out of date.
+	SourceHash string `yaml:"sourceHash,omitempty"`
+	Group      string `yaml:"group,omitempty"`
+	GroupOrder int    `yaml:"groupOrder,omitempty"`
+	Order      int    `yaml:"order,omitempty"`
 }
 
 func (p Page) render(body []byte) ([]byte, error) {
@@ -396,4 +409,60 @@ func gitRef(version string) string {
 		return version[i+1:]
 	}
 	return version
+}
+
+// Stale lists the translations in the folder of a language whose translatedFrom differs from the
+// sourceHash of the English doc written by Sync into en, as one line each, in path order. A
+// translation with no English doc is listed too. A folder that does not exist has none.
+func Stale(en, translated string) ([]string, error) {
+	var lines []string
+	err := filepath.WalkDir(translated, func(p string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".md") {
+			return err
+		}
+		rel, _ := filepath.Rel(translated, p)
+		rel = filepath.ToSlash(rel)
+		from, err := readKey(p, "translatedFrom")
+		if err != nil {
+			return err
+		}
+		hash, err := readKey(filepath.Join(en, filepath.FromSlash(rel)), "sourceHash")
+		if os.IsNotExist(err) {
+			lines = append(lines, rel+": there is no English doc at this path")
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if from != hash {
+			lines = append(lines, fmt.Sprintf("%s: translated from %s, the English doc is now %s", rel, from, hash))
+		}
+		return nil
+	})
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	return lines, err
+}
+
+// readKey reads one string key of the front matter of a page of the site.
+func readKey(file, key string) (string, error) {
+	b, err := os.ReadFile(file)
+	if err != nil {
+		return "", err
+	}
+	rest, ok := bytes.CutPrefix(b, []byte("---\n"))
+	if !ok {
+		return "", fmt.Errorf("%s: no front matter", file)
+	}
+	head, _, ok := bytes.Cut(rest, []byte("\n---\n"))
+	if !ok {
+		return "", fmt.Errorf("%s: front matter is not closed", file)
+	}
+	var m map[string]any
+	if err := yaml.Unmarshal(head, &m); err != nil {
+		return "", fmt.Errorf("%s: %w", file, err)
+	}
+	s, _ := m[key].(string)
+	return s, nil
 }

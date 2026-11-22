@@ -23,8 +23,8 @@ jobs:
       # The prepare script is skipped: tifa check writes .tifa/ itself, in a step whose findings
       # GitHub can mark on the files.
       - run: pnpm install --frozen-lockfile --ignore-scripts
-      # The docs come from the Tifa module: write them into content/docs, which tifa check reads.
+      # The docs come from the Tifa module: write them into content/docs/en-US, which tifa check reads.
       - run: go generate ./...
-      # content/docs is committed: it must be what go generate writes for the Tifa version in go.mod.
-      - run: git add -N content/docs && git diff --exit-code -- content/docs
+      # content/docs/en-US is committed: it must be what go generate writes for the Tifa version in go.mod.
+      - run: git add -N content/docs && git diff --exit-code -- content/docs/en-US
       - run: go tool tifa check

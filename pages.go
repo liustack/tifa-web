@@ -13,6 +13,10 @@ type Prose struct {
 	Body        tifa.HTML         `json:"body"`
 	Headings    []content.Heading `json:"headings"`
 	English     bool              `json:"english"`
+	// Outdated is true when the body is a translation of an older version of the English doc,
+	// which the page says. EnglishURL is then the English page, since the note links to it.
+	Outdated   bool   `json:"outdated"`
+	EnglishURL string `json:"englishUrl,omitempty"`
 }
 
 func proseOf(d Doc, english bool) Prose {
@@ -21,7 +25,14 @@ func proseOf(d Doc, english bool) Prose {
 
 // ProseOfDoc is a doc shown as a page of its own, with the note when its body is English in a
 // Chinese site.
-func ProseOfDoc(d DocView) Prose { return proseOf(d.Doc, !d.Own) }
+func ProseOfDoc(d DocView) Prose {
+	p := proseOf(d.Doc, !d.Own)
+	p.Outdated = d.Outdated
+	if d.Outdated {
+		p.EnglishURL = EnglishURL(d.Doc)
+	}
+	return p
+}
 
 // LoadProse reads the page written by hand with an ID, in the language of the request, such as
 // why or examples.
