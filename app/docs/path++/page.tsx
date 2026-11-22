@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { HTML } from 'tifa/client'
 import { i18n, useTranslation } from 'tifa/i18n'
 import { DocsBody, DocsDescription, DocsPage, DocsTitle, MarkdownCopyButton, ViewOptionsPopover } from 'fumadocs-ui/layouts/docs/page'
+import { DocNote } from '@/components/prose'
 import { site } from '@/components/site'
 import { page } from './route.gen'
 
@@ -16,7 +17,7 @@ function useOrigin() {
 }
 
 export default function DocPage() {
-  const { title, description, body, headings, english, markdown, source } = page.useLoaderData()
+  const { title, description, body, headings, english, outdated, englishUrl, markdown, source } = page.useLoaderData()
   const { t } = useTranslation()
   const origin = useOrigin()
   const toc = headings
@@ -30,7 +31,7 @@ export default function DocPage() {
         <MarkdownCopyButton markdownUrl={origin + markdown}>{t('docs.copyPage')}</MarkdownCopyButton>
         <ViewOptionsPopover markdownUrl={origin + markdown} githubUrl={source} />
       </div>
-      {english && <p className="mb-6 rounded-lg border border-fd-border bg-fd-card px-4 py-3 text-sm">{t('docs.englishOnly')}</p>}
+      <DocNote english={english} outdated={outdated} englishUrl={englishUrl} />
       <DocsBody>
         <HTML value={body} />
       </DocsBody>

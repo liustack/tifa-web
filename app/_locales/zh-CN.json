@@ -97,7 +97,9 @@
   "docs": {
     "version": "Tifa {{version}} 的文档",
     "copyPage": "复制本页",
-    "englishOnly": "文档暂时只有英文。"
+    "englishOnly": "文档暂时只有英文。",
+    "outdated": "英文版在这之后改过，这页的中文可能没跟上。",
+    "outdatedLink": "看英文版"
   },
   "home": {
     "stack": {

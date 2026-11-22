@@ -2,13 +2,33 @@ import { HTML, type HTMLProps } from 'tifa/client'
 import { DocsBody } from 'fumadocs-ui/layouts/docs/page'
 import { useTranslation } from 'tifa/i18n'
 
-// Prose is the text of a page of Markdown, in the style of a doc. english marks a body that is
-// English on the Chinese site with the note that says so.
-export function Prose({ body, english }: { body: HTMLProps['value']; english?: boolean }) {
+const noteClass = 'mb-6 rounded-lg border border-fd-border bg-fd-card px-4 py-3 text-sm'
+
+// DocNote says what is wrong with the language of a doc: its body is English on the Chinese
+// site, or a translation made before the English doc changed. The link goes to the English page,
+// which is another document, so it is a plain <a>.
+export function DocNote({ english, outdated, englishUrl }: { english?: boolean; outdated?: boolean; englishUrl?: string }) {
   const { t } = useTranslation()
+  if (english) return <p className={noteClass}>{t('docs.englishOnly')}</p>
+  if (outdated) {
+    return (
+      <p className={noteClass}>
+        {t('docs.outdated')}{' '}
+        <a className="font-medium underline underline-offset-4" href={englishUrl}>
+          {t('docs.outdatedLink')}
+        </a>
+      </p>
+    )
+  }
+  return null
+}
+
+// Prose is the text of a page of Markdown, in the style of a doc. english and outdated add the
+// note that says so.
+export function Prose({ body, english, outdated, englishUrl }: { body: HTMLProps['value']; english?: boolean; outdated?: boolean; englishUrl?: string }) {
   return (
     <>
-      {english && <p className="mb-6 rounded-lg border border-fd-border bg-fd-card px-4 py-3 text-sm">{t('docs.englishOnly')}</p>}
+      <DocNote english={english} outdated={outdated} englishUrl={englishUrl} />
       <DocsBody>
         <HTML value={body} />
       </DocsBody>
