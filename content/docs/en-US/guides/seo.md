@@ -2,7 +2,7 @@
 title: Search engines and language models
 description: How a Tifa site gets found by search engines and read by language models
 source: docs/guides/seo.md
-sourceHash: 46da77c9f885
+sourceHash: 9dd9812ff622
 group: Guides
 groupOrder: 3
 order: 8
@@ -11,7 +11,7 @@ order: 8
 
 You want people to find your site in search results and in the answers of ChatGPT, Claude and the like. By the end, search engines get a sitemap of every public page with its date and its versions in other languages, and language models get a short index of the site and the text of your posts as Markdown.
 
-It all comes from one setting and one function. The code below is from [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.1.19/test/apps/i18n) and [examples/shop](https://github.com/liustack/tifa/blob/v0.1.19/examples/shop/sitemap.go).
+It all comes from one setting and one function. The code below is from [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.1.20/test/apps/i18n) and [examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop/sitemap.go).
 
 ## Turn it on
 
@@ -35,9 +35,53 @@ site:
 
 Every page also gets `<link rel="canonical">` with its full URL: the path and the query parameters its `Load` and Layouts read, the URL the server renders it with (see [Query parameters](/docs/reference/memo#query-parameters)). Other parameters are left out. So `/store/products?page=2&utm_source=news` has the canonical URL `/store/products?page=2` when its `Load` reads `page`: page 2 of a list is a page of its own, and a link with a tracking parameter is no copy. A canonical you write in your own `head` wins. There is none on a 404 or an error page.
 
+A page with a canonical URL also gets `<meta property="og:url">` with the same URL, so a shared link points at the page without its tracking parameters. An `og:url` in the `head` of a route, or in the `documentHead` of the root Layout, wins, and the page has only that one. When the page writes its own canonical, `og:url` repeats that URL.
+
 Without `site.url` none of this happens: no canonical link, no sitemap and no `robots.txt`. A file in `public/` or a route of the app at one of these paths wins over Tifa's, so an app that has its own sitemap keeps it.
 
 A site whose pages all have fixed paths, such as `/`, `/about` and `/pricing`, needs nothing more. Its sitemap is complete.
+
+## Share cards
+
+A link to your page in a chat or a social feed shows a card: a title, a line of text and an image. The card reads `og:` meta tags, and a missing one is filled with a guess or left empty. Write them in the `head` of the page (see [Title and meta tags](/docs/pages/pages#title-and-meta-tags)), with data from its `Load`. Tifa writes `og:url` itself.
+
+```go
+// app/products/product+/route.go
+type Page struct {
+	Name    string `json:"name"`
+	Summary string `json:"summary"`
+	Image   string `json:"image"`
+}
+
+func Load(c *tifa.Ctx) (Page, error) {
+	p, err := catalog.Get(c.Param("product"))
+	if err != nil {
+		return Page{}, err
+	}
+	return Page{Name: p.Name, Summary: p.Summary, Image: "/og/" + p.ID + ".png"}, nil
+}
+```
+
+```tsx
+// app/products/product+/page.tsx
+export const head = ({ loaderData }: { loaderData?: PageData }) => ({
+  meta: loaderData
+    ? [
+        { title: loaderData.name },
+        { property: 'og:title', content: loaderData.name },
+        { property: 'og:description', content: loaderData.summary },
+        { property: 'og:image', content: loaderData.image },
+        { name: 'twitter:card', content: 'summary_large_image' },
+      ]
+    : [],
+})
+```
+
+- `og:image` must be a full URL with the scheme and host, since crawlers do not resolve a path against the page. Write a path that starts with one `/`, such as `/og/kettle.png`, and Tifa puts `site.url` in front of it. The same goes for `og:image:url`, `og:image:secure_url` and `twitter:image`, on the server and after a navigation in the browser. A full URL, or one that starts with `//`, stays as you wrote it. Without `site.url` nothing is changed, so a path stays a path.
+- Put a fixed image in `public/`, such as `public/og/default.png`, which is served at `/og/default.png` with the name unchanged. An image that differs per page can be a GET route of the app that writes it. Do not import it, since an imported file gets a hashed name that changes with the build and crawlers keep the old card.
+- Make the image 1200 by 630 pixels, a ratio of about 1.91 to 1. That fills the large card of most apps. PNG or JPEG, under 5 MB.
+- `twitter:card` set to `summary_large_image` asks for the large card. Without it, X shows a small one. Titles and descriptions come from the `og:` tags.
+- A tag of a route replaces the tag of the same `property` or `name` from the Layouts above it. A route that writes several tags of one name, such as two `og:image`, keeps all of them and drops the outer ones. So put the default card in the root Layout's `documentHead` and let a page override it.
 
 ## List the pages with parameters
 
@@ -228,7 +272,7 @@ An error the function itself returns, such as a failed query, is an unexpected e
 
 ## Test it
 
-`tifatest.Start` runs the whole app, `OnStart` included, so a test can read the sitemap the way a search engine does (from [examples/shop](https://github.com/liustack/tifa/blob/v0.1.19/examples/shop/sitemap_test.go)):
+`tifatest.Start` runs the whole app, `OnStart` included, so a test can read the sitemap the way a search engine does (from [examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop/sitemap_test.go)):
 
 ```go
 func TestSitemapListsTheStorefront(t *testing.T) {

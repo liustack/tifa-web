@@ -1,4 +1,4 @@
-<!-- Written by Tifa v0.1.19 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.1.20 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 # Rendering on the server
 
 Contents: how a render works, what the server has and lacks, dates and numbers that must match, Temporal, browser-only components, libraries, `head` and the document shell, `SSR` and `Memo`, styles.
@@ -128,7 +128,9 @@ export const head = ({ loaderData }: { loaderData?: PageData }) => ({
 
 - `title` and meta tags with the same name come from the deepest route. Link, style and script tags are deduplicated in route order. A `<meta charset>` and a viewport meta are always added.
 - Tag attributes use React names (`className`, `httpEquiv`, `crossOrigin`). Event attributes (`onClick`), `javascript:` links and the `style` attribute are not allowed in head tags.
+- Never write `<title>` or `<meta>` in a component: the server HTML puts it in `<body>`, where crawlers do not read it, and `tifa check` warns. Use `head`. A `<title>` inside an `<svg>` is fine.
 - `loaderData` can be undefined when the `Load` failed. Handle it.
+- Share cards: `og:title`, `og:description`, `og:image` and `twitter:card` go in `meta` as `{ property: 'og:image', content }`. `og:image` must be a full URL, 1200x630: write a path such as `/og/a.png` and Tifa puts `site.url` in front of it (also for `og:image:url`, `og:image:secure_url`, `twitter:image`). With `site.url` Tifa writes `og:url` itself. See `docs/guides/seo.md`.
 - `head` may also return `htmlAttributes` for `<html>` (see [i18n.md](i18n.md) for `lang`).
 - The root Layout (`app/layout.tsx`) may export two constants. `htmlAttributes` (default `{ lang: 'en' }`) and `documentHead` (tags every page carries, also for unmatched URLs). Put the site default `title` in `documentHead`:
 

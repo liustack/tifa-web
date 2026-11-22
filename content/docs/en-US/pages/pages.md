@@ -2,7 +2,7 @@
 title: Pages and Layouts
 description: How to write the React side of a route
 source: docs/pages.md
-sourceHash: 0524c0a685d1
+sourceHash: e74288dbc830
 group: Pages and data
 groupOrder: 2
 order: 2
@@ -190,9 +190,25 @@ export const head = ({ loaderData }: { loaderData?: LayoutData }) => ({
 - On a site with languages Tifa writes `lang` itself, the language of the page. A `lang` in `htmlAttributes` fails the build there (see [A site in several languages](/docs/start/app#a-site-in-several-languages)).
 - `htmlAttributes` must be an object, and `pnpm typecheck` reports any other value. At run time such a value fails like an error the `head` throws: the server render fails as an unexpected error (`OnError`, or a 500), with the message in the log, and on the page under `tifa dev`. In the browser, after a navigation or on a page without SSR, the router writes the error to the console and drops the whole head of that route.
 
+### Title and meta tags
+
+Write the title and the meta tags of a page in its `head` export (or in `documentHead` of the root Layout), never as `<title>` or `<meta>` in a component. React 19 allows them in a component and moves them into the head in the browser, but Tifa writes the head of the document as a string and React renders only the app root inside `<body>`. So the server HTML has the tag in `<body>`, where crawlers and share cards do not read it, and the page can end up with two descriptions.
+
+```tsx
+// not this
+export default function Page() {
+  return <><title>Pour-over kettle</title><p>...</p></>
+}
+
+// this
+export const head = () => ({ meta: [{ title: 'Pour-over kettle' }] })
+```
+
+`tifa check`, `tifa build` and `tifa dev` warn about a `<title>` or `<meta>` written as JSX, with its file and line. A `<title>` inside an `<svg>` is the tooltip of a graphic and is fine, and so is a `<meta itemProp>`.
+
 ### A Layout without the Layouts above
 
-Name the component file `layout_.tsx` instead of `layout.tsx`, and the Layout of the folder shows its pages without any Layout above it, the root Layout included. Only the document shell the framework writes stays around them. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.1.19/examples/shop) works this way: it draws its own header and footer, and none of the workbench the root Layout draws around the other pages.
+Name the component file `layout_.tsx` instead of `layout.tsx`, and the Layout of the folder shows its pages without any Layout above it, the root Layout included. Only the document shell the framework writes stays around them. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop) works this way: it draws its own header and footer, and none of the workbench the root Layout draws around the other pages.
 
 ```text
 app/

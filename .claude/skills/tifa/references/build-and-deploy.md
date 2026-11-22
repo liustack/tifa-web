@@ -1,4 +1,4 @@
-<!-- Written by Tifa v0.1.19 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.1.20 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 # Build, configure and deploy
 
 Contents: `tifa dev`, `tifa build`, go.mod and package setup, settings, search engines and language models, `tifa deploy`, building for Linux, running the program, HTTPS, running behind a CDN or proxy, sizing, license notices.
@@ -92,7 +92,7 @@ Cache headers: a page with `const Cache = true` or `const Cache = <duration>` in
 
 ## Search engines and language models
 
-`site.url` in `tifa.yaml` (scheme and host, no path) marks the site as public. With it every page gets a canonical link, and the program serves `/sitemap.xml`, a default `/robots.txt` (`Allow: /` and a `Sitemap:` line, unless `public/robots.txt` exists), `/llms.txt`, `/llms-full.txt` and a Markdown version at `<path>.md` of each page that shows a content entry. Without `site.url` there is none of this. A file in `public/` or a route at the same path wins.
+`site.url` in `tifa.yaml` (scheme and host, no path) marks the site as public. With it every page gets a canonical link and an `og:url` meta with the same URL, and the program serves `/sitemap.xml`, a default `/robots.txt` (`Allow: /` and a `Sitemap:` line, unless `public/robots.txt` exists), `/llms.txt`, `/llms-full.txt` and a Markdown version at `<path>.md` of each page that shows a content entry. Without `site.url` there is none of this. A file in `public/` or a route at the same path wins.
 
 The pages without parameters are in the sitemap on their own. Pages with parameters need `tifa.SetSitemap` in `OnStart`, otherwise the program logs one line at start naming the routes it left out:
 

@@ -2,14 +2,14 @@
 title: Writing an app
 description: How to start a Tifa app
 source: docs/app.md
-sourceHash: 9db174f122e4
+sourceHash: d9d8e3331c00
 group: Start
 groupOrder: 1
 order: 2
 ---
 
 
-For a complete example, see [examples/shop](https://github.com/liustack/tifa/blob/v0.1.19/examples/shop). For the build, the generated files and how to set up go.mod, see [build.md](/docs/ship/build).
+For a complete example, see [examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop). For the build, the generated files and how to set up go.mod, see [build.md](/docs/ship/build).
 
 ## Folders
 
@@ -123,6 +123,7 @@ Vite says the same: prefer importing assets, and use `public/` for files never r
 | `export const getServerSideProps`, `getStaticProps`, `loader`, `clientLoader` | `Load` in `route.go` | warning |
 | `export const getStaticPaths`, `generateStaticParams` | Nothing: a folder `name+` matches any value, and `Load` returns `tifa.ErrNotFound` for one that does not exist | warning |
 | `export const generateMetadata`, `metadata` | The `head` export, and `documentHead` in the root `layout.tsx` | warning |
+| `<title>` or `<meta>` written as JSX in a component (outside an `<svg>`) | The `head` export (see [Title and meta tags](/docs/pages/pages#title-and-meta-tags)). In a component the tag lands in `<body>`, where crawlers do not read it | warning |
 | `export const action`, `clientAction` | A method handler in `route.go`, such as `func POST(c *tifa.Ctx, in AddInput) (Todo, error)` | warning |
 | `export const revalidate`, `dynamic` | `const Cache` in `route.go` lets a CDN keep a page. Every page already loads and renders on each request | warning |
 | `createFileRoute`, `createRootRoute`, `createServerFn` called in a page or Layout | The folder is the route, `./route.gen` exports it as `page`, and a server function is a method handler | warning |
@@ -148,7 +149,7 @@ Tifa has no `loading.tsx`. A page is rendered whole on the server, so a first vi
 
 ## A site in several languages
 
-Put a `_locales` folder in a folder of `app/`, with one `<language>.json` file per language, and the pages and API routes in that folder and below it are offered in those languages. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.1.19/examples/shop) is `app/store/` with `_locales/zh-CN.json` and `_locales/en-US.json`.
+Put a `_locales` folder in a folder of `app/`, with one `<language>.json` file per language, and the pages and API routes in that folder and below it are offered in those languages. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop) is `app/store/` with `_locales/zh-CN.json` and `_locales/en-US.json`.
 
 ```yaml
 # tifa.yaml
