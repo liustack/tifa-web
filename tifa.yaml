@@ -61,4 +61,4 @@ deploy:
   front: cloudflare   # visitors come through a Cloudflare Tunnel at tifago.com
   ssh: cloudflare     # GitHub Actions reaches the server through the same tunnel
   ci: github          # every push to main that passes CI deploys
-  # The server is DEPLOY_HOST in .env (git ignores it), or --host.
+  # The server is TIFA_DEPLOY_HOST in .env (git ignores it), or --host.

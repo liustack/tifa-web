@@ -2,7 +2,7 @@
 title: Deploying
 description: How to put a Tifa app on a server
 source: docs/deploy.md
-sourceHash: 771bbfb987fc
+sourceHash: 6d1031f5d9d4
 group: Build and deploy
 groupOrder: 4
 order: 3
@@ -52,9 +52,9 @@ deploy:
 | `TIFA_DEPLOY_CF_ZONE_ID` | none | The ID of that zone | environment, `.env` |
 | `TIFA_DEPLOY_GITHUB_TOKEN` | none | A fine-grained GitHub token, for setup and remove when gh is not there | environment, `.env` |
 
-An older name (`DEPLOY_HOST`, `CF_CACHE_PURGE_TOKEN`, `CF_ZONE_ID`) found in `.env` while the new one is missing stops every `tifa deploy` command with an error that names the new name. Rename it. In the environment the old names are left alone: other tools use them.
+An older name (`DEPLOY_HOST`, `CF_CACHE_PURGE_TOKEN`, `CF_ZONE_ID`) found in `.env` while the new one is missing stops every `tifa deploy` command with an error that names the new name. Rename it. In the environment the old names are left alone: other tools use them. A `TIFA_DEPLOY_` name in `.env` that tifa deploy does not read stops the command too, and the error names the closest one.
 
-What you need: a Linux server with systemd, on x86_64 or aarch64, that you can reach with `ssh root@<TIFA_DEPLOY_HOST>` once (tested on Ubuntu 24.04). On your machine, what `tifa build` needs (Go, and Node for an app with pages) and `ssh`. For `front: cloudflare` and `ssh: cloudflare`, [cf](https://developers.cloudflare.com/cf/get-started/), the Cloudflare CLI (in beta), logged in (`cf auth login`). For `ci: github`, [gh](https://cli.github.com/) logged in (`gh auth login`), or without gh a fine-grained token in `TIFA_DEPLOY_GITHUB_TOKEN` (see [Deploy from GitHub Actions](#deploy-from-github-actions)).
+What you need: a Linux server with systemd, on x86_64 or aarch64, that you can reach with `ssh root@<TIFA_DEPLOY_HOST>` once (tested on Ubuntu 24.04). On your machine, what `tifa build` needs (Go, and Node for an app with pages) and `ssh`. For `front: cloudflare` and `ssh: cloudflare`, [cf](https://developers.cloudflare.com/cf/get-started/), the Cloudflare CLI (in beta), installed (`pnpm add --global cf`) and logged in (`cf auth login`). Setup and remove tell the two apart: without cf on the PATH they say to install it, with cf installed they ask for the login. For `ci: github`, [gh](https://cli.github.com/) logged in (`gh auth login`), or without gh a fine-grained token in `TIFA_DEPLOY_GITHUB_TOKEN` (see [Deploy from GitHub Actions](#deploy-from-github-actions)). On a terminal, setup installs and logs in cf and gh for you (see below).
 
 ### Set up with a plan
 
@@ -93,6 +93,21 @@ On a terminal it asks, and only when there is something to change. Without one, 
 ```
 shop on vps matches tifa.yaml: 9 things checked (--all lists them).
 ```
+
+**cf and gh.** When `tifa.yaml` needs cf (`front: cloudflare`) or gh (`ci: github` without `TIFA_DEPLOY_GITHUB_TOKEN`) and it is missing or not logged in, the first plan installs and logs it in, and the rest waits for it, since setup reads Cloudflare and GitHub with them:
+
+```
+Plan for shop on vps
+
+  add     this machine: install cf with pnpm add --global cf
+  add     this machine: log in to cf (opens a browser)
+
+Setup plans the rest, with the Cloudflare part, once cf is ready, and asks again.
+
+Apply this plan? [y/N]
+```
+
+Your typed y is the consent: setup asks nothing more about it. It installs cf with `pnpm add --global cf`, and gh with `brew install gh` on macOS or `winget install --id GitHub.cli -e` on Windows, then runs `cf auth login` and `gh auth login --web` on your terminal, and each one opens a browser. gh logs in with the git protocol https, which leaves your other repositories as they are, and asks one question: whether to log git in with GitHub too. Either answer works for Tifa. Yes lets git push with the login of gh, the workflow file included. Setup uses the program where the package manager put it, even when the PATH of your terminal does not have that folder yet. Then it plans the rest and asks again. It installs only with a package manager the machine has and never downloads a program itself. With `--yes`, even on a terminal, or without a terminal, it installs nothing and logs in nothing, and lists the commands among what you need to do: an agent that runs setup with `--yes` never installs a global package or opens a browser. It does the same without pnpm, without brew or winget, and on Linux, where gh needs root and [GitHub's package repository](https://github.com/cli/cli/blob/trunk/docs/install_linux.md). An install or login that fails is a warning that says how to do it by hand (pnpm needs `pnpm setup` once before it installs anything globally), and setup goes on with what does not need that tool.
 
 Setup exits with an error when an item is left for you or a step that may fail failed (a cache purge token that Cloudflare refused three times), after it did all the rest. An item marked `(optional)`, such as the cache purge token, does not make it fail. A script can rely on the exit code: run setup again once you did what the list says. Run it again whenever `tifa.yaml` changes: it only does what differs.
 
@@ -420,7 +435,7 @@ Checked against the vendors' own documentation on 2026-11-04. Names and defaults
 
 **Cloudflare**
 
-`tifa deploy setup` with cf adds these rules for its domain itself (see [Set up the server](#set-up-the-server)). On 2026-11-20 they gave, through a tunnel to the example shop: an `/assets/` file `HIT` from the second or third request, pages `BYPASS`, `/__tifa/session` `DYNAMIC`.
+`tifa deploy setup` with cf adds these rules for its domain itself (see [Set up with a plan](#set-up-with-a-plan)). On 2026-11-20 they gave, through a tunnel to the example shop: an `/assets/` file `HIT` from the second or third request, pages `BYPASS`, `/__tifa/session` `DYNAMIC`.
 
 - **Caching.** HTML and JSON are not cached by default, because Cloudflare decides by file extension ([default cache behavior](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/)). To cache pages with `Cache`, add a Cache Rule for their paths with "Eligible for cache" and set Edge TTL to "Use cache-control header if present, bypass cache if not". Never "Ignore cache-control header and use this TTL" ([cache rule settings](https://developers.cloudflare.com/cache/how-to/cache-rules/settings/)). In the same rule set Browser TTL to "Respect origin TTL": otherwise the zone's Browser Cache TTL, 4 hours by default, replaces the `max-age=0` of a page with `Cache` and the `no-cache` of a public file in what browsers get, and browsers keep them that long, where no purge reaches (seen on 2026-11-20: `max-age=14400`).
 - **`private` and `no-store`** are never cached. `s-maxage` is honored. The documentation does not say how `s-maxage=N` works next to `max-age=0`, which is what a page with `Cache` sends, so check that the second request for such a page is a cache hit ([Cache-Control directives](https://developers.cloudflare.com/cache/concepts/cache-control/)). `stale-if-error` is honored for 5xx answers.

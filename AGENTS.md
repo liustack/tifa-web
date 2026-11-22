@@ -1,7 +1,7 @@
 # Notes for coding agents
 
 <!-- tifa:begin -->
-<!-- Written by Tifa v0.1.17 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
+<!-- Written by Tifa v0.1.18 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
 
 This is a [tifa](https://github.com/liustack/tifa) app. Go routes requests, loads data and runs the hooks. React pages render to HTML inside the Go process (slowjs, no Node at run time), and TanStack Router takes over in the browser. The build bundles the front end with Vite, on Node, and makes one executable that needs no Node.
 

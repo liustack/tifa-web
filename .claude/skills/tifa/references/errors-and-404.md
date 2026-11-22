@@ -1,4 +1,4 @@
-<!-- Written by Tifa v0.1.17 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.1.18 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 # Errors, 404 and redirects
 
 Contents: what to return, what the user sees, writing `ErrorBoundary`, how a 404 is placed, render failures, `OnError`.
