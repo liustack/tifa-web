@@ -5,7 +5,7 @@ source: docs/testing-apps.md
 group: Pages and data
 groupOrder: 2
 order: 9
-translatedFrom: a66d4a7f22b4
+translatedFrom: 0c8cee1b3f58
 ---
 
 
@@ -34,7 +34,7 @@ func TestLoad(t *testing.T) {
 - 用 `tifa.Use(c, Load)` 运行 `Load` 和 `Layout`。它按服务器的规则运行它们：每个请求一次，写响应体会失败。在 `Load` 里对某个布局调用 `tifa.Use`，会为同一个请求运行那个布局。只有函数用 `tifa.Use` 要求的布局才会运行。
 - 直接调用方法处理函数：`POST(c)`，或带类型输入的 `POST(c, in)`。输入就是你传的那个值，所以要单独测试 `Validate`，如果 `Validate` 会改动输入，就传改动之后的输入。
 - 直接调用 `OnRequest`，给 `next` 传一个闭包：`OnRequest(c, func(c *tifa.Ctx) error { got = c.Context(); return nil })`。闭包代替路由，所以它既不会恢复 panic，也不会写结果。
-- 请求体上限是默认的 `server.body_limit`，1 MiB，除非 `c.SetBodyLimit` 改了它。`route.go` 的 `BodyLimit` 和 `ReadTimeout` 不生效。测试结束时会删除请求的 multipart 文件。
+- 请求体上限是默认的 `server.body_limit`，1 MiB，除非 `c.SetBodyLimit` 改了它。`route.go` 的 `BodyLimit` 和 `ReadTimeout` 不生效，`c.SetReadTimeout` 也什么都不做，因为测试没有连接。测试结束时会删除请求的 multipart 文件。
 - `tifatest.File(t, "sea.png", data)` 给出一个上传文件的 `*multipart.FileHeader`，用于传给处理函数的输入，或用 `Validate` 检查。它的 `Content-Type` 跟随名字的扩展名。它的临时文件在测试结束时删除。
 - 等函数返回之后再读 recorder，并且每个请求都新建一个 `NewCtx`：`rec.Result()` 会保留它第一次被调用时看到的头。
 - `tifa build` 不读 `_test.go` 文件，所以测试可以放在 `app/` 下的任何文件夹里。

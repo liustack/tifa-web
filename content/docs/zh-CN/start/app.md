@@ -5,11 +5,11 @@ source: docs/app.md
 group: Start
 groupOrder: 1
 order: 2
-translatedFrom: 9db174f122e4
+translatedFrom: d9d8e3331c00
 ---
 
 
-完整的例子见 [examples/shop](https://github.com/liustack/tifa/blob/v0.1.17/examples/shop)。构建、生成的文件和怎么设置 go.mod，见 [build.md](/docs/ship/build)。
+完整的例子见 [examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop)。构建、生成的文件和怎么设置 go.mod，见 [build.md](/docs/ship/build)。
 
 ## 文件夹 {#folders}
 
@@ -123,6 +123,7 @@ Vite 说的是同一件事：优先导入资源，`public/` 给源码里从不�
 | `export const getServerSideProps`、`getStaticProps`、`loader`、`clientLoader` | `route.go` 里的 `Load` | 警告 |
 | `export const getStaticPaths`、`generateStaticParams` | 不需要：`name+` 文件夹匹配任何值，对不存在的值，`Load` 返回 `tifa.ErrNotFound` | 警告 |
 | `export const generateMetadata`、`metadata` | `head` 导出，以及根 `layout.tsx` 里的 `documentHead` | 警告 |
+| 在组件里用 JSX 写的 `<title>` 或 `<meta>`（`<svg>` 之外） | `head` 导出（见[标题和 meta 标签](/docs/pages/pages#title-and-meta-tags)）。在组件里，这个标签会落进 `<body>`，爬虫不读那里 | 警告 |
 | `export const action`、`clientAction` | `route.go` 里的方法处理函数，比如 `func POST(c *tifa.Ctx, in AddInput) (Todo, error)` | 警告 |
 | `export const revalidate`、`dynamic` | `route.go` 里的 `const Cache` 让 CDN 保存一个页面。每个页面本来就在每个请求上加载和渲染 | 警告 |
 | 在页面或布局里调用 `createFileRoute`、`createRootRoute`、`createServerFn` | 文件夹就是路由，`./route.gen` 把它导出为 `page`，服务器函数就是方法处理函数 | 警告 |
@@ -148,7 +149,7 @@ Tifa 没有 `loading.tsx`。页面在服务器上整个渲染，所以第一次�
 
 ## 多语言站点 {#a-site-in-several-languages}
 
-在 `app/` 的某个文件夹里放一个 `_locales` 文件夹，每种语言一个 `<language>.json` 文件，这个文件夹和它下面的页面与 API 路由就会以这些语言提供。[examples/shop](https://github.com/liustack/tifa/blob/v0.1.17/examples/shop) 的店面是 `app/store/`，带 `_locales/zh-CN.json` 和 `_locales/en-US.json`。
+在 `app/` 的某个文件夹里放一个 `_locales` 文件夹，每种语言一个 `<language>.json` 文件，这个文件夹和它下面的页面与 API 路由就会以这些语言提供。[examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop) 的店面是 `app/store/`，带 `_locales/zh-CN.json` 和 `_locales/en-US.json`。
 
 ```yaml
 # tifa.yaml

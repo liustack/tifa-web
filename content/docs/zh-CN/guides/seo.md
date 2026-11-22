@@ -5,13 +5,13 @@ source: docs/guides/seo.md
 group: Guides
 groupOrder: 3
 order: 8
-translatedFrom: 46da77c9f885
+translatedFrom: 9dd9812ff622
 ---
 
 
 你希望别人能在搜索结果里，以及在 ChatGPT、Claude 这类工具的回答里找到你的站点。做完之后，搜索引擎会拿到一份 sitemap，里面有每个公开页面、它的日期和它其他语言的版本，语言模型会拿到一份简短的站点索引，以及你的文章的 Markdown 文本。
 
-这一切来自一个设置和一个函数。下面的代码来自 [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.1.17/test/apps/i18n) 和 [examples/shop](https://github.com/liustack/tifa/blob/v0.1.17/examples/shop/sitemap.go)。
+这一切来自一个设置和一个函数。下面的代码来自 [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.1.20/test/apps/i18n) 和 [examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop/sitemap.go)。
 
 ## 打开它 {#turn-it-on}
 
@@ -35,9 +35,53 @@ site:
 
 每个页面还会得到带完整 URL 的 `<link rel="canonical">`：路径加上它的 `Load` 和布局读取的查询参数，也就是服务器渲染它时用的 URL（见 [查询参数](/docs/reference/memo#query-parameters)）。其他参数会略去。所以当 `/store/products?page=2&utm_source=news` 的 `Load` 读取 `page` 时，它的 canonical URL 是 `/store/products?page=2`：列表的第 2 页是一个独立的页面，而带跟踪参数的链接不是副本。你在自己的 `head` 里写的 canonical 优先。404 页面和错误页面没有 canonical。
 
+带 canonical URL 的页面还会得到 `<meta property="og:url">`，URL 相同，这样被分享的链接指向的是去掉了跟踪参数的页面。路由的 `head` 或根布局的 `documentHead` 里的 `og:url` 优先，页面上只留那一个。页面自己写了 canonical 时，`og:url` 重复那个 URL。
+
 没有 `site.url`，这一切都不会发生：没有 canonical 链接，没有 sitemap，也没有 `robots.txt`。`public/` 里的文件，或应用在这些路径上的路由，优先于 Tifa 的，所以已经有自己 sitemap 的应用会保留它。
 
 所有页面路径都固定的站点，比如 `/`、`/about` 和 `/pricing`，不需要再做别的。它的 sitemap 是完整的。
+
+## 分享卡片 {#share-cards}
+
+把你的页面链接发到聊天或社交动态里，会显示一张卡片：标题、一行文字和一张图。卡片读取 `og:` meta 标签，缺了的会被猜一个，或者留空。把它们写在页面的 `head` 里（见[标题和 meta 标签](/docs/pages/pages#title-and-meta-tags)），数据来自它的 `Load`。`og:url` 由 Tifa 自己写。
+
+```go
+// app/products/product+/route.go
+type Page struct {
+	Name    string `json:"name"`
+	Summary string `json:"summary"`
+	Image   string `json:"image"`
+}
+
+func Load(c *tifa.Ctx) (Page, error) {
+	p, err := catalog.Get(c.Param("product"))
+	if err != nil {
+		return Page{}, err
+	}
+	return Page{Name: p.Name, Summary: p.Summary, Image: "/og/" + p.ID + ".png"}, nil
+}
+```
+
+```tsx
+// app/products/product+/page.tsx
+export const head = ({ loaderData }: { loaderData?: PageData }) => ({
+  meta: loaderData
+    ? [
+        { title: loaderData.name },
+        { property: 'og:title', content: loaderData.name },
+        { property: 'og:description', content: loaderData.summary },
+        { property: 'og:image', content: loaderData.image },
+        { name: 'twitter:card', content: 'summary_large_image' },
+      ]
+    : [],
+})
+```
+
+- `og:image` 必须是带协议和主机的完整 URL，因为爬虫不会按页面地址去解析路径。写一个以单个 `/` 开头的路径，比如 `/og/kettle.png`，Tifa 会在前面加上 `site.url`。`og:image:url`、`og:image:secure_url` 和 `twitter:image` 也一样，在服务器上和在浏览器里导航之后都是如此。完整 URL，或以 `//` 开头的 URL，保持你写的样子。没有 `site.url` 时什么都不改，所以路径还是路径。
+- 固定的图放进 `public/`，比如 `public/og/default.png`，它在 `/og/default.png` 上提供，名字不变。每个页面不同的图，可以用应用里一个写出它的 GET 路由。不要用 import 导入它，因为导入的文件会得到带哈希的名字，每次构建都会变，而爬虫会留着旧卡片。
+- 图做成 1200 乘 630 像素，比例约 1.91 比 1，这样能铺满大多数应用的大卡片。PNG 或 JPEG，小于 5 MB。
+- `twitter:card` 设为 `summary_large_image` 是请求大卡片。不设的话，X 显示小卡片。标题和描述取自 `og:` 标签。
+- 路由里的标签，会替换上层布局里同一个 `property` 或 `name` 的标签。一个路由写了同名的多个标签，比如两个 `og:image`，就全部保留，并丢掉外层的。所以把默认卡片放在根布局的 `documentHead` 里，让页面去覆盖它。
 
 ## 列出带参数的页面 {#list-the-pages-with-parameters}
 
@@ -228,7 +272,7 @@ sitemap、`llms` 文件和 Markdown 版本和其他请求一样：`OnRequest` �
 
 ## 测试它 {#test-it}
 
-`tifatest.Start` 运行整个应用，包括 `OnStart`，所以测试可以像搜索引擎那样读 sitemap（取自 [examples/shop](https://github.com/liustack/tifa/blob/v0.1.17/examples/shop/sitemap_test.go)）：
+`tifatest.Start` 运行整个应用，包括 `OnStart`，所以测试可以像搜索引擎那样读 sitemap（取自 [examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop/sitemap_test.go)）：
 
 ```go
 func TestSitemapListsTheStorefront(t *testing.T) {

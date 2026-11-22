@@ -5,7 +5,7 @@ source: docs/routes.md
 group: Pages and data
 groupOrder: 2
 order: 1
-translatedFrom: 6e0abb9ff1a0
+translatedFrom: fa0d5daabbc5
 ---
 
 
@@ -37,6 +37,7 @@ func POST(c *tifa.Ctx, in ShipInput) (orders.Shipment, error) {
 - 有 `page.tsx` 的文件夹是一个页面。框架负责渲染它的 GET，所以你不能再写 `GET`。一个不需要数据、也不需要其他方法的页面，可以只有 `page.tsx`，不要 `route.go`。
 - 有 `route.go` 但没有 `page.tsx` 的文件夹，只要声明了方法处理函数，就是一个 API 路由：每个方法处理函数都按你写的方式响应，并且不允许有 `Load`，因为 `Load` 是用来加载页面数据的。只有 `Layout` 的 `route.go` 不是 API 路由，它只是给下面的页面提供布局数据。
 - 一切都是包级函数和常量。依赖请用应用已经设置好的全局变量。框架不做依赖注入。
+- 开关的名字（`SSR`、`Cache`、`Memo`、`LayoutSSR`、`BodyLimit`、`ReadTimeout`）按字面读取，所以拼错的会被忽略。`route.go` 里一个小写的 bool 常量，名叫 `cache`、`memo`、`ssr` 或 `layoutssr`，构建会失败。一个导出的常量，与某个开关只差一两个字母（`Cahce`、`ReadTimout`），并且类型是那个开关接受的，构建也会失败：`SSR`、`Memo` 和 `LayoutSSR` 是 bool，`Cache` 是 bool 或 `time.Duration`，`BodyLimit` 是整数，`ReadTimeout` 是 `time.Duration`。错误消息会指出它大概想写哪个开关。其他类型的常量，比如 `const Demo = "demo"`，像 `ID` 或 `Max` 这样的短名字，以及像 `Mode` 这样与四个字母的开关差两处编辑的名字，都不管。
 
 返回错误时：
 
@@ -66,7 +67,7 @@ func POST(c *tifa.Ctx, in ShipInput) (Shipment, error)
 - 输入是一个结构体，不是结构体指针。POST、PUT 和 PATCH 从请求体解码它：JSON，或 URL 编码的表单，或 multipart 表单。表单只会填充字符串、数字、布尔值或它们的切片这几类字段，以及文件（见[输入里的文件](#files-in-the-input)），表单里给任何其他字段的值，都会得到 400 响应。表单按每个值的种类解码，从不调用 `MarshalText` 或 `UnmarshalText`，所以带有其中之一的类型，或这类类型的切片，都属于那种「其他字段」，自带其中之一的切片类型也是，比如 `type Tags []string`，TypeScript 会把它当成一个字符串。GET 和 DELETE 从查询字符串解码，所以它的字段按同样的规则，也只能是字符串、数字、布尔值或它们的切片，不能有嵌入字段，输入类型本身也不能有 `MarshalText` 或 `UnmarshalText`。构建会检查这一点，而 `c.BindQuery` 对任何其他字段都会返回错误，不管查询里有什么。
 - 字段按它们的 `json` 标签命名，表单体和查询字符串里也一样。`form` 标签会让构建失败，传给 `c.Bind` 或 `c.BindQuery` 的结构体里也一样。路径参数、请求头和 cookie 仍然从 `c` 里取。
 - 输入和结果遵循下面的 JSON 规则，和 `Load` 的结果一样。输入还必须能从它的 TypeScript 类型所描述的 JSON 读回来：因 `MarshalText` 而成为字符串的类型，还需要 `UnmarshalText([]byte) error`，有 `UnmarshalText` 的类型在 TypeScript 里必须是字符串，除非它是 map 的键（键永远是 JSON 字符串），而 `UnmarshalJSON` 不被接受（`time.Time` 除外）。
-- 当输入类型有 `Validate` 方法时（必须是 `func() error` 或 `func(c *tifa.Ctx) error`），它在解码之后、处理函数之前运行。返回 `nil` 就继续。有了 Ctx，`Validate` 可以读取请求：用 `c.Language()` 给出访问者所用语言的消息（见[校验消息](/docs/guides/i18n#validation-messages)），还有 `c.Param`、`c.Query`、`c.QueryValues`、`c.Header`、`c.Cookie`、`c.Path()`、`c.Context()`、`c.Request()` 和 `tifa.Session`。它只做检查，只用返回的错误来回答，所以当 `Validate`，或它把 Ctx 传进去的函数，写响应（`c.JSON`、`c.Text`、`c.NoContent`、`c.SetHeader`、`c.SetCookie`、`c.Writer`）、再次读取请求体（`c.Bind`、`c.BindQuery`、`c.SetBodyLimit`）、调用 `tifa.SetSession` 或 `tifa.ClearSession`，或调用 `tifa.Use` 时，构建会失败。Ctx 可以去 `Load` 里允许它去的地方（见 [Load 如何使用 Ctx](#how-load-may-use-ctx)）。`tifa.Error` 或 `tifa.Fields` 会原样作为响应，所以要标记单个字段，就返回 `tifa.Fields`。把它们收集到一个 `tifa.Fields{}` 里，最后 `return fields.Err()`，没有添加任何内容时它是 nil（空的 `tifa.Fields` 仍然是一个错误）。其他任何错误都以 400 响应，消息是它的 `err.Error()`，用户会看到这条消息。
+- 当输入类型有 `Validate` 方法时（必须是 `func() error` 或 `func(c *tifa.Ctx) error`），它在解码之后、处理函数之前运行。返回 `nil` 就继续。有了 Ctx，`Validate` 可以读取请求：用 `c.Language()` 给出访问者所用语言的消息（见[校验消息](/docs/guides/i18n#validation-messages)），还有 `c.Param`、`c.Query`、`c.QueryValues`、`c.Header`、`c.Cookie`、`c.Path()`、`c.Context()`、`c.Request()` 和 `tifa.Session`。它只做检查，只用返回的错误来回答，所以当 `Validate`，或它把 Ctx 传进去的函数，写响应（`c.JSON`、`c.Text`、`c.NoContent`、`c.SetHeader`、`c.SetCookie`、`c.Writer`）、再次读取请求体（`c.Bind`、`c.BindQuery`、`c.SetBodyLimit`、`c.SetReadTimeout`）、调用 `tifa.SetSession` 或 `tifa.ClearSession`，或调用 `tifa.Use` 时，构建会失败。Ctx 可以去 `Load` 里允许它去的地方（见 [Load 如何使用 Ctx](#how-load-may-use-ctx)）。`tifa.Error` 或 `tifa.Fields` 会原样作为响应，所以要标记单个字段，就返回 `tifa.Fields`。把它们收集到一个 `tifa.Fields{}` 里，最后 `return fields.Err()`，没有添加任何内容时它是 nil（空的 `tifa.Fields` 仍然是一个错误）。其他任何错误都以 400 响应，消息是它的 `err.Error()`，用户会看到这条消息。
 - 浏览器从另一个站点发来的 POST、PUT、PATCH 或 DELETE（包括表单和 multipart），会在处理函数运行之前被以 403 响应，所以处理函数不需要为此做自己的检查。`server.trusted_origins` 和 `server.cross_site_paths` 可以放行指定的来源和路径（见[跨站写入](/docs/ship/config#cross-site-writes)）。
 - 无法解码的请求体或查询字符串，会以 400 响应（请求体超过限制是 413，内容类型不对或没有、或把 JSON 发给含文件的输入是 415，请求体没有按时到达是 408），并且处理函数不会运行。
 - 自己写响应的处理函数，用 `c.Bind(&in)` 解码请求体，用 `c.BindQuery(&in)` 解码查询字符串。它们按字段的 `json` 标签命名，再按 Go 名，和有类型的输入一样。传给它们的结构体里有 `form` 标签，会让构建失败，和有类型的输入一样（构建看不到类型的值，比如在接口后面的，不会检查，标签被忽略）。`c.Bind` 也会从 multipart 表单填充 `*multipart.FileHeader` 和 `[]*multipart.FileHeader` 字段。
@@ -125,7 +126,24 @@ await POST({ input: { title, photo: file instanceof File ? file : null, extras: 
 - `ReadTimeout` 是一个 `time.Duration`。时间从 Tifa 匹配到路由的那一刻开始算，在 `OnRequest` 之前，并且只对这个请求有效。之后响应还会再得到 `server.write_timeout`，因为响应是在请求体收完之后才写的。时间到了请求体还在传，就以 408 响应。
 - 每个都可以是常量（必须大于 0），也可以是变量，比如[应用的选项](/docs/ship/config#options-of-the-app)：`var BodyLimit = uploads.UploadLimit`，其中 `UploadLimit = tifa.Size("upload.limit", 4<<20, "Largest upload")`。变量只在应用启动时读取一次。值为 0 的变量沿用设置，负数则会让应用在启动时停下。
 - 没有方法处理函数却声明了其中任何一个的 `route.go`，会让构建失败。带 POST 的页面的 `route.go` 可以声明它们，它们对这个 POST 有效。
-- 在 `OnRequest` 或处理函数里调用 `c.SetBodyLimit`，仍然可以像以前一样，改变单个请求的上限。
+- 现在写它们的办法是 `OnRequest`。也要匹配方法，因为路由里的常量只对方法处理函数有效，而同一个页面的 GET 没有请求体可等：`c.SetBodyLimit` 和 `c.SetReadTimeout` 为单个请求设置它们，要在任何东西读取请求体之前调用。这些常量在这个版本里继续有效，下一个 minor 版本会去掉。
+
+```go
+// hooks.go
+func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
+	if c.Pattern() == "/photos" && c.Request().Method == http.MethodPost {
+		if err := c.SetBodyLimit(100 << 20); err != nil {
+			return err
+		}
+		if err := c.SetReadTimeout(5 * time.Minute); err != nil {
+			return err
+		}
+	}
+	return next(c)
+}
+```
+
+- `c.SetReadTimeout(d)` 对这个请求做 `ReadTimeout` 做的事：请求体从现在起有 `d` 的时间到达，之后响应再得到 `server.write_timeout`。没有请求体的请求，比如 GET，保持它的期限，这个调用什么都不做。读取请求体开始之后，两者都会返回错误，`SetReadTimeout` 在 `d` 不大于 0 时，或响应到不了连接时（比如在一个不会解开包装的 `tifa.SetHTTPHandler` 中间件后面）也会返回错误。检查这个错误并返回它。
 
 ## Ctx {#ctx}
 
@@ -145,6 +163,7 @@ await POST({ input: { title, photo: file instanceof File ? file : null, extras: 
 | `c.JSON(code, v)`、`c.Text(code, s)`、`c.NoContent(code)` | 写出响应。`Load` 里不允许 |
 | `c.Bind(&v)`、`c.BindQuery(&v)` | 把请求体或查询字符串解码进结构体，见上文。`Load` 里不允许 |
 | `c.SetBodyLimit(n)` | 改变这个请求的请求体上限（默认是 `server.body_limit`，或者路由的 `BodyLimit`，见[路由的请求体上限和读取时间](#body-limit-and-read-time-of-a-route)）。要在任何东西读取请求体之前调用，通常在 `OnRequest` 里。读取一旦开始，它会返回错误 |
+| `c.SetReadTimeout(d)` | 给这个请求的请求体 `d` 的时间到达，代替 `server.read_timeout`，之后响应再得到 `server.write_timeout`（路由的 `ReadTimeout` 对它的每个请求做同样的事）。要在任何东西读取请求体之前调用，通常在 `OnRequest` 里。读取一旦开始，它会返回错误 |
 | `c.Request()`、`c.Writer()` | 原始的 `*http.Request` 和 `http.ResponseWriter`，只给方法处理函数和 `OnRequest` 用 |
 
 ## Load 如何使用 Ctx {#how-load-may-use-ctx}

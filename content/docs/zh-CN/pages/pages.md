@@ -5,7 +5,7 @@ source: docs/pages.md
 group: Pages and data
 groupOrder: 2
 order: 2
-translatedFrom: 0524c0a685d1
+translatedFrom: e74288dbc830
 ---
 
 
@@ -190,9 +190,25 @@ export const head = ({ loaderData }: { loaderData?: LayoutData }) => ({
 - 在有多种语言的网站上，Tifa 自己写 `lang`，也就是页面的语言。在那里，`htmlAttributes` 里有 `lang` 会让构建失败（见[多语言网站](/docs/start/app#a-site-in-several-languages)）。
 - `htmlAttributes` 必须是对象，其他值 `pnpm typecheck` 会报告。运行时，这样的值就像 `head` 抛出的错误一样失败：服务端渲染作为意外错误失败（`OnError`，或 500），消息在日志里，在 `tifa dev` 下还在页面上。在浏览器里，导航之后或在没有 SSR 的页面上，路由器会把错误写到控制台，并丢掉那个路由的整个 head。
 
+### 标题和 meta 标签 {#title-and-meta-tags}
+
+页面的标题和 meta 标签写在它的 `head` 导出里（或根布局的 `documentHead` 里），不要在组件里写成 `<title>` 或 `<meta>`。React 19 允许在组件里写它们，并在浏览器里把它们移进 head，但 Tifa 把文档的 head 当字符串写出，React 只渲染 `<body>` 里的应用根节点。所以服务器 HTML 里这个标签落在 `<body>` 里，爬虫和分享卡片不读那里，页面还可能出现两份描述。
+
+```tsx
+// not this
+export default function Page() {
+  return <><title>Pour-over kettle</title><p>...</p></>
+}
+
+// this
+export const head = () => ({ meta: [{ title: 'Pour-over kettle' }] })
+```
+
+`tifa check`、`tifa build` 和 `tifa dev` 会对用 JSX 写的 `<title>` 或 `<meta>` 给出警告，带文件和行号。`<svg>` 里的 `<title>` 是图形的提示文字，没有问题，`<meta itemProp>` 也一样。
+
 ### 不带上层布局的布局 {#a-layout-without-the-layouts-above}
 
-把组件文件命名为 `layout_.tsx` 而不是 `layout.tsx`，这个文件夹的布局就会显示它的页面，而不带它上面的任何布局，根布局也包括在内。只有框架写出的文档外壳留在它们周围。[examples/shop](https://github.com/liustack/tifa/blob/v0.1.17/examples/shop) 的店面就是这样工作的：它自己画页眉和页脚，根布局给其他页面画的工作台，它一点也没有。
+把组件文件命名为 `layout_.tsx` 而不是 `layout.tsx`，这个文件夹的布局就会显示它的页面，而不带它上面的任何布局，根布局也包括在内。只有框架写出的文档外壳留在它们周围。[examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop) 的店面就是这样工作的：它自己画页眉和页脚，根布局给其他页面画的工作台，它一点也没有。
 
 ```text
 app/
