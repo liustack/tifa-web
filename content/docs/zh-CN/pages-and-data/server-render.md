@@ -1,11 +1,10 @@
 ---
 title: 服务端渲染
 description: 服务端渲染有什么、缺什么
-source: docs/server-render.md
-group: Pages and data
+source: docs/pages-and-data/server-render.zh-CN.md
+group: 页面与数据
 groupOrder: 2
 order: 7
-translatedFrom: 791de8abb4c4
 ---
 
 
@@ -23,7 +22,7 @@ translatedFrom: 791de8abb4c4
 - `Intl` 和 `toLocale*` 方法，见[服务端渲染里的 Intl](#intl-in-server-rendering)。
 - `Temporal` 和 `Date.prototype.toTemporalInstant`，见[服务端渲染里的 Temporal](#temporal-in-server-rendering)。
 - `console`，有 `log`、`info`、`debug`、`warn`、`error` 和 `assert`。前四个什么也不打印。`error` 和失败的 `assert` 会抛出，所以渲染会带着它们的消息失败。其他方法，比如 `console.time` 或 `console.table`，不存在，调用会抛出 `TypeError`。
-- `Date.now()` 和 `Math.random()`。它们能用，但它们的值不能进入 HTML，见 [SSR 与缓存](/docs/pages/ssr-and-cache#ssr-and-cache)。
+- `Date.now()` 和 `Math.random()`。它们能用，但它们的值不能进入 HTML，见 [SSR 与缓存](/docs/pages-and-data/ssr-and-cache#ssr-and-cache)。
 
 它没有：
 
@@ -140,7 +139,7 @@ export default function ReceiptPage() {
 
 ### `tifa dev` 里的警告 {#warnings-in-tifa-dev}
 
-在 [`tifa dev`](/docs/ship/dev) 下，如果某次渲染调用了不带语言区域的 Intl 构造函数或 `toLocale*` 方法，或者不带 `timeZone` 的日期相关调用，就会记录一条警告，里面有这次调用在你源码中的位置和它的调用栈：
+在 [`tifa dev`](/docs/build-and-deploy/dev) 下，如果某次渲染调用了不带语言区域的 Intl 构造函数或 `toLocale*` 方法，或者不带 `timeZone` 的日期相关调用，就会记录一条警告，里面有这次调用在你源码中的位置和它的调用栈：
 
 ```text
 2026/10/16 08:00:00 tifa: ssr: Number.prototype.toLocaleString without a locale at app/orders/order+/items.tsx:12:7. The server formats in en-US and UTC, a browser in the language and time zone of its user, so the text can differ from the HTML and React reports a hydration mismatch. Pass the locale and, for a date, the timeZone, from data Load returns, as in toLocaleDateString('zh-CN', {timeZone: 'Asia/Shanghai'}), or format in a useEffect.
@@ -152,13 +151,13 @@ export default function ReceiptPage() {
 
 ### 开销 {#cost}
 
-在某次渲染用到 Intl 之前，VM 里只带着 Intl 的替身，大约 10 KB，用到之后，这个 VM 会增加大约 30 到 45 KB。示例商店的一个 VM 大约占 11 MB，所以这不到它的 1%。在 `tifa dev` 下，每个 VM 都会立刻付出这笔开销，因为警告需要装上 Intl。每种语言在每个进程里只读入内存一次，100 到 180 KB，另外在第一次用到任何语言时，还有所有语言共用的大约 1 MB。语言区域数据让程序大约增大 1.7 MB，生成的 `main.go` 内嵌的时区数据库再增加大约 450 KB。语言区域数据带有一份许可声明，要随程序一起发布，见[随程序发布的声明](/docs/ship/build#notices-to-ship-with-the-program)。
+在某次渲染用到 Intl 之前，VM 里只带着 Intl 的替身，大约 10 KB，用到之后，这个 VM 会增加大约 30 到 45 KB。示例商店的一个 VM 大约占 11 MB，所以这不到它的 1%。在 `tifa dev` 下，每个 VM 都会立刻付出这笔开销，因为警告需要装上 Intl。每种语言在每个进程里只读入内存一次，100 到 180 KB，另外在第一次用到任何语言时，还有所有语言共用的大约 1 MB。语言区域数据让程序大约增大 1.7 MB，生成的 `main.go` 内嵌的时区数据库再增加大约 450 KB。语言区域数据带有一份许可声明，要随程序一起发布，见[随程序发布的声明](/docs/build-and-deploy/build#notices-to-ship-with-the-program)。
 
 ## 服务端渲染里的 Temporal {#temporal-in-server-rendering}
 
 页面可以使用 `Temporal.Now`、`Instant`、`ZonedDateTime`、`PlainDate`、`PlainTime`、`PlainDateTime`、`PlainYearMonth`、`PlainMonthDay`、`Duration` 和 `Date.prototype.toTemporalInstant`，包括在模块加载时。slowjs 提供 V8 带的那些方法、IANA 时区，以及 Intl 支持的历法。Temporal 用的是和 Intl 相同的内置 tz 2026e 数据，不读取机器的 zoneinfo。
 
-`Date.now()`、`new Date()`、`Date()`、`Temporal.Now` 和不带日期的 Intl 日期格式化，共用 VM 的时钟。默认情况下它在渲染期间保持实时。Go 可以用 `tifa.WithRenderClock` 为一次渲染提供一个时钟，见[渲染时钟](/docs/pages/testing-apps#render-clock)。`Temporal.Now.instant().epochMilliseconds` 和 `Date.now()` 各自单独读取这个时钟，所以如果两次调用之间过了一点时间，它们可能不同。`Temporal.Now.timeZoneId()` 是 `UTC`，也就是 Intl 的默认时区，其他 Now 方法在没有传入时区时也使用 UTC。进程的 Go 时区保持不变。
+`Date.now()`、`new Date()`、`Date()`、`Temporal.Now` 和不带日期的 Intl 日期格式化，共用 VM 的时钟。默认情况下它在渲染期间保持实时。Go 可以用 `tifa.WithRenderClock` 为一次渲染提供一个时钟，见[渲染时钟](/docs/pages-and-data/testing-apps#render-clock)。`Temporal.Now.instant().epochMilliseconds` 和 `Date.now()` 各自单独读取这个时钟，所以如果两次调用之间过了一点时间，它们可能不同。`Temporal.Now.timeZoneId()` 是 `UTC`，也就是 Intl 的默认时区，其他 Now 方法在没有传入时区时也使用 UTC。进程的 Go 时区保持不变。
 
 `toLocaleString` 使用 Intl。请传入明确的语言区域。纯日期或纯时间没有时区，会忽略 `timeZone`，`Instant` 使用格式化器的时区，`ZonedDateTime` 使用它自己的时区。构造带时区的值或格式化 instant 时，请使用明确的时区。ISO 的 `PlainYearMonth` 和 `PlainMonthDay` 在格式化时需要 `calendar: 'iso8601'`。
 
@@ -171,4 +170,4 @@ return <time>{Temporal.PlainDate.from(day).toLocaleString(locale, { dateStyle: '
 
 这会渲染出 `October 22, 2026`。不要把 `Temporal.Now` 的结果放进会水合的 HTML：浏览器运行得更晚，它的默认时区也可能不同。请在 `Load` 里计算一个固定的值，或者在水合之后用 effect 显示当前时间。浏览器的语言区域数据可能不同，见 Intl 一节的说明。Tifa 只给服务端 VM 提供 Temporal，不提供浏览器 polyfill 或 TypeScript 声明。没有 Temporal 的浏览器，需要在页面代码之前加载一个 polyfill，或者页面在那里必须避开它。
 
-Temporal 在每个 VM 里是延迟安装的，在第一次读取 `Temporal` 或调用 `toTemporalInstant` 时才安装。不用它的页面只保留替身。用来安装它的字节码在每个进程里只编译一次。实测的大小、VM 内存和首次使用的开销，见[内存](/docs/reference/performance#memory)。现有的[六份声明文件](/docs/ship/build#notices-to-ship-with-the-program)也涵盖 Temporal。
+Temporal 在每个 VM 里是延迟安装的，在第一次读取 `Temporal` 或调用 `toTemporalInstant` 时才安装。不用它的页面只保留替身。用来安装它的字节码在每个进程里只编译一次。实测的大小、VM 内存和首次使用的开销，见[内存](/docs/reference/performance#memory)。现有的[六份声明文件](/docs/build-and-deploy/build#notices-to-ship-with-the-program)也涵盖 Temporal。

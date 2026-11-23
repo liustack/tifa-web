@@ -2,20 +2,19 @@
 title: Values from the environment
 description: How a value from the environment, such as a public key or an API base URL, reaches a page of a Tifa app
 source: docs/guides/environment.md
-sourceHash: 00b1410b3a5b
 group: Guides
 groupOrder: 3
 order: 10
 ---
 
 
-In Tifa the environment and the secrets stay in the Go process. The program reads its settings when it starts: flags, environment variables, `.env` and `tifa.yaml` (see [Configuration](/docs/ship/config)). The front-end build never sees them. Vite does not read `.env` (`envDir: false`), and the build of one app runs in every environment.
+In Tifa the environment and the secrets stay in the Go process. The program reads its settings when it starts: flags, environment variables, `.env` and `tifa.yaml` (see [Configuration](/docs/build-and-deploy/config)). The front-end build never sees them. Vite does not read `.env` (`envDir: false`), and the build of one app runs in every environment.
 
 To give a value to the browser, return it from `Load`, or from a `Layout` for every page below it. That line of Go is the only way a value reaches a page, so it is always written on purpose and easy to find.
 
 ## An example
 
-Define the option with the app settings (see [Options of the app](/docs/ship/config#options-of-the-app)):
+Define the option with the app settings (see [Options of the app](/docs/build-and-deploy/config#options-of-the-app)):
 
 ```go
 // options.go

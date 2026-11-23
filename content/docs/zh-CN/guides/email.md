@@ -1,11 +1,10 @@
 ---
 title: 发送邮件
-description: 如何用纯 Go 库，从 Tifa 应用通过 SMTP 发送邮件
-source: docs/guides/email.md
-group: Guides
+description: 怎样在 Tifa 应用里用纯 Go 的库通过 SMTP 发邮件
+source: docs/guides/email.zh-CN.md
+group: 做法
 groupOrder: 3
 order: 5
-translatedFrom: 66d5b3c1d087
 ---
 
 
@@ -27,7 +26,7 @@ go get github.com/wneessen/go-mail@v0.8.1
 
 ## 设置 {#settings}
 
-主机、端口和密码在每台机器上都不同，所以它们是应用的选项（[应用的选项](/docs/ship/config#options-of-the-app)）：
+主机、端口和密码在每台机器上都不同，所以它们是应用的选项（[应用的选项](/docs/build-and-deploy/config#options-of-the-app)）：
 
 ```go
 // options.go
@@ -56,7 +55,7 @@ SMTP_PASSWORD=...
 MAIL_FROM=notes@example.com
 ```
 
-- **不要把密码放进代码。** `tifa.Secret` 没有默认值，程序也拒绝把它作为命令行参数，因为那会出现在进程列表里。请用环境变量，或工作目录里的 `.env` 文件（[.env](/docs/ship/config#env)）。`tifa.yaml` 只放 Tifa 自己的设置，所以它不是放密码的地方。`./myapp config` 会说明密码来自哪里，并且不显示它。
+- **不要把密码放进代码。** `tifa.Secret` 没有默认值，程序也拒绝把它作为命令行参数，因为那会出现在进程列表里。请用环境变量，或工作目录里的 `.env` 文件（[.env](/docs/build-and-deploy/config#env)）。`tifa.yaml` 只放 Tifa 自己的设置，所以它不是放密码的地方。`./myapp config` 会说明密码来自哪里，并且不显示它。
 - **`smtp.host` 为空时什么也不发。** 邮件连同它的文字一起写进日志。在 `tifa dev` 下和第一次部署时，这正是你想要的，但不要在生产环境里一直这样，因为重置链接会留在日志里。
 - **用邮件服务商的 SMTP 服务**，并从你拥有的域名下的地址发送，按服务商告诉你的设置 SPF 和 DKIM 记录。从小 VPS 直接发出的邮件常常进垃圾箱，有些主机还会封锁出站的 25 端口。服务商接受 587 端口（`starttls`）或 465 端口（`tls`）。
 - 错误的 `smtp.tls` 应该让应用在启动时就停下，而不是等到第一封邮件。`OnStart` 调用 `clientOptions`（见下文）并返回它的错误。

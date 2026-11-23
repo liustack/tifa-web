@@ -1,11 +1,10 @@
 ---
 title: 兼容性
-description: Tifa v0.1 对应用保持稳定的内容（包、文件约定、生成路径、命令、设置、HTTP 名称），以及哪些在任何版本都可能改变
-source: docs/compatibility.md
-group: Reference
+description: Tifa v0.1 对应用保持稳定的东西（包、文件约定、生成的路径、命令、设置、HTTP 名称），以及哪些东西在任何版本里都可能改变
+source: docs/reference/compatibility.zh-CN.md
+group: 参考
 groupOrder: 5
 order: 3
-translatedFrom: b167785a83fa
 ---
 
 
@@ -13,7 +12,7 @@ translatedFrom: b167785a83fa
 
 ## 稳定的内容 {#stable}
 
-**Go 包。** `github.com/liustack/tifa`、`github.com/liustack/tifa/content` 和 `github.com/liustack/tifa/tifatest` 导出的名称。包括 `hooks.go` 里各个 hook 的名称，`route.go` 里 `Load`、`Layout` 和方法处理函数的签名，`route.go` 会读取的常量（`SSR`、`Memo`、`Cache`），`Validate` 和 `Exposed` 方法，`tifa.Stats()` 的字段，以及[路由](/docs/pages/routes)里的 JSON 规则。
+**Go 包。** `github.com/liustack/tifa`、`github.com/liustack/tifa/content` 和 `github.com/liustack/tifa/tifatest` 导出的名称。包括 `hooks.go` 里各个 hook 的名称，`route.go` 里 `Load`、`Layout` 和方法处理函数的签名，`route.go` 会读取的常量（`SSR`、`Memo`、`Cache`），`Validate` 和 `Exposed` 方法，`tifa.Stats()` 的字段，以及[路由](/docs/pages-and-data/routes)里的 JSON 规则。
 
 **文件约定。** 根目录的文件（`go.mod`、`tifa.yaml`、`hooks.go`、`setup.ts`、`options.go`、`content.go`、`content/`、`public/`、`app/`），`app/` 里文件夹名的含义（`name`、`name+`、`name++`），文件夹里的约定文件（`route.go`、`page.tsx`、`layout.tsx`、`layout_.tsx`），`page.tsx` 和 `layout.tsx` 导出的内容，`_locales/<language>.json`，以及 `*.client.tsx`。
 
@@ -21,7 +20,7 @@ translatedFrom: b167785a83fa
 
 **命令和参数。** `go tool tifa` 的各个命令（`new`、`build`、`dev`、`gen`、`check`、`routes`、`errors`、`docs`、`agents`、`upgrade`）及其参数。构建出的程序的 `serve`、`config` 和 `version`，`-c/--config`，以及每个设置对应的一个参数。
 
-**`tifa.yaml` 的键。** [config.md](/docs/ship/config) 里的每个键，连同它的参数、环境变量、类型和默认值。Tifa 要去掉的键，会先被列为已停用，已停用的键只会打印一条警告。下一个 minor 版本可能会移除它。
+**`tifa.yaml` 的键。** [config.md](/docs/build-and-deploy/config) 里的每个键，连同它的参数、环境变量、类型和默认值。Tifa 去掉一个键，会在 minor 版本里进行，更新日志会说明该改写成什么。
 
 **应用和 CDN 会碰到的 HTTP 名称。**
 

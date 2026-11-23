@@ -22,44 +22,23 @@ type Tree struct {
 	Children []Node `json:"children"`
 }
 
-// groupNames are the sections of the sidebar in Chinese. The titles of the docs follow their
-// bodies, which are English until a file in content/docs/zh-CN says otherwise.
-var groupNames = map[string]string{
-	"Start":            "开始",
-	"Pages and data":   "页面与数据",
-	"Guides":           "做法",
-	"Build and deploy": "构建与部署",
-	"Reference":        "参考",
-}
-
-// GroupName is the name of a section in a language.
-func GroupName(language, group string) string {
-	if language == tifaweb.Chinese {
-		if n, ok := groupNames[group]; ok {
-			return n
-		}
-	}
-	return group
-}
-
 // BuildTree makes the page tree from the collection: one open folder per section.
 func BuildTree(language string) Tree {
 	t := Tree{Name: "Tifa"}
 	for _, d := range tifaweb.SortedDocs(language) {
-		name := GroupName(language, d.Group)
-		if n := len(t.Children); n == 0 || t.Children[n-1].Name != name {
-			t.Children = append(t.Children, Node{Type: "folder", Name: name, DefaultOpen: true})
+		if n := len(t.Children); n == 0 || t.Children[n-1].Name != d.Group {
+			t.Children = append(t.Children, Node{Type: "folder", Name: d.Group, DefaultOpen: true})
 		}
 		f := &t.Children[len(t.Children)-1]
-		f.Children = append(f.Children, Node{Type: "page", Name: d.Title, URL: tifaweb.DocURL(d.Doc)})
+		f.Children = append(f.Children, Node{Type: "page", Name: d.Title, URL: tifaweb.DocURL(d)})
 	}
 	return t
 }
 
 // First is the doc /docs leads to.
-func First() tifaweb.Doc { return tifaweb.SortedDocs(tifaweb.English)[0].Doc }
+func First() tifaweb.Doc { return tifaweb.SortedDocs(tifaweb.English)[0] }
 
 // Find returns the doc at a path below /docs, as a language shows it.
-func Find(language, path string) (tifaweb.DocView, error) {
+func Find(language, path string) (tifaweb.Doc, error) {
 	return tifaweb.FindDoc(language, strings.Trim(path, "/"))
 }

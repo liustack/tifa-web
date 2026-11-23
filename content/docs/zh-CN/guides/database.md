@@ -1,15 +1,14 @@
 ---
 title: 在 SQLite 里保存数据
-description: 如何在 Tifa 应用里用 SQLite 保存数据
-source: docs/guides/database.md
-group: Guides
+description: 怎样在 Tifa 应用里用 SQLite 保存数据
+source: docs/guides/database.zh-CN.md
+group: 做法
 groupOrder: 3
 order: 2
-translatedFrom: c911102a7980
 ---
 
 
-Tifa 没有数据库层。你的应用在 `OnStart` 里打开一个数据库，像任何 Go 程序一样用 `database/sql` 使用它。这篇指南从 [`tifa new`](/docs/ship/build#tifa-new) 写出的 SQLite 配置出发，加上真实应用接下来需要的东西：文件路径的设置、迁移、事务、备份和测试。
+Tifa 没有数据库层。你的应用在 `OnStart` 里打开一个数据库，像任何 Go 程序一样用 `database/sql` 使用它。这篇指南从 [`tifa new`](/docs/build-and-deploy/build#tifa-new) 写出的 SQLite 配置出发，加上真实应用接下来需要的东西：文件路径的设置、迁移、事务、备份和测试。
 
 代码来自一个用 `tifa new` 建的临时应用，模块是 `example.com/notes`。文件放在哪里，见 [组织一个应用](/docs/start/structure#2-shared-resources-and-other-dependencies)。
 
@@ -78,7 +77,7 @@ func OnShutdown(ctx context.Context) error { return DB.Close() }
 
 ## 文件放在哪里 {#where-the-file-lives}
 
-路径是应用的一个选项，写在 `options.go` 里（[应用的选项](/docs/ship/config#options-of-the-app)）：
+路径是应用的一个选项，写在 `options.go` 里（[应用的选项](/docs/build-and-deploy/config#options-of-the-app)）：
 
 ```go
 // options.go
@@ -86,7 +85,7 @@ var DBPath = tifa.String("db.path", "app.db", "SQLite database file")
 ```
 
 - 相对路径相对于程序运行所在的文件夹解析。在 `tifa dev` 下那是应用根目录，在服务器上是你启动程序的文件夹。
-- 在服务器上，把文件放进专门放数据的文件夹，并用环境变量来指定：`DB_PATH=/var/lib/notes/app.db`。[部署](/docs/ship/deploy#run-it) 说明要备份这个文件夹，或者在容器里把它挂载出来。
+- 在服务器上，把文件放进专门放数据的文件夹，并用环境变量来指定：`DB_PATH=/var/lib/notes/app.db`。[部署](/docs/build-and-deploy/deploy#run-it) 说明要备份这个文件夹，或者在容器里把它挂载出来。
 - WAL 模式下的 SQLite 会在它旁边再保存两个文件，`app.db-wal` 和 `app.db-shm`。应用运行时不要手动复制这三个文件，见下面的备份。让这三个文件都不进 git（`tifa new` 的 `.gitignore` 就是这样）。
 - 一个程序拥有这个文件。部署时短暂重叠的两份应用共用同一个文件是可以的，但第二台服务器需要 [Postgres](#when-to-use-postgres)。
 
@@ -222,7 +221,7 @@ func Load(c *tifa.Ctx) (todos.Todo, error) {
 }
 ```
 
-- 缺失的行变成 `tifa.ErrNotFound`，响应 404（[route.go](/docs/pages/routes#routego)）。
+- 缺失的行变成 `tifa.ErrNotFound`，响应 404（[route.go](/docs/pages-and-data/routes#routego)）。
 - `Load` 只读。一次访问里 `Load` 可能运行不止一次（导航、页面缓存），所以写入要放在 `POST`、`PUT`、`PATCH` 和 `DELETE` 处理函数里。
 - 来自请求的每个值都用 `?` 占位符。永远不要用字符串拼接来构建 SQL。
 - 带 `RETURNING` 的 `QueryRowContext` 一次调用就能插入并读回新行，`tifa new` 应用里的 `AddTodo` 就是这样做的。
@@ -337,7 +336,7 @@ func TestOpenDBMigratesOnce(t *testing.T) {
 }
 ```
 
-根包在它自己的测试里不能导入 `testdb`（这个导入会绕回来），所以它的测试自己带一个三行的辅助函数。路由代码用 `tifatest.NewCtx` 测试，见 [测试](/docs/pages/testing-apps)。
+根包在它自己的测试里不能导入 `testdb`（这个导入会绕回来），所以它的测试自己带一个三行的辅助函数。路由代码用 `tifatest.NewCtx` 测试，见 [测试](/docs/pages-and-data/testing-apps)。
 
 ## 什么时候用 Postgres {#when-to-use-postgres}
 
@@ -361,4 +360,4 @@ func OpenDB(ctx context.Context, url string) (*sql.DB, error) {
 
 这篇指南里其他一切都保持原来的形状：一个在 `OnStart` 里打开的 `DB` 变量，一个放地址的选项（`db.url`，现在因为它含有密码，是一个 `tifa.Secret`，见 [发送邮件](/docs/guides/email#settings)），通过 `database/sql` 做查询。变化的是：占位符是 `$1`、`$2`，pragma 没有了，上面的迁移运行器是 SQLite 专用的，所以要用 goose 这样的库。这时测试需要一个真正的 Postgres，所以通过一个设置给它们一个，没设置时就跳过。
 
-会话可以保存在同一个数据库里：[会话](/docs/pages/sessions#where-to-store-sessions)。
+会话可以保存在同一个数据库里：[会话](/docs/pages-and-data/sessions#where-to-store-sessions)。

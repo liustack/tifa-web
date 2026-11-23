@@ -1,10 +1,12 @@
 // Command syncdocs writes the docs and the changelog of the Tifa version this site depends on
-// into content/docs/en-US and content/site.
+// into content/docs/en-US, content/docs/zh-CN and content/site.
 //
-// The site has no copy of the docs. Every run reads docs/ from the Tifa module in the Go module
-// cache, keeps the docs written for people who build apps (front matter audience: app), and
-// turns each into a page of the site: its own front matter, links that point at pages of the
-// site or at the Tifa repository. content/docs/en-US is generated and committed, so a build needs no step of its own, and CI checks it matches. The other folders of content/docs are translations written by hand, which syncdocs never changes: it prints the ones whose English doc changed. Run it with
+// The site has no copy of the docs and no list of them. Every run reads docs/ from the Tifa
+// module in the Go module cache. Each folder there whose index.md says audience: app is a section
+// of the sidebar, and each doc in it is a page, in English from <name>.md and in Chinese from the
+// <name>.zh-CN.md that Tifa ships beside it. A page keeps its own front matter and its links, which
+// point at pages of the site or at the Tifa repository. The folders of content/docs are generated
+// and committed, so a build needs no step of its own, and CI checks they match. Run it with
 // go generate, after pnpm install and whenever the Tifa version changes.
 package main
 
@@ -13,7 +15,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 )
 
@@ -27,14 +28,11 @@ func main() {
 	if len(os.Args) > 2 {
 		siteOut = os.Args[2]
 	}
-	// Only the English folder is written. The translations in the other language folders are
-	// written by people, and syncdocs only reads them to find the ones that are out of date.
-	out := filepath.Join(docs, "en-US")
 	dir, version, err := tifaModule()
 	if err != nil {
 		log.Fatalf("syncdocs: %v", err)
 	}
-	n, err := Sync(dir, version, out)
+	n, err := Sync(dir, version, docs)
 	if err != nil {
 		log.Fatalf("syncdocs: %v", err)
 	}
@@ -42,22 +40,14 @@ func main() {
 		log.Fatalf("syncdocs: %v", err)
 	}
 	fmt.Printf("syncdocs: the changelog of %s written to %s\n", version, siteOut)
-	fmt.Printf("syncdocs: %d docs of %s %s written to %s\n", n, modulePath, version, out)
-	zh := filepath.Join(docs, "zh-CN")
-	// Links in the hand-written files name the Tifa version of go.mod too.
-	pinned, err := PinLinks([]string{"app/_locales", "content/pages", zh}, version)
+	fmt.Printf("syncdocs: %d docs of %s %s written to %s in %s and %s\n", n, modulePath, version, docs, english, chinese)
+	// Links in the pages written by hand name the Tifa version of go.mod too.
+	pinned, err := PinLinks([]string{"app/_locales", "content/pages"}, version)
 	if err != nil {
 		log.Fatalf("syncdocs: %v", err)
 	}
 	for _, p := range pinned {
 		fmt.Printf("syncdocs: links to Tifa now name %s: %s\n", gitRef(version), p)
-	}
-	stale, err := Stale(out, zh)
-	if err != nil {
-		log.Fatalf("syncdocs: %v", err)
-	}
-	for _, l := range stale {
-		fmt.Printf("syncdocs: out of date, translate again: %s/%s\n", zh, l)
 	}
 }
 

@@ -1,11 +1,10 @@
 ---
 title: tifa dev
-description: 如何使用 tifa dev
-source: docs/dev.md
-group: Build and deploy
+description: 怎样使用 tifa dev
+source: docs/build-and-deploy/dev.zh-CN.md
+group: 构建与部署
 groupOrder: 4
 order: 1
-translatedFrom: cffed9bdd25c
 ---
 
 
@@ -13,7 +12,7 @@ translatedFrom: cffed9bdd25c
 tifa dev [--dir app-root] [--addr 127.0.0.1:9527] [--background]
 ```
 
-启动时它先打印 `tifa dev: serving http://<address>`，然后做一次完整构建（步骤与 [`tifa build`](/docs/ship/build) 相同，应用的第一次构建要几秒到一分钟，见[日志](#log)），再启动应用。浏览器只连 `--addr`。`tifa dev` 把页面请求和数据请求转发给应用，把 `/__tifa/vite/` 下的请求（浏览器模块和 Vite 的 HMR websocket）转发给 Vite 的开发服务器。应用重启或加载新的 SSR 包时，页面请求会等着。Ctrl-C、SIGTERM 和 SIGHUP（终端关闭时会发出）会停掉应用、Vite 和 `tifa dev`。用 `nohup` 启动的 `tifa dev` 会忽略 SIGHUP。Vite 的构建或插件迟迟不结束时，给它 5 秒，然后停掉 Vite。如果 `tifa dev` 本身被杀掉，应用和 Vite 会自己停：应用像收到 SIGTERM 一样关闭，Vite 在同样的 5 秒内退出（在 Windows 上两者同时结束，见[在 Windows 上](#on-windows)）。`tifa dev` 只把明确指定的文件交给应用和 Vite，不会把自己继承来的文件交给它们，比如脚本用 `flock` 持有的锁。
+启动时它先打印 `tifa dev: serving http://<address>`，然后做一次完整构建（步骤与 [`tifa build`](/docs/build-and-deploy/build) 相同，应用的第一次构建要几秒到一分钟，见[日志](#log)），再启动应用。浏览器只连 `--addr`。`tifa dev` 把页面请求和数据请求转发给应用，把 `/__tifa/vite/` 下的请求（浏览器模块和 Vite 的 HMR websocket）转发给 Vite 的开发服务器。应用重启或加载新的 SSR 包时，页面请求会等着。Ctrl-C、SIGTERM 和 SIGHUP（终端关闭时会发出）会停掉应用、Vite 和 `tifa dev`。用 `nohup` 启动的 `tifa dev` 会忽略 SIGHUP。Vite 的构建或插件迟迟不结束时，给它 5 秒，然后停掉 Vite。如果 `tifa dev` 本身被杀掉，应用和 Vite 会自己停：应用像收到 SIGTERM 一样关闭，Vite 在同样的 5 秒内退出（在 Windows 上两者同时结束，见[在 Windows 上](#on-windows)）。`tifa dev` 只把明确指定的文件交给应用和 Vite，不会把自己继承来的文件交给它们，比如脚本用 `flock` 持有的锁。
 
 带 `package.json` 的应用要先装好 npm 包。刚克隆下来时没有 `node_modules`，`tifa dev`（和 `tifa build` 一样）会在启动任何东西之前停下，并打印要运行的命令：PATH 里有 pnpm 就是 `pnpm install`，否则是 `npm install`。没有页面的应用没有 `package.json`，也不需要 Node。
 
@@ -21,11 +20,11 @@ tifa dev [--dir app-root] [--addr 127.0.0.1:9527] [--background]
 
 同一个应用里的第二个 `tifa dev` 不会启动。它会打印 `tifa: tifa dev is already running in this app at http://<address> (pid <N>)` 并报错退出，这发生在它启动 Vite 之前。有 `tifa dev` 在运行时，`tifa build` 也会同样停下，因为两者都写 `.tifa/dist`。锁是 `.tifa/dev.lock`，持有它的进程结束后它就消失。不带 `--addr` 时，9527 端口被占用，`tifa dev` 会依次试 9528 及以上，一共十个端口，`serving` 那一行会写出它用了哪一个。带 `--addr` 时，`tifa dev` 只用那个地址，被占用就失败。
 
-`tifa dev` 提供的是普通 HTTP。项目文件里的 [HTTPS 设置](/docs/ship/config#https)只对构建出来的程序生效，开发程序会忽略它们。
+`tifa dev` 提供的是普通 HTTP。项目文件里的 [HTTPS 设置](/docs/build-and-deploy/config#https)只对构建出来的程序生效，开发程序会忽略它们。
 
 ## Vite {#vite}
 
-`tifa dev` 在 Node 上运行应用自己的 Vite，用的是应用的 `vite.config.ts`（见 [build.md](/docs/ship/build#the-apps-tsconfig-and-vite-config)）：
+`tifa dev` 在 Node 上运行应用自己的 Vite，用的是应用的 `vite.config.ts`（见 [build.md](/docs/build-and-deploy/build#the-apps-tsconfig-and-vite-config)）：
 
 - Vite 的开发服务器提供浏览器模块。它随带页面的应用的第一次构建一起启动，监听 127.0.0.1 上一个空闲端口，只有 `tifa dev` 会连它。页面从它那里加载 Vite 客户端、`@vitejs/plugin-react` 的 React Fast Refresh 运行时和 `.tifa/client.ts`。
 - SSR 包仍然是一个文件 `.tifa/dist/ssr.js`，应用把它加载进自己的 slowjs VM。它在开发服务器所在的同一个 Node 进程里构建，放在它自己的工作线程上：浏览器拿到的是 React 的开发版，slowjs 跑的是生产版，而 Vite 每个线程只选一次版本。Tifa 自己设置 `NODE_ENV`（开发服务器用 development，SSR 包用 production），所以 shell 里的 `NODE_ENV` 两边都不影响。SSR 包每构建 10 次（失败的也算）就换一个新的工作线程，因为 Node 不会把 Vite 构建留在线程里的东西全部释放。线程结束过的那次构建（比如插件没捕获的错误）之后也会换。把东西放在该线程 `globalThis` 上的插件，到那时会从头开始。
@@ -62,8 +61,8 @@ tifa dev [--dir app-root] [--addr 127.0.0.1:9527] [--background]
 - 应用根目录之外、Vite 开发服务器加载的文件（比如工作区里另一个包的源码，或用 `?raw` 导入的文本文件），由 Vite 而不是 `tifa dev` 监视。它变化时，`tifa dev` 也会重建 SSR 包，不管是什么类型的文件，和应用自己的前端文件一样，日志里会用相对应用根目录的路径写出它。这类文件可能恰好在 Vite 开发服务器重启期间变化，这时旧的监视器和新的监视器都看不到。所以每次开发服务器的重启结束时，不管是什么引起的、有没有成功，`tifa dev` 都会重建一次 SSR 包（重叠的重启算作一次），日志里会写 `Vite's dev server restarted`。新的监视器会继续监视旧监视器监视的根目录之外的文件。
 - Vite 重启开发服务器时不会等新的文件监视器读完应用根目录，监视器还没读到的文件没有起点：在那之前的编辑永远看不到，所以开发服务器已经提供过的模块会一直是旧的，直到这个文件再次变化。因此重启之后，开发服务器要等监视器读完文件才响应请求，在大应用里这会更久。
 - `go:embed` 放进程序里的文件是程序的一部分，所以改动会重新构建它，尽管这个文件不是 Go。`tifa dev` 通过静态分析得知是哪些文件，静态分析会向 go 命令询问模块里每个包嵌入的文件和模式，从此开始监视它们，也包括 `//go:embed posts` 或 `posts/*.md` 这样的模式新匹配到的文件。不带 `all:` 命名的文件夹会像 go 命令一样，忽略以 `.` 或 `_` 开头的名字，带自己 `go.mod` 的文件夹（那是另一个模块）也一样忽略。文件出现或消失时会重新跑分析，因为这可能改变哪些文件被嵌入，而编辑只需要 go build。既被嵌入又是前端文件的文件（比如页面导入的 `.json`）两个步骤都会跑。位于 `tifa dev` 跳过的文件夹里的嵌入文件（见上）不会被监视。第一次分析成功之前，嵌入的文件是不知道的。
-- 改动 public 文件夹里图片、字体或其他文件的内容不会触发重建。下一次 bundle 只复制变过的文件，并删掉已经没了的，所以没动过大 public 文件的重建不花任何代价。在 public 文件夹里增加或删除文件会运行 bundle 步骤，它会重新生成代码，因为生成的路由代码会列出 public 文件（见[路由树](/docs/ship/build#route-tree)）。日志里写出这个文件的方式和任何其他改动一样。`tifa.yaml` 里 `build.public` 变了会换掉被监视的文件夹，不需要重启。
-- content 不需要 go build：开发程序从 `.tifa/dist` 读 `content.json` 和正文（见[内容](/docs/pages/content)）。content 步骤会用 Go 重新扫描 `content/`，在 Vite 开发服务器的 Node 进程里转换变过的条目，并写出 `.tifa/dist/content/` 和 `content.json`。每次转换都把正文写进 `.tifa/dist/content/` 下它自己的文件夹，所以应用正在显示的正文不会在它底下被改掉。然后运行中的应用重新加载内容，对每个条目运行 `Validate`，换上新的数据和正文，此后你加载的页面显示的就是新内容。应用不会重启，`OnStart` 也不会再运行。第一次启动会把所有条目转换一遍。在有集合的应用里，Go 改动之后 content 步骤也会跑，因为集合或它们的 schema 类型可能变了，变了的话就转换所有条目。
+- 改动 public 文件夹里图片、字体或其他文件的内容不会触发重建。下一次 bundle 只复制变过的文件，并删掉已经没了的，所以没动过大 public 文件的重建不花任何代价。在 public 文件夹里增加或删除文件会运行 bundle 步骤，它会重新生成代码，因为生成的路由代码会列出 public 文件（见[路由树](/docs/build-and-deploy/build#route-tree)）。日志里写出这个文件的方式和任何其他改动一样。`tifa.yaml` 里 `build.public` 变了会换掉被监视的文件夹，不需要重启。
+- content 不需要 go build：开发程序从 `.tifa/dist` 读 `content.json` 和正文（见[内容](/docs/pages-and-data/content)）。content 步骤会用 Go 重新扫描 `content/`，在 Vite 开发服务器的 Node 进程里转换变过的条目，并写出 `.tifa/dist/content/` 和 `content.json`。每次转换都把正文写进 `.tifa/dist/content/` 下它自己的文件夹，所以应用正在显示的正文不会在它底下被改掉。然后运行中的应用重新加载内容，对每个条目运行 `Validate`，换上新的数据和正文，此后你加载的页面显示的就是新内容。应用不会重启，`OnStart` 也不会再运行。第一次启动会把所有条目转换一遍。在有集合的应用里，Go 改动之后 content 步骤也会跑，因为集合或它们的 schema 类型可能变了，变了的话就转换所有条目。
 - 在 `tifa dev` 下，内容里包含草稿（`Draft` 为 true）和日期还没到的条目（带它们的 `Date`），所以你写一篇文章时能在列表和它自己的页面上看到它。页面可以给它们打上标记。
 - front matter 不符合 schema，`content/` 下有没有任何集合声明的文件夹，或者插件出错，都会显示带有 `tifa build` 那条消息的覆盖层，应用保留它已有的内容。条目没通过 `Validate` 时，会显示标题为 `The app did not load the content` 的覆盖层，应用同样保留已有内容，正文也还是旧的。
 - 样式表通过 Vite 的开发服务器，所以 `@tailwindcss/vite` 编译 Tailwind CSS 的方式和在任何 Vite 应用里一样。
@@ -95,17 +94,17 @@ tifa dev: 07:36:30 ready in 58.3s, open http://127.0.0.1:9527
 
 步骤的名字是 `static analysis`、`code generation`、`bundle`、`styles` 和 `go build`。静态分析之后还有一行 `route manifest changed` 或 `route manifest unchanged`。Vite 的警告和错误也会打印成 `tifa dev:` 行。应用自己的输出照常打印，但没有构建出来的程序那行 `tifa: listening on`，因为应用监听的端口只有 `tifa dev` 会连。它的 stderr 经过 `tifa dev`，`tifa dev` 会留下最后几行用于覆盖层（见下），所以只在终端里才给输出上色的日志库，在这里写的是纯文本。
 
-当一次渲染不带 locale 调用 Intl 或 `toLocale*` 方法，或者对日期不带 `timeZone` 时，应用会记一条 `tifa: ssr:` 警告，写出你源码里的位置，每个位置一次。页面照常渲染。见 [`tifa dev` 里的警告](/docs/pages/server-render#warnings-in-tifa-dev)。
+当一次渲染不带 locale 调用 Intl 或 `toLocale*` 方法，或者对日期不带 `timeZone` 时，应用会记一条 `tifa: ssr:` 警告，写出你源码里的位置，每个位置一次。页面照常渲染。见 [`tifa dev` 里的警告](/docs/pages-and-data/server-render#warnings-in-tifa-dev)。
 
-`tifa dev` 把每个页面渲染两次，第二次把时钟拨快 36 小时。当同样的数据两次渲染结果不同，说明页面在渲染时读了时间或随机数，渲染记忆 memo 会把这个值冻住。终端和页面上的覆盖层都会指出这一点，附上两次渲染最先分开的位置周围的 HTML，以及你代码里读时间（`Date.now()`、`new Date()`、`Date()`）或随机数（`Math.random()`、`crypto`）的位置。包内部的读取会记在调用它们的那一行你的代码上，React、TanStack Router 和 Tifa 的读取不列出。请修改组件，或者在该页面的 `route.go` 里写 `Memo = false`（见 [SSR 与缓存](/docs/pages/ssr-and-cache#ssr-and-cache)）。这样的页面在修好之前不会被缓存。构建出来的程序不会渲染两次。
+`tifa dev` 把每个页面渲染两次，第二次把时钟拨快 36 小时。当同样的数据两次渲染结果不同，说明页面在渲染时读了时间或随机数，渲染记忆 memo 会把这个值冻住。终端和页面上的覆盖层都会指出这一点，附上两次渲染最先分开的位置周围的 HTML，以及你代码里读时间（`Date.now()`、`new Date()`、`Date()`）或随机数（`Math.random()`、`crypto`）的位置。包内部的读取会记在调用它们的那一行你的代码上，React、TanStack Router 和 Tifa 的读取不列出。请修改组件，或者在该页面的 `route.go` 里写 `Memo = false`（见 [SSR 与缓存](/docs/pages-and-data/ssr-and-cache#ssr-and-cache)）。这样的页面在修好之前不会被缓存。构建出来的程序不会渲染两次。
 
 ## 构建失败时 {#when-a-build-fails}
 
 - 旧版本继续运行。日志会打印 `build failed: <reason>`，已打开的页面会出现错误覆盖层，显示 Go 编译器或 Vite 的原始消息。
 - 修好之后覆盖层消失。如果修复需要 go build，页面会重新加载，否则不会。失败的构建没做完的步骤，会并入下一次重建。
 - 在浏览器里编译失败的模块会显示 Vite 自己的覆盖层。
-- 如果安装的 TanStack Router 不是 Tifa 测试过的版本（见 [build.md](/docs/ship/build#the-apps-tsconfig-and-vite-config)），bundle 步骤会带着那条错误失败。`tifa dev` 不监视 `node_modules`，所以装好测试过的版本之后，要重启 `tifa dev`。
-- 如果安装的 React 或 React DOM 低于 19.3.0（见 [build.md](/docs/ship/build#the-apps-tsconfig-and-vite-config)），bundle 步骤会带着那条错误失败。装上更新的版本后要重启 `tifa dev`。
+- 如果安装的 TanStack Router 不是 Tifa 测试过的版本（见 [build.md](/docs/build-and-deploy/build#the-apps-tsconfig-and-vite-config)），bundle 步骤会带着那条错误失败。`tifa dev` 不监视 `node_modules`，所以装好测试过的版本之后，要重启 `tifa dev`。
+- 如果安装的 React 或 React DOM 低于 19.3.0（见 [build.md](/docs/build-and-deploy/build#the-apps-tsconfig-and-vite-config)），bundle 步骤会带着那条错误失败。装上更新的版本后要重启 `tifa dev`。
 - 如果最开始的第一次构建就失败，就没有旧版本可以提供。每个请求都得到 502 和原始错误，修好之后会自己恢复。
 - 如果应用启动后马上退出，或者 30 秒内没有监听，覆盖层的标题是 `The app did not start`。正文显示退出状态和应用写到 stderr 的最后 40 行，`OnStart` 的错误和 panic 都在那里。只要输出以那个 panic 的报告结尾，panic 那一行即使堆栈更长也会保留。应用记下日志后继续运行的 `panic: ` 行则不会。如果运行中的应用退出了（比如请求之外发生了 panic），标题是 `The app stopped`，正文相同。到下一次构建之前，页面请求会得到 502 和同样的文字。`tifa dev` 的日志只说应用退出了，因为应用自己的输出已经打印在它上面。
 - 如果运行中的应用无法加载重建后的 SSR 包（比如 slowjs 编译不了，或者它的顶层代码抛了错），覆盖层标题是 `The app did not load the SSR bundle`。应用继续使用它已有的包。堆栈给出源文件里的位置，调用了 slowjs 没有的 `require` 的包，会连同该怎么做一起指出来。
@@ -124,7 +123,7 @@ tifa dev: 07:36:30 ready in 58.3s, open http://127.0.0.1:9527
 
 ## 页面渲染失败时 {#when-a-page-fails-to-render}
 
-服务端渲染页面时如果组件抛了错，应用会把页面重新渲染一遍，用 `ErrorBoundary` 组件显示错误（见[页面上的错误](/docs/pages/pages#errors-on-a-page)）。在 `tifa dev` 下，这个页面上会有一个覆盖层，写出这个请求，在公开消息和状态文字不同时显示公开消息，并显示完整的错误，堆栈指向你的源文件。如果没有 `ErrorBoundary` 渲染，或者页面请求在应用能渲染页面之前就失败了（比如 `OnRequest` 返回了意料之外的错误），应用会用 Go 返回一个朴素的页面，在 `tifa dev` 下它显示同样的内容。两种页面都带着 `OnError` 选的状态码，所以 `curl -i` 也能看到，并且在你保存修复之后重新加载，用 TSX 做的、不会重新加载其他页面的修复也一样。构建出来的应用只显示状态和公开消息。
+服务端渲染页面时如果组件抛了错，应用会把页面重新渲染一遍，用 `ErrorBoundary` 组件显示错误（见[页面上的错误](/docs/pages-and-data/pages#errors-on-a-page)）。在 `tifa dev` 下，这个页面上会有一个覆盖层，写出这个请求，在公开消息和状态文字不同时显示公开消息，并显示完整的错误，堆栈指向你的源文件。如果没有 `ErrorBoundary` 渲染，或者页面请求在应用能渲染页面之前就失败了（比如 `OnRequest` 返回了意料之外的错误），应用会用 Go 返回一个朴素的页面，在 `tifa dev` 下它显示同样的内容。两种页面都带着 `OnError` 选的状态码，所以 `curl -i` 也能看到，并且在你保存修复之后重新加载，用 TSX 做的、不会重新加载其他页面的修复也一样。构建出来的应用只显示状态和公开消息。
 
 这些页面会显示内部错误。`tifa dev` 默认监听 `127.0.0.1`。用 `--addr 0.0.0.0:<port>` 时，网络上的其他机器能看到它们。
 
@@ -150,7 +149,7 @@ tifa dev: ready at http://127.0.0.1:9527 (pid 41231)
 
 关闭终端不会停掉它。`--background` 是唯一的开关：Tifa 不会去探测智能体，普通的 `tifa dev` 仍然留在前台。
 
-告诉智能体这些命令的 skill 和说明，由 [`tifa agents`](/docs/ship/build#tifa-agents) 写出。
+告诉智能体这些命令的 skill 和说明，由 [`tifa agents`](/docs/build-and-deploy/build#tifa-agents) 写出。
 
 - 命令的其他每个参数和每个环境变量都原样传给服务器，包括 `--dir` 和 `--addr`。
 - 服务器的所有输出都进 `.tifa/dev.log`：`tifa dev:` 行、应用的输出和 Vite 的消息。新的 `tifa dev --background` 会让这个文件重新开始。`tifa gen` 和 `tifa build` 不动它。
@@ -263,7 +262,7 @@ Hydration mismatch in the browser: http://127.0.0.1:9527/orders (×3)
 | `.tifa/dist/` | SSR 包、`build.json`、public 文件，以及有集合的应用的 `content.json` 和 `content/` 里的正文。浏览器模块改由 Vite 的开发服务器提供 |
 | `bin/tifa-dev` | 开发用的可执行文件 |
 
-应用在应用根目录里运行，即使 `tifa dev` 是用 `--dir` 从别处启动的，这和你从应用根目录运行时 `tifa build` 生成的程序一样。应用按相对路径打开的文件，比如 [`tifa new`](/docs/ship/build#tifa-new) 模板的 `app.db`，就落在那里。它读取的 `.env` 也是（见 [.env](/docs/ship/config#env)）。`tifa dev` 通过 `SERVER_ADDR` 把应用要监听的地址传给它，这个值优先于你 shell 里的 `PORT` 和 `.env`。
+应用在应用根目录里运行，即使 `tifa dev` 是用 `--dir` 从别处启动的，这和你从应用根目录运行时 `tifa build` 生成的程序一样。应用按相对路径打开的文件，比如 [`tifa new`](/docs/build-and-deploy/build#tifa-new) 模板的 `app.db`，就落在那里。它读取的 `.env` 也是（见 [.env](/docs/build-and-deploy/config#env)）。`tifa dev` 通过 `SERVER_ADDR` 把应用要监听的地址传给它，这个值优先于你 shell 里的 `PORT` 和 `.env`。
 
 停止应用时，`tifa dev` 最多等配置的 `server.shutdown_timeout` 的 3 倍再加 1 秒，然后杀掉整个进程组。
 

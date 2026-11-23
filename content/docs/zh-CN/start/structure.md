@@ -1,15 +1,14 @@
 ---
 title: 组织一个应用
-description: Tifa 应用的文件该放在哪里
-source: docs/structure.md
-group: Start
+description: Tifa 应用的文件放在哪里
+source: docs/start/structure.zh-CN.md
+group: 开始
 groupOrder: 1
 order: 4
-translatedFrom: 988021f02628
 ---
 
 
-这一页说明应用里每个文件该放在哪里。为什么这样组织，见 [理念](/docs/start/philosophy)。Tifa 自己内部是怎么工作的，见 [架构](https://github.com/liustack/tifa/blob/v0.3.0/docs/architecture.md)。
+这一页说明应用里每个文件该放在哪里。为什么这样组织，见 [理念](/docs/start/philosophy)。Tifa 自己内部是怎么工作的，见 [架构](https://github.com/liustack/tifa/blob/v0.4.1/docs/internals/architecture.md)。
 
 ## 1. 域是 app/ 下的一个文件夹 {#1-a-domain-is-a-folder-under-app}
 
@@ -41,7 +40,7 @@ myapp/
             route.go  page.tsx
 ```
 
-- **代码放哪里。** 一个域在它的文件夹里有一个以它命名的文件：`app/projects/project.go` 里是 `package projects`。当一个域有列表页和每项一个页面时，它的代码放在列表文件夹（`orders/`）里，不放在单个条目的文件夹（`order+/`）里。列表文件夹不需要有页面：在 [examples/shop](https://github.com/liustack/tifa/blob/v0.3.0/examples/shop) 里，订单列在项目页面上，`orders/` 里只有域。
+- **代码放哪里。** 一个域在它的文件夹里有一个以它命名的文件：`app/projects/project.go` 里是 `package projects`。当一个域有列表页和每项一个页面时，它的代码放在列表文件夹（`orders/`）里，不放在单个条目的文件夹（`order+/`）里。列表文件夹不需要有页面：在 [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop) 里，订单列在项目页面上，`orders/` 里只有域。
 - **包名。** 字面的文件夹用它自己的名字（`projects`、`orders`）。参数文件夹用参数名（`project+` 里是 `package project`），和 [app.md](/docs/start/app#urls-come-from-folders) 里一样。
 - **页面使用域。** 同一个文件夹里的页面是同一个包，直接调用域。下面的页面则导入它：
 
@@ -66,7 +65,7 @@ myapp/
 
 - **测试和它们测的代码放在一起：** `order_test.go` 在 `order.go` 旁边。
 - **组件和其他前端文件** 也可以放在 `app/` 下。对 Tifa 有意义的只有 `page.tsx`、`layout.tsx` 和 `layout_.tsx`，所以其他任何 `.tsx` 或 `.ts` 文件，比如共享组件，都是普通模块。把它放在用它的页面旁边，用相对路径导入：examples/shop 把 `product-card.tsx` 放在 `app/store/` 里。几个区域共用的组件可以放在 `app/` 旁边的文件夹里，比如 examples/shop 里的 `components/`。
-- **根包** 只放 hooks 和整个应用共享的资源，比如 `db.go`、`mail.go` 和 `content.go`（内容集合，见 [内容](/docs/pages/content)）。不放域的代码。数据库 schema 也留在这里：所有域的表构成一个数据库，`OnStart` 会在应用开始监听之前创建它们。每个域保留自己的查询。
+- **根包** 只放 hooks 和整个应用共享的资源，比如 `db.go`、`mail.go` 和 `content.go`（内容集合，见 [内容](/docs/pages-and-data/content)）。不放域的代码。数据库 schema 也留在这里：所有域的表构成一个数据库，`OnStart` 会在应用开始监听之前创建它们。每个域保留自己的查询。
 - 不属于任何域、又被几个域使用的代码，比如格式化金额，放进以它做的事命名的单独的包里，比如模块根目录的 `money/`。它能导入什么，见下文。
 
 ### 导入的方向 {#which-way-imports-go}
@@ -125,5 +124,5 @@ Go 的规则：包不能依赖它自己。如果包 A 直接或通过别的包�
 
 - **请求里的值**，比如已登录的用户，搭在标准 context 上：`OnRequest` 把 `c.WithContext(context.WithValue(...))` 传给 `next`，域提供一个带类型的 getter。
 - **参数** 在只有部分调用者要传不同的值时就可以用。需要时钟、限制或客户端的函数，可以把它作为参数接收。
-- **测试** 替换变量（`myapp.DB = openTestDB(t)`），或者把假的实现作为参数传入。接口要声明在使用它的包里，而且只有真的有两个实现时才声明，比如真实的和假的。路由代码用 `tifatest.NewCtx` 造的 Ctx 来测试，见 [测试](/docs/pages/testing-apps)。
+- **测试** 替换变量（`myapp.DB = openTestDB(t)`），或者把假的实现作为参数传入。接口要声明在使用它的包里，而且只有真的有两个实现时才声明，比如真实的和假的。路由代码用 `tifatest.NewCtx` 造的 Ctx 来测试，见 [测试](/docs/pages-and-data/testing-apps)。
 - 不要在 `init()` 里做设置，也不要在包级变量初始化时读取资源。资源只有在 `OnStart` 运行之后才存在。把函数放进注册表，比如 `jobs.Handle`，不读取任何东西，可以在 `init` 里运行（见 [需要某个域的代码的任务](/docs/guides/jobs#a-job-that-needs-code-of-a-domain)）。

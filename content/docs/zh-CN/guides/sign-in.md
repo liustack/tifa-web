@@ -1,17 +1,16 @@
 ---
 title: 登录和退出
-description: 如何用 Tifa 的会话让用户登录和退出
-source: docs/guides/sign-in.md
-group: Guides
+description: 怎样用 Tifa 会话让用户登录和登出
+source: docs/guides/sign-in.zh-CN.md
+group: 做法
 groupOrder: 3
 order: 3
-translatedFrom: 3bebd7ce8d51
 ---
 
 
 访问者用邮箱和密码登录，看到只有自己能打开的账号页，然后退出。会话由 Tifa 负责保管：随机令牌、cookie 和过期时间。你的代码做三件事：保存并检查密码，说明什么时候某人登录或退出，决定谁能看到什么。
 
-这里的代码都是按所写的样子运行过的（用 `go tool tifa check`，并在浏览器里试过）。每个会话调用做什么、cookie 是什么，见[会话](/docs/pages/sessions)。本指南不再重复。
+这里的代码都是按所写的样子运行过的（用 `go tool tifa check`，并在浏览器里试过）。每个会话调用做什么、cookie 是什么，见[会话](/docs/pages-and-data/sessions)。本指南不再重复。
 
 ## 谁已登录 {#who-is-signed-in}
 
@@ -35,7 +34,7 @@ type Me struct {
 func (s Session) Exposed() Me { return Me{Name: s.Name} }
 ```
 
-整个应用只用一个会话类型。`Exposed` 是交给浏览器的那部分，会保存在访问者的设备上。不要在里面放任何机密（见[浏览器这一侧](/docs/pages/sessions#in-the-browser)）。
+整个应用只用一个会话类型。`Exposed` 是交给浏览器的那部分，会保存在访问者的设备上。不要在里面放任何机密（见[浏览器这一侧](/docs/pages-and-data/sessions#in-the-browser)）。
 
 ## 密码 {#passwords}
 
@@ -298,7 +297,7 @@ func SignInRedirect(next string) error {
 
 `c.Path()` 是访问者在地址栏里看到的页面路径：里面有语言前缀，没有查询。页面整体加载时和点击链接请求它的数据时，它都一样，对处理函数来说，它是处理函数的路径。这里不该用 `c.Request()`：`Load` 不能调用它，而点击链接时，请求是数据请求，不是页面本身。`RequireUser` 可以在 `OnRequest`、`Load` 和它们调用的函数里工作。
 
-`RequireUser` 生成的 `next` 里不带查询。把状态放在查询参数里的页面，要在自己的 `Load` 里把它们补回去，比如 `signin.SignInRedirect(c.Path()+"?tab="+url.QueryEscape(c.Query("tab")))`。被许多页面共用的守卫没办法为所有页面都这样做，因为 `Load` 只能读取它点名的查询参数（见 [Load 如何使用 Ctx](/docs/pages/routes#how-load-may-use-ctx)）。`OnRequest` 不一样：hook 可以读取请求，所以下面的守卫保留了整个查询。服务器会在 `OnRequest` 运行之前，把数据请求的参数 `_tifa` 从 URL 里去掉，所以 `c.Request().URL.RawQuery` 对页面加载和点击链接都是访问者写下的那个查询。
+`RequireUser` 生成的 `next` 里不带查询。把状态放在查询参数里的页面，要在自己的 `Load` 里把它们补回去，比如 `signin.SignInRedirect(c.Path()+"?tab="+url.QueryEscape(c.Query("tab")))`。被许多页面共用的守卫没办法为所有页面都这样做，因为 `Load` 只能读取它点名的查询参数（见 [Load 如何使用 Ctx](/docs/pages-and-data/routes#how-load-may-use-ctx)）。`OnRequest` 不一样：hook 可以读取请求，所以下面的守卫保留了整个查询。服务器会在 `OnRequest` 运行之前，把数据请求的参数 `_tifa` 从 URL 里去掉，所以 `c.Request().URL.RawQuery` 对页面加载和点击链接都是访问者写下的那个查询。
 
 ## hook {#the-hooks}
 
@@ -427,11 +426,11 @@ func safeNext(next string) string {
 }
 ```
 
-- 要在方法处理函数里登录，不要在 `Load` 里。`Load` 为 GET 运行，而 GET 不能改变任何东西，`SetSession` 在那里会返回错误（见[在哪里调用什么](/docs/pages/sessions#where-to-call-what)）。
+- 要在方法处理函数里登录，不要在 `Load` 里。`Load` 为 GET 运行，而 GET 不能改变任何东西，`SetSession` 在那里会返回错误（见[在哪里调用什么](/docs/pages-and-data/sessions#where-to-call-what)）。
 - `SetSession` 每次调用都会生成新的随机令牌，并丢掉请求原本带的会话，所以登录绝不会沿用别人选定的令牌。
 - 意外错误（比如数据库挂了）会交给 `OnError`。密码错误是带状态码的 `tifa.Error`，不会交给它。
 - `next` 来自 URL，所以任何人都可以往里放任何东西。`safeNext` 把它限制成本站的一个路径。没有它，你的登录页会把访问者送到攻击者指定的任何网站。不要去掉它。
-- 处理函数返回 `tifa.Redirect(..., 303)`。页面的调用通过路由器跟随它，浏览器里的会话副本由同一个响应更新（见[浏览器这一侧](/docs/pages/sessions#in-the-browser)）。
+- 处理函数返回 `tifa.Redirect(..., 303)`。页面的调用通过路由器跟随它，浏览器里的会话副本由同一个响应更新（见[浏览器这一侧](/docs/pages-and-data/sessions#in-the-browser)）。
 
 ## 登录页 {#the-sign-in-page}
 
@@ -556,7 +555,7 @@ func POST(c *tifa.Ctx, in RenameInput) error {
 - **先读会话，再读数据库。** 从会话里取 ID，再加载其余的信息。会话是登录时做的一份副本。之后改的名字、被收回的角色或被停用的账号，都不在里面。
 - **两处设防。** `OnRequest` 在任何 `Load` 运行之前，就把访问者挡在整个区域之外，页面加载和点击链接都一样。处理函数是一个独立的 URL，可以不经过它的页面直接被调用，所以每个需要用户的处理函数都要自己检查会话。返回某个用户数据的 `Load` 也应该这样做，用 `RequireUser`。
 - **让副本保持同步。** 会话里有东西变化时，像 `POST` 那样再次调用 `SetSession`。这次调用会把新会话带给浏览器，所以页头会立即跟着变。
-- **带 `Cache` 的页面。** 在带 `Cache` 的页面上，对所有人来说 `Session` 都是 nil，所以这样的页面不能是私有的（见[给 CDN 的缓存](/docs/pages/ssr-and-cache#cache-for-cdns)）。
+- **带 `Cache` 的页面。** 在带 `Cache` 的页面上，对所有人来说 `Session` 都是 nil，所以这样的页面不能是私有的（见[给 CDN 的缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)）。
 
 `app/account/page.tsx`：
 
@@ -621,9 +620,9 @@ func POST(c *tifa.Ctx) error {
 }
 ```
 
-`ClearSession` 会删除服务器上的记录并丢弃 cookie，所以即使有人留着一份旧 cookie，它也没有用了。没人登录时它什么也不做。退出登录要用 POST，绝不能用 GET：否则别的站点上的一个链接或一张图片就能做到这件事（见[登录库](/docs/pages/sessions#sign-in-libraries)）。
+`ClearSession` 会删除服务器上的记录并丢弃 cookie，所以即使有人留着一份旧 cookie，它也没有用了。没人登录时它什么也不做。退出登录要用 POST，绝不能用 GET：否则别的站点上的一个链接或一张图片就能做到这件事（见[登录库](/docs/pages-and-data/sessions#sign-in-libraries)）。
 
-页面需要知道会话已经结束：浏览器里的那份副本驱动着 `SignedIn`、`SignedOut` 和 `useSession`。Tifa 把新的会话放进这次调用的响应里，所以页头会立即跟着变。这对像上面那样重定向的处理函数成立，对以 `return tifa.ClearSession(c)` 结尾、没有输入也没有结果的处理函数也成立。只有自己用 `c.JSON` 或 `c.Text` 写响应的处理函数，没办法带上它（见[浏览器这一侧](/docs/pages/sessions#in-the-browser)）。
+页面需要知道会话已经结束：浏览器里的那份副本驱动着 `SignedIn`、`SignedOut` 和 `useSession`。Tifa 把新的会话放进这次调用的响应里，所以页头会立即跟着变。这对像上面那样重定向的处理函数成立，对以 `return tifa.ClearSession(c)` 结尾、没有输入也没有结果的处理函数也成立。只有自己用 `c.JSON` 或 `c.Text` 写响应的处理函数，没办法带上它（见[浏览器这一侧](/docs/pages-and-data/sessions#in-the-browser)）。
 
 ## 浏览器这一侧 {#the-browser-side}
 
@@ -682,7 +681,7 @@ function Account() {
 - `SignedIn` 和 `SignedOut` 按会话显示它们唯一的子元素。服务器会标记页面，所以首次绘制就是对的，不会闪烁。
 - `data` 是会话里 `Exposed` 的那部分，类型来自 Go。它用来显示，不用来决定某人能做什么。那由 Go 来决定。
 - 退出登录之后的 `router.clearCache()` 会丢掉路由器放在内存里的页面，这样这个浏览器上的下一个人，不会看到上一个人的数据。
-- 你自己写的、会让人登录或退出的 `fetch`，Tifa 并不知道。请使用生成的函数，或者在它之后调用 `router.invalidate()`（见[浏览器这一侧](/docs/pages/sessions#in-the-browser)的末尾）。
+- 你自己写的、会让人登录或退出的 `fetch`，Tifa 并不知道。请使用生成的函数，或者在它之后调用 `router.invalidate()`（见[浏览器这一侧](/docs/pages-and-data/sessions#in-the-browser)的末尾）。
 
 ## 测试 {#test-it}
 
@@ -733,7 +732,7 @@ func TestSignIn(t *testing.T) {
 }
 ```
 
-`tifatest.NewCtx` 给测试一个它自己的会话存储，所以 `SetSession` 可以工作。`SetSession` 一返回，cookie 就在记录器里了。每个请求建一个 `NewCtx`，在函数返回之后再读 `rec.Result()`：记录器会保留它第一次 `Result()` 时的头，所以用于两个请求的记录器，永远看不到第二个请求的 cookie。同一个测试里的 `Ctx` 共用存储，所以一个的 cookie 可以让下一个登录（见[测试会话](/docs/pages/sessions#testing-sessions)）。要测试一个需要用户、但不想真的登录的函数，用 `tifatest.SignIn`（见[测试会话](/docs/pages/sessions#testing-sessions)）。要像浏览器那样走完整个登录过程，从受保护的页面开始，经过重定向和表单，再回到页面，请用 `tifatest.Start` 启动应用（见[测试整个请求](/docs/pages/testing-apps#testing-a-whole-request)）。
+`tifatest.NewCtx` 给测试一个它自己的会话存储，所以 `SetSession` 可以工作。`SetSession` 一返回，cookie 就在记录器里了。每个请求建一个 `NewCtx`，在函数返回之后再读 `rec.Result()`：记录器会保留它第一次 `Result()` 时的头，所以用于两个请求的记录器，永远看不到第二个请求的 cookie。同一个测试里的 `Ctx` 共用存储，所以一个的 cookie 可以让下一个登录（见[测试会话](/docs/pages-and-data/sessions#testing-sessions)）。要测试一个需要用户、但不想真的登录的函数，用 `tifatest.SignIn`（见[测试会话](/docs/pages-and-data/sessions#testing-sessions)）。要像浏览器那样走完整个登录过程，从受保护的页面开始，经过重定向和表单，再回到页面，请用 `tifatest.Start` 启动应用（见[测试整个请求](/docs/pages-and-data/testing-apps#testing-a-whole-request)）。
 
 `app/account/request_test.go` 用 `tifatest.Start`，像浏览器那样走完整条路径：守卫、登录、页面、退出，以及再次触发守卫。它放在自己的包里，因为 `tifaapp` 会 import 每个路由：
 
@@ -789,15 +788,15 @@ func TestSignInAndOut(t *testing.T) {
 }
 ```
 
-`Start` 会运行 `OnStart`，所以演示账号是存在的。`client` 保存登录时拿到的会话 cookie，并在下一个请求里带上它，退出登录则会把它丢掉。当 `.tifa/tifaapp` 过期时，测试会失败，并提示运行 `go tool tifa check`（见[测试整个请求](/docs/pages/testing-apps#testing-a-whole-request)）。
+`Start` 会运行 `OnStart`，所以演示账号是存在的。`client` 保存登录时拿到的会话 cookie，并在下一个请求里带上它，退出登录则会把它丢掉。当 `.tifa/tifaapp` 过期时，测试会失败，并提示运行 `go tool tifa check`（见[测试整个请求](/docs/pages-and-data/testing-apps#testing-a-whole-request)）。
 
 ## 需要决定的事 {#decisions}
 
-**会话放在内存还是放在存储里。** 没有存储时，会话存在进程的内存里，重启会让所有人退出登录。刚开始这样就行。等它变得要紧时，给 `OnStart` 设置一个存储（见[会话存在哪里](/docs/pages/sessions#where-to-store-sessions)）。
+**会话放在内存还是放在存储里。** 没有存储时，会话存在进程的内存里，重启会让所有人退出登录。刚开始这样就行。等它变得要紧时，给 `OnStart` 设置一个存储（见[会话存在哪里](/docs/pages-and-data/sessions#where-to-store-sessions)）。
 
 **会话持续多久。** 从登录起 30 天，由 `session.max_age` 设置。它不会续期。对涉及钱或私人数据的应用，请把它缩短。
 
-**OAuth、魔法链接、两步验证码。** 它们替换的是密码检查，不是其余部分。检查成功后，像上面那样调用 `tifa.SetSession`。这些流程的临时状态放在库自己的一个短期 cookie 里（见[登录库](/docs/pages/sessions#sign-in-libraries)）。
+**OAuth、魔法链接、两步验证码。** 它们替换的是密码检查，不是其余部分。检查成功后，像上面那样调用 `tifa.SetSession`。这些流程的临时状态放在库自己的一个短期 cookie 里（见[登录库](/docs/pages-and-data/sessions#sign-in-libraries)）。
 
 **注册和重置密码。** 这里没有展示。两者最后都落在 `HashPassword` 和对你的用户表的一次写入上。
 

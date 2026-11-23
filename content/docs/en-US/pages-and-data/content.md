@@ -1,8 +1,7 @@
 ---
 title: Content
 description: How an app keeps posts, docs and other writing as Markdown files under content/ and reads them in Go
-source: docs/content.md
-sourceHash: ae835d8a601f
+source: docs/pages-and-data/content.md
 group: Pages and data
 groupOrder: 2
 order: 4
@@ -11,6 +10,8 @@ order: 4
 
 A collection is a folder of Markdown files under `content/` that the app reads in Go as typed values: a blog, a set of docs, release notes. The build reads the files, checks every front matter against a Go struct, turns each body into HTML and puts the result into the program. At run time a `Load` or a handler reads the entries like any other data, and nothing is parsed.
 
+**How much it is for.** Collections suit up to about 1,000 entries per app. At 1,000 entries of about 10 KB each, the program grows by about 10 MB and the build converts them in about 2 seconds. Every image a body uses goes into the program too, so put large or many images in object storage and link them by URL. For more than 1,000 entries, or writing that people edit while the site runs, keep it in a database and build the editing pages with Tifa, as a small CMS.
+
 Four steps put an entry on a page:
 
 1. Declare the collection in `content.go` (the struct is the schema of the front matter).
@@ -18,7 +19,7 @@ Four steps put an entry on a page:
 3. Read them in a `Load` with the methods of the collection.
 4. Show the body with `<HTML>`.
 
-The code in this page is from [test/apps/content](https://github.com/liustack/tifa/blob/v0.3.0/test/apps/content), an app with a blog and docs in two languages.
+The code in this page is from [test/apps/content](https://github.com/liustack/tifa/blob/v0.4.1/test/apps/content), an app with a blog and docs in two languages.
 
 ## Declaring a collection
 
@@ -138,7 +139,7 @@ tags: [search]
 ---
 ```
 
-Its keys are the `json` names of the fields of the schema struct, and the build checks them with the same JSON rules as `Load` results and handler inputs ([JSON rules](/docs/pages/routes#json-rules)).
+Its keys are the `json` names of the fields of the schema struct, and the build checks them with the same JSON rules as `Load` results and handler inputs ([JSON rules](/docs/pages-and-data/routes#json-rules)).
 
 - A field may be a string, number, bool, `time.Time`, pointer, slice, map with string keys or nested struct. `time.Time` takes `2006-01-02` (midnight UTC) and RFC 3339, quoted or not. Types that read their own JSON, `[]byte`, `time.Duration`, interfaces and the json options other than `omitempty` and `omitzero` (such as `,string`) fail the build.
 - A field is required unless it is a pointer, slice or map, or has `omitempty` or `omitzero`. This is the same rule as for optional fields in the TypeScript types of the page.
@@ -276,7 +277,7 @@ export default function PostPage() {
 }
 ```
 
-- `Body() tifa.HTML` reads the HTML of the entry from the program each time it is called (`tifa dev` reads it from `.tifa/dist`) and keeps no copy. A page shows it with `<HTML>`, see [Showing HTML the app trusts](/docs/pages/pages#showing-html-the-app-trusts). Links inside the body go through the router.
+- `Body() tifa.HTML` reads the HTML of the entry from the program each time it is called (`tifa dev` reads it from `.tifa/dist`) and keeps no copy. A page shows it with `<HTML>`, see [Showing HTML the app trusts](/docs/pages-and-data/pages#showing-html-the-app-trusts). Links inside the body go through the router.
 - `Headings() []content.Heading` lists the `h1` to `h6` of the body in order, each as `{Depth, ID, Text}`: its level, the `id` it has in the HTML and its text.
 
 ## Markdown to HTML
@@ -401,7 +402,7 @@ One request that reads a collection several times may see both sides of that mom
 
 ## `tifa dev`
 
-`tifa dev` reads the content from `.tifa/dist`, so a change under `content/` needs no go build and no restart (see [What each change triggers](/docs/ship/dev#what-each-change-triggers)):
+`tifa dev` reads the content from `.tifa/dist`, so a change under `content/` needs no go build and no restart (see [What each change triggers](/docs/build-and-deploy/dev#what-each-change-triggers)):
 
 - A Markdown file changed, added or removed, its body or its front matter: `tifa dev` scans `content/` again, converts that entry, writes `.tifa/dist/content/` and `content.json`, and the running app loads them. The app runs `Validate` on every entry and takes the new data, and a page you load after that shows it. `OnStart` does not run again, and open pages reload.
 - Another file under `content/`, such as an image: the entries in its folder are converted again, and the translations that fall back to that folder.

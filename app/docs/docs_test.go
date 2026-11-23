@@ -8,17 +8,6 @@ import (
 	tifaweb "github.com/liustack/tifa-web"
 )
 
-// Every section of the sidebar has a name in Chinese, so that the sidebar of /zh-CN has no English
-// section.
-func TestEverySectionHasAChineseName(t *testing.T) {
-	tifatest.LoadContent(t)
-	for _, d := range tifaweb.Docs.All() {
-		if _, ok := groupNames[d.Group]; !ok {
-			t.Errorf("the section %q of %s has no name in Chinese: add it to groupNames", d.Group, d.Path)
-		}
-	}
-}
-
 func TestTreeFollowsTheLanguage(t *testing.T) {
 	tifatest.LoadContent(t)
 	en, zh := BuildTree("en-US"), BuildTree(tifaweb.Chinese)

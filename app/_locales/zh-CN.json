@@ -97,9 +97,7 @@
   "docs": {
     "version": "Tifa {{version}} 的文档",
     "copyPage": "复制本页",
-    "englishOnly": "文档暂时只有英文。",
-    "outdated": "英文版在这之后改过，这页的中文可能没跟上。",
-    "outdatedLink": "看英文版"
+    "englishOnly": "文档暂时只有英文。"
   },
   "home": {
     "stack": {
@@ -162,7 +160,7 @@
       "costTitle": "代价",
       "cost": [
         "Tifa 在 slowjs 里渲染页面，slowjs 是纯 Go 写的 JavaScript 引擎。它没有 JIT，所以一次渲染比在 Node 里更久。",
-        "每个请求都要渲染时，Next.js 每秒答出的页面请求是 Tifa 的 1.17 倍，TanStack Start 是 1.57 倍，峰值内存分别是 Tifa 的 7 倍和 6 倍。见[研究报告（英文）](https://github.com/liustack/tifa/blob/v0.3.0/docs/studies/nextjs-and-tanstack-start.md#conclusions)。"
+        "每个请求都要渲染时，Next.js 每秒答出的页面请求是 Tifa 的 1.17 倍，TanStack Start 是 1.57 倍，峰值内存分别是 Tifa 的 7 倍和 6 倍。见[研究报告（英文）](https://github.com/liustack/tifa/blob/v0.4.1/docs/studies/nextjs-and-tanstack-start.md#conclusions)。"
       ]
     },
     "pages": {

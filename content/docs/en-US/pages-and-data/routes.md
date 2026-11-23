@@ -1,8 +1,7 @@
 ---
 title: Routes and Ctx
 description: How to write the Go side of a route in route.go
-source: docs/routes.md
-sourceHash: a505c7afdde6
+source: docs/pages-and-data/routes.md
 group: Pages and data
 groupOrder: 2
 order: 1
@@ -33,7 +32,7 @@ func POST(c *tifa.Ctx, in ShipInput) (orders.Shipment, error) {
 
 - `Load` returns the page data. Its return type must convert to TypeScript (see "JSON rules" below).
 - `GET`, `POST`, `PUT`, `PATCH` and `DELETE` handle the HTTP method they are named after.
-- `Layout` returns the data of the Layout of the folder (see [Layout](/docs/pages/pages#layout)).
+- `Layout` returns the data of the Layout of the folder (see [Layout](/docs/pages-and-data/pages#layout)).
 - A folder with a `page.tsx` is a page. The framework renders its GET, so you cannot also write `GET`. A page that needs no data and no other method can be `page.tsx` alone, without `route.go`.
 - A folder with `route.go` and no `page.tsx` is an API route when it declares a method handler: every method handler answers as written, and `Load` is not allowed, because `Load` loads the data of a page. A `route.go` with only a `Layout` is no API route. It gives the pages below it their Layout data.
 - Everything is package-level functions and constants. Use the global variables the app has set up for dependencies. The framework does no dependency injection.
@@ -44,7 +43,7 @@ When an error is returned:
 | Returned | Result |
 | --- | --- |
 | `tifa.ErrNotFound` | 404 |
-| `tifa.Redirect(url, status)` | A redirect. Page loads and navigation follow it, and so does a handler function called from the browser (see [Calling method handlers from the browser](/docs/pages/pages#calling-method-handlers-from-the-browser)). Panics when `status` is not 3xx |
+| `tifa.Redirect(url, status)` | A redirect. Page loads and navigation follow it, and so does a handler function called from the browser (see [Calling method handlers from the browser](/docs/pages-and-data/pages#calling-method-handlers-from-the-browser)). Panics when `status` is not 3xx |
 | `tifa.Error{Status, Message}` | Answered with its status code and message, does not go to `OnError`. A status outside 400 to 599 is handled as an unexpected error |
 | `tifa.Fields{"carrier": "pick a carrier"}` | 422 with a message per input field by its json name, does not go to `OnError` |
 | Any other error, a panic | Goes to `OnError`. Without one, it is logged and answered with 500 |
@@ -68,7 +67,7 @@ func POST(c *tifa.Ctx, in ShipInput) (Shipment, error)
 - Fields are named by their `json` tags, in a form body and the query string too. A `form` tag fails the build, also in a struct passed to `c.Bind` or `c.BindQuery`. Path parameters, headers and cookies still come from `c`.
 - The input and the result follow the JSON rules below, the same as the result of `Load`. The input must also read back from the JSON its TypeScript type describes: a type that is a string because of `MarshalText` needs `UnmarshalText([]byte) error` too, a type with `UnmarshalText` must be a string in TypeScript unless it is a map key (a key is always a JSON string), and `UnmarshalJSON` is not accepted (except on `time.Time`).
 - When the input type has a method `Validate` (it must be `func() error` or `func(c *tifa.Ctx) error`), it runs after decoding and before the handler. `nil` goes on. With the Ctx, `Validate` can read the request: `c.Language()` for a message in the visitor's language (see [Validation messages](/docs/guides/i18n#validation-messages)), `c.Param`, `c.Query`, `c.QueryValues`, `c.Header`, `c.Cookie`, `c.Path()`, `c.Context()`, `c.Request()`, and `tifa.Session`. It checks and answers with its error only, so the build fails when `Validate`, or a function it passes the Ctx to, writes the response (`c.JSON`, `c.Text`, `c.NoContent`, `c.SetHeader`, `c.SetCookie`, `c.Writer`), reads the body again (`c.Bind`, `c.BindQuery`, `c.SetBodyLimit`, `c.SetReadTimeout`), calls `tifa.SetSession` or `tifa.ClearSession`, or calls `tifa.Use`. The Ctx may go where it may in `Load` (see [How Load may use Ctx](#how-load-may-use-ctx)). A `tifa.Error` or `tifa.Fields` is answered as is, so return `tifa.Fields` to mark single fields. Collect them in a `tifa.Fields{}` and end with `return fields.Err()`, which is nil when nothing was added (an empty `tifa.Fields` is still an error). Any other error is answered with 400 and its `err.Error()` as the message, which the user sees.
-- A POST, PUT, PATCH or DELETE that a browser sends from another site, a form or multipart included, is answered with 403 before the handler runs, so a handler needs no check of its own for it. `server.trusted_origins` and `server.cross_site_paths` let chosen origins and paths through (see [Cross-site writes](/docs/ship/config#cross-site-writes)).
+- A POST, PUT, PATCH or DELETE that a browser sends from another site, a form or multipart included, is answered with 403 before the handler runs, so a handler needs no check of its own for it. `server.trusted_origins` and `server.cross_site_paths` let chosen origins and paths through (see [Cross-site writes](/docs/build-and-deploy/config#cross-site-writes)).
 - A body or query string that does not decode is answered with 400 (413 for a body over the limit, 415 for another content type or none, or for JSON to an input that holds files, 408 for a body that does not arrive in time), and the handler does not run.
 - A handler that writes its own response decodes input with `c.Bind(&in)` for the body and `c.BindQuery(&in)` for the query string. These name a field by its `json` tag, then its Go name, as a typed input does. A `form` tag in a struct passed to them fails the build, as it does for a typed input (a value the build cannot see the type of, such as one behind an interface, is not checked, and the tag is ignored). `c.Bind` fills `*multipart.FileHeader` and `[]*multipart.FileHeader` fields from a multipart form too.
 
@@ -133,10 +132,9 @@ func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
 }
 ```
 
-- `c.SetBodyLimit(n)` is a number of bytes. A body over it is answered with 413 before the handler runs. The limit counts the whole body: the files, the other fields and the multipart framing. Take the number from an [option of the app](/docs/ship/config#options-of-the-app) if it should change without a build: `c.SetBodyLimit(int64(UploadLimit))` with `UploadLimit = tifa.Size("upload.limit", 4<<20, "Largest upload")`.
+- `c.SetBodyLimit(n)` is a number of bytes. A body over it is answered with 413 before the handler runs. The limit counts the whole body: the files, the other fields and the multipart framing. Take the number from an [option of the app](/docs/build-and-deploy/config#options-of-the-app) if it should change without a build: `c.SetBodyLimit(int64(UploadLimit))` with `UploadLimit = tifa.Size("upload.limit", 4<<20, "Largest upload")`.
 - `c.SetReadTimeout(d)` gives the body `d` from now to arrive, and the answer `server.write_timeout` after it, since it is written once the body is in. A body still coming when the time is over is answered with 408. A request with no body, such as a GET, keeps its deadlines and the call does nothing.
 - Both return an error once the body is being read, and `SetReadTimeout` also when `d` is not over 0 or when the response cannot reach the connection, such as behind a middleware of `tifa.SetHTTPHandler` that does not unwrap it. Check the error and return it.
-- `BodyLimit` and `ReadTimeout` as constants in `route.go` are gone: declaring one fails the build and shows this `OnRequest` for the route.
 
 ## Ctx
 
@@ -196,7 +194,7 @@ The value `Load` or a `Layout` function returns, and the input and result of a m
 | `bool` | `boolean` |
 | integers, floats, `json.Number` | `number` |
 | `string`, `time.Time` | `string` |
-| `tifa.HTML` | `HTML` of `tifa/client`, see [Showing HTML the app trusts](/docs/pages/pages#showing-html-the-app-trusts). Not a map key, a handler input, in the session or a whole result |
+| `tifa.HTML` | `HTML` of `tifa/client`, see [Showing HTML the app trusts](/docs/pages-and-data/pages#showing-html-the-app-trusts). Not a map key, a handler input, in the session or a whole result |
 | `*multipart.FileHeader`, `[]*multipart.FileHeader` | `Blob \| null`, `Blob[]`. Only in a field of the input of a POST, PUT or PATCH handler, see [Files in the input](#files-in-the-input) |
 | pointer | `T \| null` |
 | slice | `T[]`. A nil slice is written as `[]` |

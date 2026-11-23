@@ -57,7 +57,7 @@ export const deployTerminal: TerminalLine[] = [
   { kind: 'ok', text: 'deployed tifa-web release 20261121T175155Z (commit b33189ed3edc) in 25.7s' },
 ]
 
-// Whole visits to the example shop, one core each, as docs/performance.md has them for
+// Whole visits to the example shop, one core each, as docs/reference/performance.md has them for
 // 2026-11-18. Each row is the value of Tifa, TanStack Start (uncompressed) and Next.js. The width
 // of a bar is the value over the largest of its row.
 export const numbers = [

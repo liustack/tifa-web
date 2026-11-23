@@ -2,7 +2,6 @@
 title: Background work
 description: How to do work outside a request in a Tifa app
 source: docs/guides/jobs.md
-sourceHash: 02741236be66
 group: Guides
 groupOrder: 3
 order: 6
@@ -98,7 +97,7 @@ If the function needs code of a domain under `app/`, the root cannot import that
 
 ## What Tifa does when it stops
 
-On SIGINT or SIGTERM (a deploy, Ctrl-C), in this order ([`server.shutdown_timeout`](/docs/ship/config#settings) is 10 seconds by default):
+On SIGINT or SIGTERM (a deploy, Ctrl-C), in this order ([`server.shutdown_timeout`](/docs/build-and-deploy/config#settings) is 10 seconds by default):
 
 1. It closes the channel of `tifa.ShuttingDown`, which streams watch to end at once ([Streaming](/docs/guides/streaming#when-the-program-stops)), stops accepting connections and waits up to `shutdown_timeout` for the requests in flight.
 2. If some are still running, it cancels their contexts and waits up to `shutdown_timeout` again.
@@ -106,7 +105,7 @@ On SIGINT or SIGTERM (a deploy, Ctrl-C), in this order ([`server.shutdown_timeou
 
 Tifa knows nothing of the goroutines you start. Two things follow:
 
-- **Stop them yourself.** Start them with a context of their own and cancel it in `OnShutdown`. The context `OnStart` receives stays valid, but it is done as soon as the stop signal comes, while the last requests are still running (see [hooks.go](/docs/pages/hooks#hooksgo)). A goroutine on its own context keeps working while those requests finish, and one of them may still queue a job.
+- **Stop them yourself.** Start them with a context of their own and cancel it in `OnShutdown`. The context `OnStart` receives stays valid, but it is done as soon as the stop signal comes, while the last requests are still running (see [hooks.go](/docs/pages-and-data/hooks#hooksgo)). A goroutine on its own context keeps working while those requests finish, and one of them may still queue a job.
 - **Catch their panics.** Tifa turns a panic in a request into a 500 and goes on. A panic in your own goroutine ends the whole program. Every loop below recovers.
 
 ## The pieces
@@ -534,7 +533,7 @@ func TestRunDoesAJobAndRetriesAFailure(t *testing.T) {
 }
 ```
 
-The same file tests a job that panics, `EnqueueOnce` with a taken key, a job left `running` by a crash, a stop in the middle of a job (it goes back to `queued` with no attempt used), and `Every` after a panic. The hooks are tested together: `OnStart` with a temporary `DBPath`, then `OnShutdown`, which must return without error and leave the database closed. See [Testing](/docs/pages/testing-apps) for tests of route code.
+The same file tests a job that panics, `EnqueueOnce` with a taken key, a job left `running` by a crash, a stop in the middle of a job (it goes back to `queued` with no attempt used), and `Every` after a panic. The hooks are tested together: `OnStart` with a temporary `DBPath`, then `OnShutdown`, which must return without error and leave the database closed. See [Testing](/docs/pages-and-data/testing-apps) for tests of route code.
 
 ## Check it on the real program
 

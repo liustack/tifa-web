@@ -1,17 +1,16 @@
 ---
 title: 表单
-description: 如何在 Tifa 应用里做一个表单
-source: docs/guides/forms.md
-group: Guides
+description: 怎样在 Tifa 应用里做一个表单
+source: docs/guides/forms.zh-CN.md
+group: 做法
 groupOrder: 3
 order: 1
-translatedFrom: db192541b2a3
 ---
 
 
 一本留言簿。访客输入名字和留言，Go 一侧检查并保存留言，页面显示它。做完之后，表单会在每个错误的输入下面显示错误，发送时禁用按钮，立刻显示新留言，并在服务器回答之后加载真实的列表。
 
-这些代码是照写出来的样子运行过的。一共两个文件。参考文档说明了每个调用做什么：[方法处理函数](/docs/pages/routes#method-handlers-with-input-and-result)、[从浏览器调用它们](/docs/pages/pages#calling-method-handlers-from-the-browser)。
+这些代码是照写出来的样子运行过的。一共两个文件。参考文档说明了每个调用做什么：[方法处理函数](/docs/pages-and-data/routes#method-handlers-with-input-and-result)、[从浏览器调用它们](/docs/pages-and-data/pages#calling-method-handlers-from-the-browser)。
 
 ## Go 一侧 {#the-go-side}
 
@@ -197,12 +196,12 @@ function Field({ label, name, state }: { label: string; name: 'name' | 'text'; s
 1. React 在一个 transition 里，用表单数据调用你给 `useActionState` 的函数。`useFormStatus` 报告 `pending`，所以按钮被禁用，并显示「Sending…」。
 2. `addOptimistic` 把新留言放在列表最上面，调暗显示。它必须在 action 里调用（见 [useOptimistic](https://react.dev/reference/react/useOptimistic)）。
 3. `POST` 把输入作为 JSON 发出。如果 Go 拒绝了它，这个调用会抛出 `TifaError`。`e.fields` 放着 `tifa.Fields` 的消息，每个输入一条，`e.message` 是其他任何错误的文字。
-4. 成功时，`router.invalidate({ sync: true })` 重新加载页面数据，并在页面显示它时完成。到那时 action 才结束，调暗的留言被真实的留言替换。见 [重新加载页面数据](/docs/pages/pages#pagetsx)。
+4. 成功时，`router.invalidate({ sync: true })` 重新加载页面数据，并在页面显示它时完成。到那时 action 才结束，调暗的留言被真实的留言替换。见 [重新加载页面数据](/docs/pages-and-data/pages#pagetsx)。
 5. 失败时，action 返回输入的值和消息。乐观的留言会自己消失，因为 action 结束时没有新的页面数据。
 
 ## 取舍 {#decisions}
 
-**用 React hooks 还是表单库。** 这三个 hooks（`useActionState`、`useFormStatus`、`useOptimistic`，见 [useActionState](https://react.dev/reference/react/useActionState) 和 [useFormStatus](https://react.dev/reference/react-dom/hooks/useFormStatus)）足够应付几个字段、没有客户端规则的表单。字段很多、规则要在访客输入时运行，或者有字段数组时，就用库。`examples/shop` 用 react-hook-form 加一个 Zod schema（`app/projects/project+/orders/order+/ship-form.tsx`），[app.md](/docs/pages/server-render#libraries-that-render-differently-on-the-server) 列出了为它在服务器上要做什么。Tifa 这一部分对任何库都一样：捕获 `TifaError`，把 `e.fields` 交给库设置错误的办法。对 react-hook-form 就是 `form.setError(name, { message })`。
+**用 React hooks 还是表单库。** 这三个 hooks（`useActionState`、`useFormStatus`、`useOptimistic`，见 [useActionState](https://react.dev/reference/react/useActionState) 和 [useFormStatus](https://react.dev/reference/react-dom/hooks/useFormStatus)）足够应付几个字段、没有客户端规则的表单。字段很多、规则要在访客输入时运行，或者有字段数组时，就用库。`examples/shop` 用 react-hook-form 加一个 Zod schema（`app/projects/project+/orders/order+/ship-form.tsx`），[app.md](/docs/pages-and-data/server-render#libraries-that-render-differently-on-the-server) 列出了为它在服务器上要做什么。Tifa 这一部分对任何库都一样：捕获 `TifaError`，把 `e.fields` 交给库设置错误的办法。对 react-hook-form 就是 `form.setError(name, { message })`。
 
 **水合之前让按钮保持禁用。** 用函数作为 `action` 时，服务器会写出 `action="javascript:throw new Error('React form unexpectedly submitted.')"`。在脚本运行之前，表单什么也发不出去，在输入框里按 Enter 就会碰上这个。`useHydrated` 让按钮在那之前一直禁用，这也挡住了 Enter 键。
 

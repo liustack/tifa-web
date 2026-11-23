@@ -40,7 +40,7 @@ func GET(c *tifa.Ctx, in Input) ([]Result, error) {
 		return true
 	}
 	for _, d := range tifaweb.SortedDocs(c.Language()) {
-		url := tifaweb.DocURL(d.Doc)
+		url := tifaweb.DocURL(d)
 		if match(d.Title) {
 			out = append(out, Result{ID: d.ID, URL: url, Type: "page", Content: d.Title})
 		}

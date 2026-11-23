@@ -1,8 +1,7 @@
 ---
 title: Hooks
 description: How to set up the whole app in hooks.go (OnStart, OnShutdown, OnRequest, OnError, the log handler, net/http middleware) and in setup.ts (the setup that runs...
-source: docs/hooks.md
-sourceHash: 4c6c7fcd2094
+source: docs/pages-and-data/hooks.md
 group: Pages and data
 groupOrder: 2
 order: 6
@@ -22,10 +21,10 @@ func OnError(c *tifa.Ctx, err error) tifa.Error // unexpected errors: report, re
 
 - `OnStart` gets the context of the program: it is done when the program gets SIGINT or SIGTERM. Pass it to the calls that can wait, such as `db.PingContext(ctx)`, so Ctrl-C does not wait for a database that never answers. If `OnStart` returns an error, the program stops. `ctx` stays valid after `OnStart` returns, so a goroutine may watch it, but it is done as soon as the stop signal comes: before the requests in flight finish and before `OnShutdown` runs. Work that requests feed, such as a job queue, runs on a context of its own that `OnShutdown` cancels, so the jobs the last requests queue still run (see [Background work](/docs/guides/jobs)).
 - `OnShutdown` runs once the requests in flight have returned. A handler that streams with no end of its own, such as server-sent events, would hold that for `server.shutdown_timeout`: it returns when `tifa.ShuttingDown(c.Context())` closes, as the stop starts (see [Streaming](/docs/guides/streaming#when-the-program-stops)).
-- `OnRequest` runs for pages, navigation data requests, API routes and unmatched URLs. It does not run for static files, and it does not see a write that a browser sends from another site: the program refuses that with 403 first (see [Cross-site writes](/docs/ship/config#cross-site-writes)). It sees the [security headers](/docs/ship/config#security-headers) already set and can change them. For an unmatched URL, `c.Pattern()` is empty, and `next(c)` runs the Layouts its 404 shows inside (see [404](/docs/pages/pages#404)). On a page with `Cache` it sees an anonymous request, with no cookie, session or most headers (see [Cache for CDNs](/docs/pages/ssr-and-cache#cache-for-cdns)).
+- `OnRequest` runs for pages, navigation data requests, API routes and unmatched URLs. It does not run for static files, and it does not see a write that a browser sends from another site: the program refuses that with 403 first (see [Cross-site writes](/docs/build-and-deploy/config#cross-site-writes)). It sees the [security headers](/docs/build-and-deploy/config#security-headers) already set and can change them. For an unmatched URL, `c.Pattern()` is empty, and `next(c)` runs the Layouts its 404 shows inside (see [404](/docs/pages-and-data/pages#404)). On a page with `Cache` it sees an anonymous request, with no cookie, session or most headers (see [Cache for CDNs](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)).
 - Resources the whole app shares, such as a database connection or a logger, go in files at the app root next to `hooks.go`, for example `db.go` or `middleware.go`. Each one builds a package-level variable or a function: set it up in `OnStart`, release it in `OnShutdown`, and use it directly anywhere, for example `myapp.DB` after importing `example.com/myapp`. Domains under `app/` import the root package for this. Models and queries stay in their domains. Route code uses these resources only inside functions, never while package-level variables are initialized. Do not use `init()` for setup. See [which way imports go](/docs/start/structure#which-way-imports-go).
 - `next` runs the matched route, once. A second call returns an error. Pass it the `*tifa.Ctx` the route should see: `next(c)`, or `next(c.WithContext(ctx))` to store request-scoped values in the standard context, as `r.WithContext(ctx)` does for a request. `c.WithContext` returns a copy and leaves `c` alone. Business packages provide typed getters.
-- The error `next` returns can be recognized with `errors.Is` and `errors.As`, a redirect as `*tifa.RedirectError`, and a render turned away because every VM is busy as `tifa.ErrSSRBusy` (see [Handling a rejected render](/docs/ship/config#handling-a-rejected-render)).
+- The error `next` returns can be recognized with `errors.Is` and `errors.As`, a redirect as `*tifa.RedirectError`, and a render turned away because every VM is busy as `tifa.ErrSSRBusy` (see [Handling a rejected render](/docs/build-and-deploy/config#handling-a-rejected-render)).
 
 ### Changing the log handler
 
@@ -42,7 +41,7 @@ Tifa looks up `slog.Default()` for each message, so a later `slog.SetDefault` al
 
 ### Setting up in OnStart
 
-`OnStart` is where the app wires what the whole process shares: the log handler, plain `net/http` middleware, the [session store](/docs/pages/sessions#where-to-store-sessions) and the pages of the [sitemap](/docs/guides/seo) with `tifa.SetSitemap`.
+`OnStart` is where the app wires what the whole process shares: the log handler, plain `net/http` middleware, the [session store](/docs/pages-and-data/sessions#where-to-store-sessions) and the pages of the [sitemap](/docs/guides/seo) with `tifa.SetSitemap`.
 
 ```go
 import (
@@ -66,7 +65,7 @@ func OnStart(ctx context.Context) error {
 }
 ```
 
-`tifa.SetHTTPHandler(wrap)` gets Tifa's handler and returns the one to serve. The wrapper is outside everything else: static files, the cross-site check and the routes. It sees every request with the original `http.ResponseWriter`, including the 403 of a refused cross-site write. Once the handler it wraps has returned, `r.Pattern` of that request is the route template, the same as `c.Pattern()` (such as `/projects/{project}`, and empty when no route matched), so a metrics middleware can count by route and not by URL. The browser asks for the data of a navigation with the `_tifa` parameter, and `.p` marks a preload. Do not count page views from these requests: a preload can serve a navigation without another request, and a reload adds one. Count the client navigations the browser finishes, plus the full page requests (see [Page requests](/docs/ship/build#page-requests)). It is plain `net/http`, so `OnRequest`, `OnError` and the cross-site check do not apply to the paths it serves itself, such as `/debug/pprof/` above. Put such paths behind your own check, or keep them on another listener. A shutdown still waits for the requests it wraps. Call it in `OnStart` only: it panics once the server listens. `tifa.SetHTTPHandler(nil)` removes the wrapper. It runs outside the anonymous request of a page with `Cache` (see [Cache for CDNs](/docs/pages/ssr-and-cache#cache-for-cdns)): the values it puts into the context of the request reach `OnRequest` and `Load` of such a page, so do not recognize visitors in it, do it in `OnRequest`.
+`tifa.SetHTTPHandler(wrap)` gets Tifa's handler and returns the one to serve. The wrapper is outside everything else: static files, the cross-site check and the routes. It sees every request with the original `http.ResponseWriter`, including the 403 of a refused cross-site write. Once the handler it wraps has returned, `r.Pattern` of that request is the route template, the same as `c.Pattern()` (such as `/projects/{project}`, and empty when no route matched), so a metrics middleware can count by route and not by URL. The browser asks for the data of a navigation with the `_tifa` parameter, and `.p` marks a preload. Do not count page views from these requests: a preload can serve a navigation without another request, and a reload adds one. Count the client navigations the browser finishes, plus the full page requests (see [Page requests](/docs/build-and-deploy/build#page-requests)). It is plain `net/http`, so `OnRequest`, `OnError` and the cross-site check do not apply to the paths it serves itself, such as `/debug/pprof/` above. Put such paths behind your own check, or keep them on another listener. A shutdown still waits for the requests it wraps. Call it in `OnStart` only: it panics once the server listens. `tifa.SetHTTPHandler(nil)` removes the wrapper. It runs outside the anonymous request of a page with `Cache` (see [Cache for CDNs](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)): the values it puts into the context of the request reach `OnRequest` and `Load` of such a page, so do not recognize visitors in it, do it in `OnRequest`.
 
 ## setup.ts
 
@@ -94,5 +93,5 @@ i18n.services.formatter?.addCached('currency', (lng, options) => {
 
 ## Sessions
 
-A session is the record of who is signed in, kept on the server and found by a cookie. Sign in with `tifa.SetSession(c, &s)` in a method handler, read it with `tifa.Session[S](c)` anywhere that has the Ctx, and sign out with `tifa.ClearSession(c)`. [Sessions](/docs/pages/sessions) has the rest: the cookie, a store of your own on Redis or SQL, where each call may be made, `useSession` and `SignedIn` in the browser, testing and the errors.
+A session is the record of who is signed in, kept on the server and found by a cookie. Sign in with `tifa.SetSession(c, &s)` in a method handler, read it with `tifa.Session[S](c)` anywhere that has the Ctx, and sign out with `tifa.ClearSession(c)`. [Sessions](/docs/pages-and-data/sessions) has the rest: the cookie, a store of your own on Redis or SQL, where each call may be made, `useSession` and `SignedIn` in the browser, testing and the errors.
 

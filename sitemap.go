@@ -38,16 +38,13 @@ func sitemap(c *tifa.Ctx) (tifa.Sitemap, error) {
 		// No Content: the changelog is long and would fill /llms-full.txt with every release.
 		sm.Pages = append(sm.Pages, tifa.SitemapPage{Language: language, Path: "/changelog", Title: changelog.Title, Description: changelog.Description})
 		for _, d := range SortedDocs(language) {
-			page := tifa.SitemapPage{
+			sm.Pages = append(sm.Pages, tifa.SitemapPage{
 				Language:    language,
-				Path:        DocURL(d.Doc),
+				Path:        DocURL(d),
 				Title:       d.Title,
 				Description: d.Description,
-			}
-			if d.Own {
-				page.Content = d.Doc
-			}
-			sm.Pages = append(sm.Pages, page)
+				Content:     d,
+			})
 		}
 	}
 	return sm, nil

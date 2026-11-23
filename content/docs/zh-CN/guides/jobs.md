@@ -1,11 +1,10 @@
 ---
 title: 后台任务
-description: 如何在 Tifa 应用里做请求之外的工作
-source: docs/guides/jobs.md
-group: Guides
+description: 怎样在 Tifa 应用里做请求之外的工作
+source: docs/guides/jobs.zh-CN.md
+group: 做法
 groupOrder: 3
 order: 6
-translatedFrom: 02741236be66
 ---
 
 
@@ -98,7 +97,7 @@ func every(ctx context.Context, d time.Duration, fn func(context.Context) error)
 
 ## Tifa 停止时做什么 {#what-tifa-does-when-it-stops}
 
-收到 SIGINT 或 SIGTERM（部署、Ctrl-C）时，按这个顺序（[`server.shutdown_timeout`](/docs/ship/config#settings) 默认是 10 秒）：
+收到 SIGINT 或 SIGTERM（部署、Ctrl-C）时，按这个顺序（[`server.shutdown_timeout`](/docs/build-and-deploy/config#settings) 默认是 10 秒）：
 
 1. 它关闭 `tifa.ShuttingDown` 的 channel，让监听它的流立即结束（[流式传输](/docs/guides/streaming#when-the-program-stops)），停止接受连接，并最多等 `shutdown_timeout` 让正在处理的请求完成。
 2. 如果还有请求在运行，它会取消它们的 context，再最多等一个 `shutdown_timeout`。
@@ -106,7 +105,7 @@ func every(ctx context.Context, d time.Duration, fn func(context.Context) error)
 
 Tifa 对你启动的 goroutine 一无所知。由此得出两点：
 
-- **自己停掉它们。** 用自己的 context 启动它们，在 `OnShutdown` 里取消它。`OnStart` 收到的 context 仍然有效，但停止信号一来它就结束了，而这时最后几个请求还在运行（见 [hooks.go](/docs/pages/hooks#hooksgo)）。用自己 context 的 goroutine，在这些请求完成的过程中会继续工作，而其中某个请求可能还会往队列里放任务。
+- **自己停掉它们。** 用自己的 context 启动它们，在 `OnShutdown` 里取消它。`OnStart` 收到的 context 仍然有效，但停止信号一来它就结束了，而这时最后几个请求还在运行（见 [hooks.go](/docs/pages-and-data/hooks#hooksgo)）。用自己 context 的 goroutine，在这些请求完成的过程中会继续工作，而其中某个请求可能还会往队列里放任务。
 - **接住它们的 panic。** Tifa 会把请求里的 panic 变成 500 并继续运行。你自己的 goroutine 里的 panic 会让整个程序退出。下面的每个循环都做了 recover。
 
 ## 各个部分 {#the-pieces}
@@ -534,7 +533,7 @@ func TestRunDoesAJobAndRetriesAFailure(t *testing.T) {
 }
 ```
 
-同一个文件还测试了这些情况：panic 的任务、key 已被占用时的 `EnqueueOnce`、因崩溃而停留在 `running` 的任务、任务进行到一半时停止（它回到 `queued`，不消耗尝试次数），以及 panic 之后的 `Every`。hook 一起测试：用一个临时的 `DBPath` 运行 `OnStart`，然后运行 `OnShutdown`，它必须不出错地返回，并让数据库处于已关闭状态。路由代码的测试见[测试](/docs/pages/testing-apps)。
+同一个文件还测试了这些情况：panic 的任务、key 已被占用时的 `EnqueueOnce`、因崩溃而停留在 `running` 的任务、任务进行到一半时停止（它回到 `queued`，不消耗尝试次数），以及 panic 之后的 `Every`。hook 一起测试：用一个临时的 `DBPath` 运行 `OnStart`，然后运行 `OnShutdown`，它必须不出错地返回，并让数据库处于已关闭状态。路由代码的测试见[测试](/docs/pages-and-data/testing-apps)。
 
 ## 在真实程序上检查 {#check-it-on-the-real-program}
 

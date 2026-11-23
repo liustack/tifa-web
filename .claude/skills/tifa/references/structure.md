@@ -1,9 +1,9 @@
-<!-- Written by Tifa v0.3.0 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.4.1 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 # Structuring an app
 
 Contents: where code goes, which way packages may import, shared resources.
 
-Full docs (in the folder `go tool tifa docs` prints): `docs/structure.md` and `docs/philosophy.md`.
+Full docs (in the folder `go tool tifa docs` prints): `docs/start/structure.md` and `docs/start/philosophy.md`.
 
 ## A domain is a folder under app/
 
