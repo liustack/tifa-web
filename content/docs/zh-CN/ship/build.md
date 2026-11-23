@@ -240,7 +240,7 @@ go tool tifa upgrade [version] [--dir app-root]
 2. 命令把剩下的事交给新的 Tifa，即 `go tool tifa upgrade --after <old version>`。旧的二进制不做这些，因为只有新的 Tifa 才知道它固定了哪些版本，以及它的 skill 写了什么。
 3. `tifa new` 用精确版本写出的那些包（`react`、`react-dom`、`@tanstack/react-router`、`vite`，以及它的 `package.json` 里的其他包），当应用把它们列成更旧的精确版本时，会被设成新 Tifa 的版本。其他每个包、其他每个键和文件的排版都保持原样。比固定版本更新的包会保留，并带一行类似 `react 19.4.0 is newer than the 19.3.0 Tifa is tested with, left as it is` 的提示。写成 `^19.2.0`、`~19.2.0`、范围、标签或 `workspace:` 的版本从不去猜：它会保留，并带一行说明。例外是 `@tanstack/react-router`，`tifa build` 只接受它恰好是固定的那个版本（见[升级 TanStack Router](#upgrading-tanstack-router)）：它的精确版本，不管更旧还是更新，都会被设成固定的版本，写成范围的则保留，并带一行要你手动设置的提示。然后运行安装命令，`pnpm install` 或你的锁文件对应的那个命令。
 4. skill 和 `AGENTS.md` 里由 Tifa 管理的部分会重新写出，和 [`tifa agents`](#tifa-agents) 做的一样。
-5. 它会打印你旧版本之后、直到新版本为止的每个 [CHANGELOG.md](https://github.com/liustack/tifa/blob/v0.2.0/CHANGELOG.md) 条目里的每条 `Upgrading:` 说明，每条都带着它的版本。这些是需要你动手做的步骤：这个命令从不修改你的 Go 或 TypeScript 代码。
+5. 它会打印你旧版本之后、直到新版本为止的每个 [CHANGELOG.md](https://github.com/liustack/tifa/blob/v0.2.1/CHANGELOG.md) 条目里的每条 `Upgrading:` 说明，每条都带着它的版本。这些是需要你动手做的步骤：这个命令从不修改你的 Go 或 TypeScript 代码。
 6. 运行 `tifa check`，它的结果就是 `tifa upgrade` 的结果。
 
 Tifa 在各个发布版本之间保持稳定的是什么，以及哪些在任何版本里都可能改变，见[兼容性](/docs/reference/compatibility)。
@@ -266,7 +266,7 @@ check passed
 - 它会拒绝比 `go.mod` 里更旧的版本，是同一个版本时则说明应用已经在那个版本了。它会拒绝 `go.mod` 里替换了 Tifa 的应用，因为这时 `go.mod` 里的版本并不是应用构建所用的版本。拒绝时什么都不会改。当正在使用 `go.work` 文件时（设置了 `GOWORK`，或应用里或它上层有一个），它也会拒绝，因为 `go get` 会写到工作区里，而 `go tool` 会遵循它：请改运行 `GOWORK=off go tool tifa upgrade`。
 - 它从不转交给应用自己的 Tifa，所以在 Tifa 太旧、还没有这个命令的应用里也能用：用你安装的 Tifa 运行它（见[全局安装命令](#installing-the-command-globally)），或者运行 `go run github.com/liustack/tifa/cmd/tifa@latest upgrade`。
 - 版本按语义化版本比较，并且只比较精确版本。React 和 React DOM 可以比固定版本更新（`tifa build` 只需要 19.3.0 或更高），所以更新的版本由你自己保留。
-- `Upgrading:` 说明是这个词之后的文字，直到它在更新日志里所在的列表项结束，所以条目要把它写在最后（见 [commit.md](https://github.com/liustack/tifa/blob/v0.2.0/docs/commit.md#changelog)）。
+- `Upgrading:` 说明是这个词之后的文字，直到它在更新日志里所在的列表项结束，所以条目要把它写在最后（见 [commit.md](https://github.com/liustack/tifa/blob/v0.2.1/docs/commit.md#changelog)）。
 - 它不问任何问题，也没有试运行。它可能改动的文件有 `go.mod`、`go.sum`、`package.json`、锁文件、`AGENTS.md` 和 `.claude/skills/tifa/`，所以 `git diff` 就是试运行。
 
 当 `go get` 之后的某一步失败时（`pnpm install` 失败，或 `tifa check` 失败），命令会以那个失败的状态退出，并以一行结束：Go 已经在新版本了，后面的步骤没有完成。请修好原因，然后运行它打印的那一行 `cd <app> && go tool tifa upgrade --after <old version>`，它会把 `go mod tidy` 之后的步骤再做一遍。`--after` 接受应用原来的版本，写成 `v0.0.17` 这样。
@@ -281,7 +281,7 @@ tifa agents [--dir app-root] [--check] [--skills-dir .claude/skills/tifa]
 
 根据应用所用的 Tifa 版本，写出编码 agent 在应用里要读的东西（`go tool tifa` 是用 `go.mod` 里的模块构建的，所以它里面的文件就是那个版本的）：
 
-- Tifa skill，在 `.claude/skills/tifa/` 里：`SKILL.md` 和它的 `references/`。它们是 Tifa 仓库里 [`skills/tifa`](https://github.com/liustack/tifa/tree/v0.2.0/skills/tifa) 的文件，命令把它们带在自己里面，并多加了一行，说明是哪个 Tifa 写的这个文件，以及升级之后要再运行 `go tool tifa agents`。它里面的链接指向已安装版本的文档（`docs/testing-apps.md#testing`，在 `go tool tifa docs` 打印的文件夹里），而不是 GitHub。
+- Tifa skill，在 `.claude/skills/tifa/` 里：`SKILL.md` 和它的 `references/`。它们是 Tifa 仓库里 [`skills/tifa`](https://github.com/liustack/tifa/tree/v0.2.1/skills/tifa) 的文件，命令把它们带在自己里面，并多加了一行，说明是哪个 Tifa 写的这个文件，以及升级之后要再运行 `go tool tifa agents`。它里面的链接指向已安装版本的文档（`docs/testing-apps.md#testing`，在 `go tool tifa docs` 打印的文件夹里），而不是 GitHub。
 - `AGENTS.md` 里标记行之间的部分（见 [AGENTS.md 里由 Tifa 管理的部分](#the-managed-block-of-agentsmd)）。
 - `.github/workflows/ci.yml`，即 `tifa new` 写出的工作流，但只在应用没有 `.github/workflows/ci.yml` 也没有其他工作流文件时才写。它只写一次，从不替换，`--check` 也不要求它。用 yarn 或 bun 的应用会得到一条提示，因为这个工作流只有 pnpm 和 npm 的步骤。
 
@@ -387,7 +387,7 @@ go tool tifa build
 
 SSR 包一开始会导入 `runtime/host.js`，它补上 slowjs 缺少的东西：`TextEncoder`/`TextDecoder`、`AbortController`、`Headers`、`Response`、`queueMicrotask`、`atob`、`btoa`、`DOMException`、`structuredClone`、`crypto.getRandomValues`、`crypto.randomUUID`、`AsyncLocalStorage`，以及一个什么都不打印、调用 `error` 时会抛出异常的 `console`。在运行包里的模块之前，SSR 加载器会注册引擎的 `URL` 和 `URLSearchParams`（`github.com/liustack/slowjs/url`，它在 Go 里解析），注册用于取新鲜随机字节的 Go 函数，以及用于引擎的异步上下文的 Go 函数，后者是 promise 任务携带的一个对象，`AsyncLocalStorage` 把它的存储放在里面。所以对于在模块加载时就用到 `crypto` 和 `AsyncLocalStorage` 的依赖，它们已经准备好了。克隆完全在 JS 里运行，使用内置的品牌检查和 `Error.isError`，不读引擎的私有字段。它不提供 `crypto.subtle`、`fetch` 或 `Request`。[服务端渲染里有什么](/docs/pages/server-render#what-the-server-render-has)列出了页面在那里能找到的一切。这个脚本由 `go generate ./js` 从 `js/host/host.ts` 预先打包，并提交进仓库。它的依赖版本锁定在 `js/host/package.json` 和 `pnpm-lock.yaml` 里。要升级，在 `js/host` 里运行 `pnpm install --frozen-lockfile`（改了版本之后则运行 `pnpm install`），再运行 `go generate ./js`。`internal/bundle` 里的 `TestHostScriptIsUpToDate` 会检查重新生成的结果和已提交的文件一致，当 `js/host/node_modules` 不存在时会跳过。所以应用不需要安装这些 polyfill 包。`abort-controller` 和它的依赖 `event-target-shim` 打了补丁（`js/host/patches`，登记在 `js/host/pnpm-workspace.yaml` 里）：每个对象把它的内部状态放在对象自己的一个 symbol 属性里，而不是 WeakMap 里。这个属性在对象创建时定义一次，之后不再重新定义，所以当应用把 signal 封存或冻结时，取消仍然有效（`TestHostScriptAbortsFrozenSignals`）。之后唯一会变的状态，即 signal 的 aborted 标志，放在一个盒子里，只有盒子里的值会变。其余状态没有装盒：把每一份状态都装盒会让 P99 增加约 1.5 ms。slowjs 需要好几轮 GC 才能回收经过 WeakMap 值的死循环引用，有些循环引用始终收不掉。所以每次渲染留下的路由、AbortController 和监听器要等好几轮 GC，VM 的堆就会增长。改用属性后，一次 GC 就能把它们全部收掉，`TestHostScriptFreesDeadAbortSignalsInOneCollection` 守着这一点。
 
-Tifa 插件会改写 SSR 包里的十一个 npm 包。它按代码的形态或文本找到要改的代码，而不是按包的版本，所以 `pnpm update` 不会弄坏构建。当某个发布版本改变了那段代码时，构建会打印一条警告，带上包的版本和文件，并让那段代码保持原样。页面仍然能渲染。每条这样的警告都以 `tifa rewrite not recognized: ` 开头，所以 `grep` 能找到所有的警告，`internal/bundle` 和 `test/e2e` 会因它而失败（见[测试](https://github.com/liustack/tifa/blob/v0.2.0/docs/testing.md#ci)），用最新 React 构建的定时 CI 任务也一样。对 React DOM 的改动让它每个文件的每一行都留在原处，所以渲染错误的堆栈跟踪给出的 React DOM 行号，就是它在 `node_modules` 里的行号。没有设置可以关闭这些改动：它们没有一个会改变 HTML，除了下面一个 server action 的键，而 Tifa 没有 server action。
+Tifa 插件会改写 SSR 包里的十一个 npm 包。它按代码的形态或文本找到要改的代码，而不是按包的版本，所以 `pnpm update` 不会弄坏构建。当某个发布版本改变了那段代码时，构建会打印一条警告，带上包的版本和文件，并让那段代码保持原样。页面仍然能渲染。每条这样的警告都以 `tifa rewrite not recognized: ` 开头，所以 `grep` 能找到所有的警告，`internal/bundle` 和 `test/e2e` 会因它而失败（见[测试](https://github.com/liustack/tifa/blob/v0.2.1/docs/testing.md#ci)），用最新 React 构建的定时 CI 任务也一样。对 React DOM 的改动让它每个文件的每一行都留在原处，所以渲染错误的堆栈跟踪给出的 React DOM 行号，就是它在 `node_modules` 里的行号。没有设置可以关闭这些改动：它们没有一个会改变 HTML，除了下面一个 server action 的键，而 Tifa 没有 server action。
 
 - React DOM 有十四处改动：
   - `react-dom/server.edge` 会加载 React 的两个服务端渲染器。插件读取那个文件的形态，只保留 Tifa 使用的字符串渲染器。在示例应用上，这让包小了 25%，4 个 VM 的池启动用 63 毫秒，而不是 117 毫秒，渲染耗时则不变。没有这处改动时，包里会保留两个渲染器。
@@ -442,13 +442,13 @@ React DOM 19.3.0 和 19.3.1 是插件读过其中每个函数的版本。遇到�
 3. 检查 `dropKeyPaths` 和 `dropKeyPathNames` 改动的位置仍然是它们期望的形态，以及插件作为第二道防线保存的计数（`keyPathUses`、`keyPathReaders`）。不是时，构建会给出警告。
 4. 把打印出来的行加进 `reviewedReactDOM`，运行 `go test ./internal/bundle` 和 `TIFA_E2E=1 go test -timeout 30m ./test/e2e/`，并在这一节和上面讲键路径的那一条里写上这个版本。
 
-每周的任务 `latest-react`（见[测试](https://github.com/liustack/tifa/blob/v0.2.0/docs/testing.md#ci)）会安装最新的 React，并在它的日志里的 `parts of react-dom <version> to read` 下打印同样的列表，所以审查的人在日志里就能找到要读的部分。带 `TIFA_REACT_UNITS=all` 时，这个测试会列出每一个部分，这就是这张表最初的做法。
+每周的任务 `latest-react`（见[测试](https://github.com/liustack/tifa/blob/v0.2.1/docs/testing.md#ci)）会安装最新的 React，并在它的日志里的 `parts of react-dom <version> to read` 下打印同样的列表，所以审查的人在日志里就能找到要读的部分。带 `TIFA_REACT_UNITS=all` 时，这个测试会列出每一个部分，这就是这张表最初的做法。
 
 引擎写出的开始标签和结束标签有它们自己的一张表，即插件里的 `reviewedEmitPieces`：slowjs 的 C 函数所替代工作的 React DOM 的 29 个部分。当某个版本改动了其中之一时，构建会打印 `... parts that differ from those the engine's start and end tags were written from: ...`，由 React 写每个标签。页面渲染的结果相同，只是耗时更长。上面的列表会把这些部分单独列成一行，`latest-react` 任务也会打印它。要重新启用引擎的标签：
 
 1. 对照 slowjs 的 `RegisterStartTag` 和 `RegisterEndTag` 以及它们的 C 函数，读每个有变化的部分。新代码做的不同的事，C 函数也必须做到，或者把这样的元素交回给 React。这是 slowjs 的一次改动和一次发布。
 2. 把这些部分的新指纹放进 `reviewedEmitPieces`。测试为 `reviewedReactDOM` 打印的那些行里有它们。
-3. 用新的 slowjs，运行 `go test ./internal/bundle` 和 `TIFA_E2E=1 TIFA_EXTREME=1 go test -run TestEngineTagsAreReacts -v ./test/e2e/`，它会在示例应用的每个页面上，把引擎的标签和 React 的标签做比较（见[测试](https://github.com/liustack/tifa/blob/v0.2.0/docs/testing.md#end-to-end-tests-teste2e)）。
+3. 用新的 slowjs，运行 `go test ./internal/bundle` 和 `TIFA_E2E=1 TIFA_EXTREME=1 go test -run TestEngineTagsAreReacts -v ./test/e2e/`，它会在示例应用的每个页面上，把引擎的标签和 React 的标签做比较（见[测试](https://github.com/liustack/tifa/blob/v0.2.1/docs/testing.md#end-to-end-tests-teste2e)）。
 
 ### i18next 缓存 {#i18next-cache}
 
@@ -488,7 +488,7 @@ React DOM 19.3.0 和 19.3.1 是插件读过其中每个函数的版本。遇到�
 | 每次调用的选项里都有一个每次渲染都变的值，比如计数器 | 0.912（0.904 到 0.921） |
 | 同上，但值有 400 个字符，缓存会填满它的 1 MB 并清空重来 | 0.924（0.918 到 0.930） |
 
-不做翻译的工作台页面的耗时是 1.000（0.997 到 1.003）。在店面页面渲染了一遍又一遍之后，商店的一个 VM 比没有缓存时多占约 0.2 到 0.4 MB，当每次调用都带一个每次渲染都变的值时，多占约 2 MB。这些是如何测量的，见[优化](https://github.com/liustack/tifa/blob/v0.2.0/docs/studies/optimizations.md#build)。
+不做翻译的工作台页面的耗时是 1.000（0.997 到 1.003）。在店面页面渲染了一遍又一遍之后，商店的一个 VM 比没有缓存时多占约 0.2 到 0.4 MB，当每次调用都带一个每次渲染都变的值时，多占约 2 MB。这些是如何测量的，见[优化](https://github.com/liustack/tifa/blob/v0.2.1/docs/studies/optimizations.md#build)。
 
 缓存在 i18next 27 上和在 26 上的工作方式相同。在一个 VM 里，一个实例，找到字符串的一次调用在 i18next 27.0.1 上花 0.95 µs，没有缓存时是 14.7 µs（在 26.5.3 上是 0.96 µs 和 14.1 µs），未命中的调用多花 0.5 µs（在 26.5.3 上是 0.6 µs）。测试在两个版本上比较了有缓存和没有缓存的翻译。上面商店页面的比值是在 i18next 26.5.3 上测的，没有在 27 上重新测。
 
