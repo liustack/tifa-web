@@ -5,7 +5,7 @@ source: docs/config.md
 group: Build and deploy
 groupOrder: 4
 order: 4
-translatedFrom: eb7b801b9c88
+translatedFrom: 6b3af2565fb8
 ---
 
 
@@ -70,7 +70,7 @@ GREETING="Hello # not a comment\n"
 - 以 `#` 开头的行和空行会跳过。不带引号的值在空格或制表符之后的 `#` 处结束，并去掉两边的空格，所以 `TLS_CERT= # none` 是空的，`COLOR=#fff` 是 `#fff`。
 - 双引号里的值可以包含 `\n`、`\t`、`\"` 和 `\\`。单引号里的值原样取用。带引号的值必须在一行里。
 - 读不了的行会让程序停止，并给出它的行号。
-- `tifa deploy` 也从这个文件读它的输入：`TIFA_DEPLOY_HOST` 用来知道服务器，其他以 `TIFA_DEPLOY_` 开头的名字也一样。程序会忽略它们（见[用 tifa deploy 部署](/docs/ship/deploy#deploy-with-tifa-deploy)）。
+- `tifa deploy` 也从这个文件读它的输入：`TIFA_DEPLOY_HOST` 用来知道服务器，其他以 `TIFA_DEPLOY_` 开头的名字也一样。程序会忽略它们。没有 `TIFA_DEPLOY_HOST` 时，`tifa deploy` 用它记在 `~/.tifa/config.yaml` 里的服务器，`TIFA_HOME` 可以移动这个文件夹（见[用 tifa deploy 部署](/docs/ship/deploy#deploy-with-tifa-deploy)）。
 
 `tifa dev` 在应用根目录里运行应用，所以应用读取那里的 `.env`，`.env` 变了会让应用重新启动。Vite 不读 `.env`（`envDir: false`）：页面从它的 `Load` 拿它需要的值。
 
@@ -129,7 +129,7 @@ Cloud Run、Heroku、Render、Railway 和 Fly 这样的托管平台，通过 `PO
 | `session.max_age` | `720h` | `--session-max-age`、`SESSION_MAX_AGE` | 会话从 `tifa.SetSession` 创建它的那一刻起能持续多久，至少一秒。它不会续期 |
 | `session.memory_limit` | `64MiB` | `--session-memory-limit`、`SESSION_MEMORY_LIMIT` | 内存会话存储最多能保存的字节数，在 `OnStart` 没有用 `tifa.SetSessionStore` 设置存储时使用。存储满了会丢掉最先过期的会话 |
 | `deploy.front` | `none` | 仅项目文件 | 访客在到达服务器之前经过什么：`none` 或 `cloudflare`。选 `cloudflare` 时，`tifa deploy setup` 会用 `cf` 把应用放在 Cloudflare Tunnel 后面，主机是 `site.url` 的主机，`deploy` 和 `rollback` 会清除那个主机名的 CDN 缓存。需要不带端口的 `site.url`。见[按方案设置](/docs/ship/deploy#set-up-with-a-plan) |
-| `deploy.ssh` | `direct` | 仅项目文件 | CI 如何连到服务器的 ssh：`direct`、`cloudflare` 或 `tailscale`。除 `direct` 以外都需要 `deploy.ci: github`，`cloudflare` 还需要 `deploy.front: cloudflare` |
+| `deploy.ssh` | `direct` | 仅项目文件 | ssh 如何连到服务器：`direct`、`cloudflare`（经 Cloudflare Tunnel，CI 和你的机器都能用）或 `tailscale`（给 CI 用）。`cloudflare` 需要 `deploy.front: cloudflare`，`tailscale` 需要 `deploy.ci: github` |
 | `deploy.ci` | `none` | 仅项目文件 | 谁来自动部署：`none` 或 `github`。选 `github` 时由仓库的 GitHub Actions 部署应用，由 `tifa deploy setup` 设置好。见[从 GitHub Actions 部署](/docs/ship/deploy#deploy-from-github-actions) |
 
 ### 已停用的设置 {#retired-settings}
@@ -142,7 +142,7 @@ Tifa 去掉的设置，至少在下一个 minor 版本之前会列在这里。�
 | `cache.size`（`--cache-size`、`CACHE_SIZE`） | `ssr.memo_size`（`--ssr-memo-size`、`SSR_MEMO_SIZE`） |
 | `cache.whole_page` | 无。带 `Cache` 的页面不再保存在程序里 |
 | `cache.ignore_query` | 无。已经没有需要清理的键 |
-| `deploy.host`（仅在 `tifa.yaml` 里） | 应用的 `.env` 里的 `TIFA_DEPLOY_HOST`，或 `tifa deploy` 的 `--host`。`tifa.yaml` 是要提交的，所以不放服务器。见[用 tifa deploy 部署](/docs/ship/deploy#deploy-with-tifa-deploy) |
+| `deploy.host`（仅在 `tifa.yaml` 里） | 应用的 `.env` 里的 `TIFA_DEPLOY_HOST`，`tifa deploy` 的 `--host`，或 `~/.tifa/config.yaml` 里的服务器。`tifa.yaml` 是要提交的，所以不放服务器。见[用 tifa deploy 部署](/docs/ship/deploy#deploy-with-tifa-deploy) |
 
 ## 应用的选项 {#options-of-the-app}
 
