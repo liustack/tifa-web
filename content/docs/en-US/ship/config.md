@@ -2,7 +2,7 @@
 title: Configuration
 description: Every setting of a Tifa app and how an app defines its own, and the security headers every answer carries, the Content-Security-Policy of server.csp among them
 source: docs/config.md
-sourceHash: eb7b801b9c88
+sourceHash: 6b3af2565fb8
 group: Build and deploy
 groupOrder: 4
 order: 4
@@ -70,7 +70,7 @@ GREETING="Hello # not a comment\n"
 - Lines starting with `#` and blank lines are skipped. An unquoted value ends at a `#` after a space or a tab and loses the spaces around it, so `TLS_CERT= # none` is empty and `COLOR=#fff` is `#fff`.
 - A value in double quotes may hold `\n`, `\t`, `\"` and `\\`. A value in single quotes is taken as it is. A quoted value stays on one line.
 - A line it cannot read stops the program with its line number.
-- `tifa deploy` reads its inputs from this file too, `TIFA_DEPLOY_HOST` to know the server and the other names that start with `TIFA_DEPLOY_`. The program ignores them (see [Deploy with tifa deploy](/docs/ship/deploy#deploy-with-tifa-deploy)).
+- `tifa deploy` reads its inputs from this file too, `TIFA_DEPLOY_HOST` to know the server and the other names that start with `TIFA_DEPLOY_`. The program ignores them. Without `TIFA_DEPLOY_HOST`, `tifa deploy` uses the server it remembered in `~/.tifa/config.yaml`, and `TIFA_HOME` moves that folder (see [Deploy with tifa deploy](/docs/ship/deploy#deploy-with-tifa-deploy)).
 
 `tifa dev` runs the app in the app root, so the app reads the `.env` there, and a change of `.env` starts the app again. Vite does not read `.env` (`envDir: false`): a page gets the values it needs from its `Load`.
 
@@ -129,7 +129,7 @@ Settings that hold a size (`server.body_limit`, `ssr.vm_memory`, `ssr.memo_size`
 | `session.max_age` | `720h` | `--session-max-age`, `SESSION_MAX_AGE` | How long a session lasts from the moment `tifa.SetSession` makes it, at least one second. It does not renew |
 | `session.memory_limit` | `64MiB` | `--session-memory-limit`, `SESSION_MEMORY_LIMIT` | Bytes the in-memory session store may hold, used when `OnStart` sets no store with `tifa.SetSessionStore`. A full store drops the sessions that expire first |
 | `deploy.front` | `none` | project file only | What visitors come through before the server: `none` or `cloudflare`. With `cloudflare`, `tifa deploy setup` puts the app behind a Cloudflare Tunnel at the host of `site.url` with cf, and `deploy` and `rollback` clear the CDN cache of that host name. Needs `site.url` without a port. See [Set up with a plan](/docs/ship/deploy#set-up-with-a-plan) |
-| `deploy.ssh` | `direct` | project file only | How CI reaches the ssh of the server: `direct`, `cloudflare` or `tailscale`. Anything but `direct` needs `deploy.ci: github`, and `cloudflare` also needs `deploy.front: cloudflare` |
+| `deploy.ssh` | `direct` | project file only | How ssh reaches the server: `direct`, `cloudflare` (through the Cloudflare Tunnel, for CI and for your machine) or `tailscale` (for CI). `cloudflare` needs `deploy.front: cloudflare`, and `tailscale` needs `deploy.ci: github` |
 | `deploy.ci` | `none` | project file only | Who deploys automatically: `none` or `github`. With `github` the GitHub Actions of the repository deploy the app, which `tifa deploy setup` sets up. See [Deploy from GitHub Actions](/docs/ship/deploy#deploy-from-github-actions) |
 
 ### Retired settings
@@ -142,7 +142,7 @@ A setting that Tifa drops is listed here for at least the next minor version. A 
 | `cache.size` (`--cache-size`, `CACHE_SIZE`) | `ssr.memo_size` (`--ssr-memo-size`, `SSR_MEMO_SIZE`) |
 | `cache.whole_page` | None. Pages with `Cache` are no longer kept in the program |
 | `cache.ignore_query` | None. There is no key to clean |
-| `deploy.host` (in `tifa.yaml` only) | `TIFA_DEPLOY_HOST` in the `.env` of the app, or `--host` of `tifa deploy`. `tifa.yaml` is committed, so it does not hold the server. See [Deploy with tifa deploy](/docs/ship/deploy#deploy-with-tifa-deploy) |
+| `deploy.host` (in `tifa.yaml` only) | `TIFA_DEPLOY_HOST` in the `.env` of the app, `--host` of `tifa deploy`, or the server in `~/.tifa/config.yaml`. `tifa.yaml` is committed, so it does not hold the server. See [Deploy with tifa deploy](/docs/ship/deploy#deploy-with-tifa-deploy) |
 
 ## Options of the app
 
