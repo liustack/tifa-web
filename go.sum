@@ -9,8 +9,8 @@ github.com/klauspost/compress v1.20.3 h1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTf
 github.com/klauspost/compress v1.20.3/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
 github.com/liustack/slowjs v0.31.12 h1:bD+vNuAdOxMSDFeL21kk7K4gGbaAq54lmShY93MG7iU=
 github.com/liustack/slowjs v0.31.12/go.mod h1:06sZhwh1lxYPVmI7bK4oKFX1MBegSuQAOJO5M/Gzuzc=
-github.com/liustack/tifa v0.2.2 h1:RsEhWg3HuzNviUb0vtmI0U4vCauR7zg7v/nY5XAplpo=
-github.com/liustack/tifa v0.2.2/go.mod h1:CmJ9iRtEe+6QTgoV4oB30qMRyA0zM06Pv/dSa0NUi04=
+github.com/liustack/tifa v0.3.0 h1:KLavdxzCq2OHAExH7NX3mgtGpbQOucNz7HwLST4qKDs=
+github.com/liustack/tifa v0.3.0/go.mod h1:CmJ9iRtEe+6QTgoV4oB30qMRyA0zM06Pv/dSa0NUi04=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/spf13/cobra v1.10.2 h1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=
 github.com/spf13/cobra v1.10.2/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=

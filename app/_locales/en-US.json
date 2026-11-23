@@ -99,7 +99,7 @@
       "costTitle": "The cost",
       "cost": [
         "Tifa renders pages in slowjs, a pure Go JavaScript engine. It has no JIT, so one render takes longer than in Node.",
-        "With every request rendering, Next.js answers 1.17 times as many page requests as Tifa and TanStack Start 1.57 times, at 7 and 6 times Tifa's peak memory. See [the study](https://github.com/liustack/tifa/blob/v0.2.2/docs/studies/nextjs-and-tanstack-start.md#conclusions)."
+        "With every request rendering, Next.js answers 1.17 times as many page requests as Tifa and TanStack Start 1.57 times, at 7 and 6 times Tifa's peak memory. See [the study](https://github.com/liustack/tifa/blob/v0.3.0/docs/studies/nextjs-and-tanstack-start.md#conclusions)."
       ]
     },
     "pages": {
