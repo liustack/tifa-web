@@ -24,10 +24,9 @@
   },
   "fumadocs": {},
   "hero": {
-    "eyebrow": "For indie hackers and startup teams",
-    "tagline": "Your whole app on one small server.",
-    "sub": "Go for the backend, React for the pages, compiled into one executable. It runs on a 1 CPU / 1 GB VPS with no Node, no Redis and no reverse proxy, and `tifa deploy` puts it live.",
-    "description": "Go for the backend, React for the pages, compiled into one executable. It runs on a 1 CPU / 1 GB VPS with no Node, no Redis and no reverse proxy, and tifa deploy puts it live.",
+    "tagline": "Full-stack Go web framework with React pages.",
+    "sub": "The whole app compiles into one executable. It runs on a 1 CPU / 1 GB VPS with no Node, no Redis and no reverse proxy, and `tifa deploy` puts it live.",
+    "description": "The whole app compiles into one executable. It runs on a 1 CPU / 1 GB VPS with no Node, no Redis and no reverse proxy, and tifa deploy puts it live.",
     "start": "Get started",
     "github": "GitHub",
     "status": "very early: APIs will change",
