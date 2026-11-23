@@ -1,7 +1,7 @@
 # Notes for coding agents
 
 <!-- tifa:begin -->
-<!-- Written by Tifa v0.1.20 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
+<!-- Written by Tifa v0.2.0 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
 
 This is a [tifa](https://github.com/liustack/tifa) app. Go routes requests, loads data and runs the hooks. React pages render to HTML inside the Go process (slowjs, no Node at run time), and TanStack Router takes over in the browser. The build bundles the front end with Vite, on Node, and makes one executable that needs no Node.
 
@@ -29,7 +29,7 @@ Never edit `.tifa/`. It is generated, and the Go tools skip it.
 ## Routes
 
 - Every folder under `app/` is a URL segment. `app/` is `/`. `name+` is a parameter, and the folder name is the parameter name: `booking+` under `staff/` is `/staff/{booking}`, not `/staff/booking/{id}` (for that, make a literal folder `booking` with `id+` inside). It is read with `c.Param("name")`. `go tool tifa routes` prints the URLs that result. `name++` is the rest of the path, last folder only, `_splat` in TypeScript. Name the Go package after the parameter: `todo+` holds `package todo`.
-- A folder has at most three convention files. `route.go` holds every Go name of the folder: `Load` (the page data), `Layout` (the data of the Layout), `LayoutSSR`, `SSR`, `Memo` and the method handlers `GET`, `POST`, `PUT`, `PATCH`, `DELETE`. These names in any other Go file of the package fail the build. `page.tsx` is the page. `layout.tsx` (with `<Outlet />`) wraps the page of its folder and every page below.
+- A folder has at most three convention files. `route.go` holds every Go name of the folder: `Load` (the page data), `Layout` (the data of the Layout), `SSR`, `Memo` and the method handlers `GET`, `POST`, `PUT`, `PATCH`, `DELETE`. These names in any other Go file of the package fail the build. `page.tsx` is the page. `layout.tsx` (with `<Outlet />`) wraps the page of its folder and every page below.
 - A folder with `page.tsx` is a page, so it cannot define `GET`. A folder with `route.go` and no `page.tsx` is an API route when it has a method handler, and has no `Load`. Its `Layout` still gives the pages below it their layout data. `tifa.Use(c, pkg.Layout)` gets the data of an enclosing Layout, run once per request.
 - Write Tifa, not another framework: no `next/link`, `'use client'`, `loader`, `getServerSideProps`, `createServerFn` or `[id]` folders. `go tool tifa check` reports them with the Tifa way. See "Coming from another framework" in `docs/app.md`.
 - Details: `docs/app.md`, which links to the doc of each topic.

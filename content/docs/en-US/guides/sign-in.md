@@ -2,7 +2,7 @@
 title: Sign in and sign out
 description: How to sign users in and out in a Tifa app with Tifa sessions
 source: docs/guides/sign-in.md
-sourceHash: d1783ef00676
+sourceHash: 3bebd7ce8d51
 group: Guides
 groupOrder: 3
 order: 3
@@ -635,9 +635,8 @@ import { SignedIn, SignedOut, useSession } from 'tifa/client'
 import { POST as signOut } from './logout/route.gen'
 import './styles.css'
 
-export const htmlAttributes = { lang: 'en' }
-
 export const documentHead = {
+  htmlAttributes: { lang: 'en' },
   meta: [{ title: 'Sign-in example' }],
   links: [{ rel: 'icon', href: 'data:,' }],
 }

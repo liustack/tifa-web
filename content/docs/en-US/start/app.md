@@ -2,14 +2,14 @@
 title: Writing an app
 description: How to start a Tifa app
 source: docs/app.md
-sourceHash: d9d8e3331c00
+sourceHash: 47881969629a
 group: Start
 groupOrder: 1
 order: 2
 ---
 
 
-For a complete example, see [examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop). For the build, the generated files and how to set up go.mod, see [build.md](/docs/ship/build).
+For a complete example, see [examples/shop](https://github.com/liustack/tifa/blob/v0.2.0/examples/shop). For the build, the generated files and how to set up go.mod, see [build.md](/docs/ship/build).
 
 ## Folders
 
@@ -17,7 +17,7 @@ For a complete example, see [examples/shop](https://github.com/liustack/tifa/blo
 myapp/
   go.mod
   hooks.go                          process and request hooks (optional)
-  hooks.ts                          onStart, run before the first render on the server and in the browser (optional)
+  setup.ts                          top-level code, run before the first render on the server and in the browser (optional)
   options.go                        options of the app, see Configuration (optional)
   db.go                             resources the whole app shares: package-level variables and functions (optional)
   app/
@@ -68,7 +68,7 @@ A folder has at most three convention files:
 
 | File | What it holds |
 | --- | --- |
-| `route.go` | Every Go name of the folder: `Layout`, `LayoutSSR`, `Load`, `SSR`, `Memo`, `Cache`, `BodyLimit`, `ReadTimeout` and the method handlers |
+| `route.go` | Every Go name of the folder: `Layout`, `Load`, `SSR`, `Memo`, `Cache` and the method handlers |
 | `page.tsx` | The page component. A folder with `page.tsx` is a page |
 | `layout.tsx` | The Layout component |
 | `layout_.tsx` | The Layout component in place of `layout.tsx`, shown without the Layouts above it (see [A Layout without the Layouts above](/docs/pages/pages#a-layout-without-the-layouts-above)) |
@@ -133,7 +133,7 @@ Vite says the same: prefer importing assets, and use `public/` for files never r
 | `middleware.ts`, and `loading`, `error` or `not-found` files in a route folder | `OnRequest` in `hooks.go`, and the `ErrorBoundary` export (see [404](/docs/pages/pages#404)) | warning |
 | In `route.go`, a function `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `Load` or `Layout` that takes `http.ResponseWriter`, `*http.Request`, `*gin.Context`, `echo.Context` or `*fiber.Ctx` | `func POST(c *tifa.Ctx, in AddInput) (Todo, error)`, or `func POST(c *tifa.Ctx) error` with `c.Writer()` and `c.Request()` (see [Method handlers with input and result](/docs/pages/routes#method-handlers-with-input-and-result)) | error |
 
-What Tifa allows is not reported. `@tanstack/react-router` and `@tanstack/react-query` are fine. A page may export `action`, `loader`, `metadata`, `revalidate` or `dynamic` for its own use when the value is not what the other framework writes (a function for `loader` and `action`, an object for `metadata`, a number or `false` for `revalidate`, one of `auto`, `force-dynamic`, `error` and `force-static` for `dynamic`). The exports and calls are read in `page.tsx`, `layout.tsx` and `layout_.tsx` only. Imports and directives are read in every TypeScript file of `app/` and in `hooks.ts`, except tests.
+What Tifa allows is not reported. `@tanstack/react-router` and `@tanstack/react-query` are fine. A page may export `action`, `loader`, `metadata`, `revalidate` or `dynamic` for its own use when the value is not what the other framework writes (a function for `loader` and `action`, an object for `metadata`, a number or `false` for `revalidate`, one of `auto`, `force-dynamic`, `error` and `force-static` for `dynamic`). The exports and calls are read in `page.tsx`, `layout.tsx` and `layout_.tsx` only. Imports and directives are read in every TypeScript file of `app/` and in `setup.ts`, except tests.
 
 ### No static generation
 
@@ -149,7 +149,7 @@ Tifa has no `loading.tsx`. A page is rendered whole on the server, so a first vi
 
 ## A site in several languages
 
-Put a `_locales` folder in a folder of `app/`, with one `<language>.json` file per language, and the pages and API routes in that folder and below it are offered in those languages. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.1.20/examples/shop) is `app/store/` with `_locales/zh-CN.json` and `_locales/en-US.json`.
+Put a `_locales` folder in a folder of `app/`, with one `<language>.json` file per language, and the pages and API routes in that folder and below it are offered in those languages. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.2.0/examples/shop) is `app/store/` with `_locales/zh-CN.json` and `_locales/en-US.json`.
 
 ```yaml
 # tifa.yaml
@@ -177,6 +177,6 @@ The [guide](/docs/guides/i18n) goes through all of it: translating, the language
 - [Render switches and caches](/docs/pages/ssr-and-cache): `SSR`, `Memo`, `Cache`, and query parameters in the server render.
 - [The server render](/docs/pages/server-render): what the server has, components to load only in the browser, Intl and Temporal.
 - [Styles](/docs/pages/styles): CSS, Tailwind CSS and shadcn/ui.
-- [Hooks](/docs/pages/hooks): `hooks.go` and `hooks.ts`.
+- [Hooks](/docs/pages/hooks): `hooks.go` and `setup.ts`.
 - [Testing](/docs/pages/testing-apps): tests with `go test` and `tifatest`.
 - [Deploying](/docs/ship/deploy): what pages open in a browser do when you deploy a new version.

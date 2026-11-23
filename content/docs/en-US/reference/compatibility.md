@@ -2,7 +2,7 @@
 title: Compatibility
 description: What Tifa v0.1 keeps stable for apps (packages, file conventions, generated paths, commands, settings, HTTP names) and what may change in any release
 source: docs/compatibility.md
-sourceHash: 22133c16756b
+sourceHash: b167785a83fa
 group: Reference
 groupOrder: 5
 order: 3
@@ -13,9 +13,9 @@ From v0.1, a change that breaks anything on the stable list below ships in a min
 
 ## Stable
 
-**Go packages.** The exported names of `github.com/liustack/tifa`, `github.com/liustack/tifa/content` and `github.com/liustack/tifa/tifatest`. That includes the names of the hooks in `hooks.go`, the signatures of `Load`, `Layout` and the method handlers in `route.go`, the constants `route.go` reads (`SSR`, `LayoutSSR`, `Memo`, `Cache`, `BodyLimit`, `ReadTimeout`), the `Validate` and `Exposed` methods, the fields of `tifa.Stats()`, and the JSON rules in [routes.md](/docs/pages/routes).
+**Go packages.** The exported names of `github.com/liustack/tifa`, `github.com/liustack/tifa/content` and `github.com/liustack/tifa/tifatest`. That includes the names of the hooks in `hooks.go`, the signatures of `Load`, `Layout` and the method handlers in `route.go`, the constants `route.go` reads (`SSR`, `Memo`, `Cache`), the `Validate` and `Exposed` methods, the fields of `tifa.Stats()`, and the JSON rules in [routes.md](/docs/pages/routes).
 
-**File conventions.** The root files (`go.mod`, `tifa.yaml`, `hooks.go`, `hooks.ts`, `options.go`, `content.go`, `content/`, `public/`, `app/`), the meaning of folder names in `app/` (`name`, `name+`, `name++`), the convention files in a folder (`route.go`, `page.tsx`, `layout.tsx`, `layout_.tsx`), what `page.tsx` and `layout.tsx` export, `_locales/<language>.json`, and `*.client.tsx`.
+**File conventions.** The root files (`go.mod`, `tifa.yaml`, `hooks.go`, `setup.ts`, `options.go`, `content.go`, `content/`, `public/`, `app/`), the meaning of folder names in `app/` (`name`, `name+`, `name++`), the convention files in a folder (`route.go`, `page.tsx`, `layout.tsx`, `layout_.tsx`), what `page.tsx` and `layout.tsx` export, `_locales/<language>.json`, and `*.client.tsx`.
 
 **Generated paths an app imports.** `.tifa/vite.js`, `.tifa/tsconfig.json`, `tifa/client` and `tifa/i18n` (mapped by the app's `tsconfig.json`), `./route.gen` and its exports, the `SessionData` type of `tifa/client`, and the Go package `<module>/.tifa/tifaapp` with its variable `App`.
 
