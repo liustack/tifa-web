@@ -44,6 +44,14 @@ func main() {
 	fmt.Printf("syncdocs: the changelog of %s written to %s\n", version, siteOut)
 	fmt.Printf("syncdocs: %d docs of %s %s written to %s\n", n, modulePath, version, out)
 	zh := filepath.Join(docs, "zh-CN")
+	// Links in the hand-written files name the Tifa version of go.mod too.
+	pinned, err := PinLinks([]string{"app/_locales", "content/pages", zh}, version)
+	if err != nil {
+		log.Fatalf("syncdocs: %v", err)
+	}
+	for _, p := range pinned {
+		fmt.Printf("syncdocs: links to Tifa now name %s: %s\n", gitRef(version), p)
+	}
 	stale, err := Stale(out, zh)
 	if err != nil {
 		log.Fatalf("syncdocs: %v", err)

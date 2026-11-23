@@ -35,8 +35,8 @@ func TestSourceURL(t *testing.T) {
 }
 
 // The pages and the home page, written by hand, copy text and code from the Tifa repository at the version of go.mod
-// and link to GitHub at that version. After a Tifa upgrade this fails until they are read again
-// against the new version and their links name it.
+// and link to GitHub at that version. go generate rewrites the version in those links. This fails
+// when a link was added by hand with another version and go generate was not run.
 func TestHandWrittenPagesNameTheVersionOfGoMod(t *testing.T) {
 	v, err := TifaVersion()
 	if err != nil {
@@ -60,7 +60,7 @@ func TestHandWrittenPagesNameTheVersionOfGoMod(t *testing.T) {
 		}
 		return nil
 	}
-	for _, dir := range []string{"content/pages", "app/_locales"} {
+	for _, dir := range []string{"content/pages", "app/_locales", "content/docs/zh-CN"} {
 		if err := filepath.WalkDir(dir, walk); err != nil {
 			t.Fatal(err)
 		}
