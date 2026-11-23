@@ -5,7 +5,7 @@ source: docs/config.md
 group: Build and deploy
 groupOrder: 4
 order: 4
-translatedFrom: 6b3af2565fb8
+translatedFrom: 57e325b2675e
 ---
 
 
@@ -129,8 +129,11 @@ Cloud Run、Heroku、Render、Railway 和 Fly 这样的托管平台，通过 `PO
 | `session.max_age` | `720h` | `--session-max-age`、`SESSION_MAX_AGE` | 会话从 `tifa.SetSession` 创建它的那一刻起能持续多久，至少一秒。它不会续期 |
 | `session.memory_limit` | `64MiB` | `--session-memory-limit`、`SESSION_MEMORY_LIMIT` | 内存会话存储最多能保存的字节数，在 `OnStart` 没有用 `tifa.SetSessionStore` 设置存储时使用。存储满了会丢掉最先过期的会话 |
 | `deploy.front` | `none` | 仅项目文件 | 访客在到达服务器之前经过什么：`none` 或 `cloudflare`。选 `cloudflare` 时，`tifa deploy setup` 会用 `cf` 把应用放在 Cloudflare Tunnel 后面，主机是 `site.url` 的主机，`deploy` 和 `rollback` 会清除那个主机名的 CDN 缓存。需要不带端口的 `site.url`。见[按方案设置](/docs/ship/deploy#set-up-with-a-plan) |
-| `deploy.ssh` | `direct` | 仅项目文件 | ssh 如何连到服务器：`direct`、`cloudflare`（经 Cloudflare Tunnel，CI 和你的机器都能用）或 `tailscale`（给 CI 用）。`cloudflare` 需要 `deploy.front: cloudflare`，`tailscale` 需要 `deploy.ci: github` |
-| `deploy.ci` | `none` | 仅项目文件 | 谁来自动部署：`none` 或 `github`。选 `github` 时由仓库的 GitHub Actions 部署应用，由 `tifa deploy setup` 设置好。见[从 GitHub Actions 部署](/docs/ship/deploy#deploy-from-github-actions) |
+| `deploy.connect` | `direct` | 仅项目文件 | 部署如何经 ssh 连到服务器，从你的机器和从 CI 都一样：`direct`、`cloudflare`（经 Cloudflare Tunnel）或 `tailscale`（CI 的 runner 加入你的 tailnet）。`cloudflare` 需要 `deploy.front: cloudflare`，`tailscale` 需要 `deploy.auto` 这个块 |
+| `deploy.auto.branch` | 仓库的默认分支 | 仅项目文件 | 有 `deploy.auto` 块时：从 GitHub Actions 部署的分支。见[从 GitHub Actions 部署](/docs/ship/deploy#deploy-from-github-actions) |
+| `deploy.auto.needs` | `ci.yml` | 仅项目文件 | 有 `deploy.auto` 块时：`.github/workflows` 里必须先通过才会部署的那个文件，比如 `ci.yml`，写 `none` 就什么也不等 |
+
+`deploy.auto` 这个块只要写上就会开启从 GitHub Actions 的部署：`auto: {}` 用默认值，写了它不认识的键，或者写成后面什么都没有的 `auto:`，都是错误。没有这个块，就没有从 GitHub Actions 的部署。`tifa deploy setup` 会设置好它们。
 
 ### 已停用的设置 {#retired-settings}
 
@@ -143,6 +146,8 @@ Tifa 去掉的设置，至少在下一个 minor 版本之前会列在这里。�
 | `cache.whole_page` | 无。带 `Cache` 的页面不再保存在程序里 |
 | `cache.ignore_query` | 无。已经没有需要清理的键 |
 | `deploy.host`（仅在 `tifa.yaml` 里） | 应用的 `.env` 里的 `TIFA_DEPLOY_HOST`，`tifa deploy` 的 `--host`，或 `~/.tifa/config.yaml` 里的服务器。`tifa.yaml` 是要提交的，所以不放服务器。见[用 tifa deploy 部署](/docs/ship/deploy#deploy-with-tifa-deploy) |
+
+更早版本的 `deploy.ssh` 和 `deploy.ci` 没有停用，只是改了名，项目文件会在它们那一行停下，并给出新的写法：`deploy.ssh` 改叫 `deploy.connect`，值不变，`ci: github` 改成 `auto: {}`（`ci: none` 直接删掉）。
 
 ## 应用的选项 {#options-of-the-app}
 
