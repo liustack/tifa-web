@@ -9,7 +9,7 @@ export default function WhyPage() {
       <ProseTitle>{title}</ProseTitle>
       <Prose body={body} />
       <h2 className="mb-6 mt-14 text-2xl font-semibold tracking-tight">{philosophy.title}</h2>
-      <Prose body={philosophy.body} english={philosophy.english} outdated={philosophy.outdated} englishUrl={philosophy.englishUrl} />
+      <Prose body={philosophy.body} />
     </ProseLayout>
   )
 }

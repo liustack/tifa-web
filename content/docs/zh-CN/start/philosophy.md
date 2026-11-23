@@ -1,11 +1,10 @@
 ---
 title: 设计理念
-description: Tifa 应用的代码为什么这样组织，以及每条理念能带来什么
-source: docs/philosophy.md
-group: Start
+description: Tifa 应用这样组织背后的想法，以及每一条能给你什么
+source: docs/start/philosophy.zh-CN.md
+group: 开始
 groupOrder: 1
 order: 3
-translatedFrom: 1ebebd97ae3c
 ---
 
 

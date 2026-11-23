@@ -1,11 +1,10 @@
 ---
 title: 配置
-description: Tifa 应用的每一项设置，应用如何定义自己的选项，以及每个响应都带的安全头，包括 server.csp 的 Content-Security-Policy
-source: docs/config.md
-group: Build and deploy
+description: Tifa 应用的每一项设置和应用怎样定义自己的设置，以及每个响应都带的安全头，其中包括 server.csp 的 Content-Security-Policy
+source: docs/build-and-deploy/config.zh-CN.md
+group: 构建与部署
 groupOrder: 4
 order: 4
-translatedFrom: 57e325b2675e
 ---
 
 
@@ -22,9 +21,11 @@ Tifa 应用的默认值是为小机器定的，开箱即用。只有需要时才
 5. 应用根目录里的项目文件 `tifa.yaml`。`tifa build` 读取它，并把它的值构建进程序。
 6. 默认值：Tifa 的设置用下表里的，[应用的选项](#options-of-the-app)用 `options.go` 里的。
 
-每个来源只设置它写出的键，所以部署文件只放它要改的内容。程序只读自己的键：文件里的其他键和其他环境变量都不管。既不是 Tifa 的设置、也不是应用的设置的参数，比如用 `--addr` 代替 `--server-addr`，会让程序以 `unknown flag` 停止。
+每个来源只设置它写出的键，所以部署文件只放它要改的内容。程序只读自己的键：`-c` 的文件里的其他键和其他环境变量都不管。`tifa.yaml` 更严格，见下文。既不是 Tifa 的设置、也不是应用的设置的参数，比如用 `--addr` 代替 `--server-addr`，会让程序以 `unknown flag` 停止。
 
 `tifa.yaml` 放的是 Tifa 设置的值。`build.*`、`i18n.*`、`site.*` 和 `deploy.*` 设置只能在这里设置，值的类型或格式不对时 `tifa build` 会失败。程序不读这个文件：改了它要重新构建。
+
+`tifa.yaml` 只放 Tifa 的设置，不放应用的任何键。里面有不是 Tifa 设置的键，比如 `deploy.ssh` 或拼错的 `server.adr`，会让 `tifa check`、`tifa build`、`tifa dev` 和部署命令在那一行失败，附近有相近的名字时会给出最接近的那个。应用自己的选项，即使放在 Tifa 的某一节里（比如 `server.name`），也只能用参数、环境变量、`.env` 或 `-c` 的文件来设置，永远不要写进 `tifa.yaml`。
 
 ```yaml
 # tifa.yaml
@@ -70,7 +71,7 @@ GREETING="Hello # not a comment\n"
 - 以 `#` 开头的行和空行会跳过。不带引号的值在空格或制表符之后的 `#` 处结束，并去掉两边的空格，所以 `TLS_CERT= # none` 是空的，`COLOR=#fff` 是 `#fff`。
 - 双引号里的值可以包含 `\n`、`\t`、`\"` 和 `\\`。单引号里的值原样取用。带引号的值必须在一行里。
 - 读不了的行会让程序停止，并给出它的行号。
-- `tifa deploy` 也从这个文件读它的输入：`TIFA_DEPLOY_HOST` 用来知道服务器，其他以 `TIFA_DEPLOY_` 开头的名字也一样。程序会忽略它们。没有 `TIFA_DEPLOY_HOST` 时，`tifa deploy` 用它记在 `~/.tifa/config.yaml` 里的服务器，`TIFA_HOME` 可以移动这个文件夹（见[用 tifa deploy 部署](/docs/ship/deploy#deploy-with-tifa-deploy)）。
+- `tifa deploy` 也从这个文件读它的输入：`TIFA_DEPLOY_HOST` 用来知道服务器，其他以 `TIFA_DEPLOY_` 开头的名字也一样。程序会忽略它们。没有 `TIFA_DEPLOY_HOST` 时，`tifa deploy` 用它记在 `~/.tifa/config.yaml` 里的服务器，`TIFA_HOME` 可以移动这个文件夹（见[用 tifa deploy 部署](/docs/build-and-deploy/deploy#deploy-with-tifa-deploy)）。
 
 `tifa dev` 在应用根目录里运行应用，所以应用读取那里的 `.env`，`.env` 变了会让应用重新启动。Vite 不读 `.env`（`envDir: false`）：页面从它的 `Load` 拿它需要的值。
 
@@ -93,18 +94,18 @@ Cloud Run、Heroku、Render、Railway 和 Fly 这样的托管平台，通过 `PO
 | --- | --- | --- | --- |
 | `build.target` | `es2020` | 仅项目文件 | Vite 构建的浏览器包的 JavaScript 目标，用逗号分隔的列表：一个 ECMAScript 版本（`es2015` 到 `es2029`、`esnext`），加上带版本的浏览器，可选 chrome、edge、firefox、ios、opera 和 safari，比如 `es2019,chrome90,safari14`。SSR 包始终以 ES2022 为目标 |
 | `build.public` | `public` | 仅项目文件 | 静态文件的文件夹，这些文件原样复制进程序，从 `/` 提供 |
-| `build.skip_tanstack_check` | `false` | 仅项目文件 | `true` 会构建 TanStack Router 不是 Tifa 测试过的版本的应用，这可能让页面在浏览器里变成空白。见 [build.md](/docs/ship/build#the-apps-tsconfig-and-vite-config) |
-| `build.debug_info` | `false` | 仅项目文件 | `true` 把 DWARF 调试信息留在程序里，供 Delve 这样的调试器使用。不设时，`tifa build` 用 `-ldflags=-w` 去掉调试信息，这让示例 shop 的程序小约 20%。无论哪种，panic 仍然会给出每一帧的文件和行号。`tifa dev` 始终保留它。见 [build.md](/docs/ship/build#debug-info) |
-| `build.i18next_cache` | `true` | 仅项目文件 | 服务端渲染会保留 i18next 翻译出来的字符串，同样的键和选项再来时直接给出，所以每次渲染都翻译同样文本的页面耗时更少：shop 的店面页面只要它的 0.778。`false` 会关掉它。应用的 formatter 和后处理器对同样的输入必须给出同样的文本。应用在第一次渲染之后不通过 i18next 的 API 改动 i18next 的资源或选项，或者给 i18next 传了读取请求内容的其他函数时，请关掉它，否则页面可能显示过期的翻译。见 [build.md](/docs/ship/build#i18next-cache) |
+| `build.skip_tanstack_check` | `false` | 仅项目文件 | `true` 会构建 TanStack Router 不是 Tifa 测试过的版本的应用，这可能让页面在浏览器里变成空白。见 [build.md](/docs/build-and-deploy/build#the-apps-tsconfig-and-vite-config) |
+| `build.debug_info` | `false` | 仅项目文件 | `true` 把 DWARF 调试信息留在程序里，供 Delve 这样的调试器使用。不设时，`tifa build` 用 `-ldflags=-w` 去掉调试信息，这让示例 shop 的程序小约 20%。无论哪种，panic 仍然会给出每一帧的文件和行号。`tifa dev` 始终保留它。见 [build.md](/docs/build-and-deploy/build#debug-info) |
+| `build.i18next_cache` | `true` | 仅项目文件 | 服务端渲染会保留 i18next 翻译出来的字符串，同样的键和选项再来时直接给出，所以每次渲染都翻译同样文本的页面耗时更少：shop 的店面页面只要它的 0.778。`false` 会关掉它。应用的 formatter 和后处理器对同样的输入必须给出同样的文本。应用在第一次渲染之后不通过 i18next 的 API 改动 i18next 的资源或选项，或者给 i18next 传了读取请求内容的其他函数时，请关掉它，否则页面可能显示过期的翻译。见 [build.md](/docs/build-and-deploy/build#i18next-cache) |
 | `i18n.default` | 无 | 仅项目文件 | 带 `_locales/` 文件夹的应用的默认语言，是常见写法的 BCP 47 标签，比如 `zh-CN` 或 `en-US`。这种语言的 URL 没有前缀（除非 `i18n.prefix` 是 `always`），它在 `tifa.Languages()` 里排第一。只有一种语言的应用可以省略它。有多种语言时，没有它 `tifa build` 会失败，没有任何区域有它的文件时也会失败。每个区域都必须有默认语言。见[多语言网站](/docs/start/app#a-site-in-several-languages) |
 | `i18n.prefix` | `off` | 仅项目文件 | `always` 会把语言放进每个有语言的路由的 URL，默认语言也不例外：`/store` 会以 308 跳转到 `/zh-CN/store`。`off` 让默认语言没有前缀。不在任何区域里的路由，两种模式下都没有前缀 |
 | `site.url` | 无 | 仅项目文件 | 站点对外提供服务的协议和主机，比如 `https://shop.example.com`，不带路径。有多种语言的站点需要它，没有它 `tifa build` 会失败。它把站点标记为公开：每个页面得到一个 canonical 链接和一个 `og:url` meta，程序提供 `/sitemap.xml`、默认的 `/robots.txt`、`/llms.txt`、`/llms-full.txt` 和内容页面的 Markdown 版本。没有它就没有这些。见[搜索引擎与语言模型](/docs/guides/seo) |
 | `server.addr` | `127.0.0.1:9527` | `--server-addr`、`SERVER_ADDR` | 监听的地址。在容器里用 `0.0.0.0:9527`。开启 [HTTPS](#https) 时，它提供的是 HTTPS，必须设置，通常是 `:443` |
-| `server.body_limit` | `1MiB` | `--server-body-limit`、`SERVER_BODY_LIMIT` | 请求体的最大大小。更大的会以 413 回答。`OnRequest` 里的 `c.SetBodyLimit` 可以为一个请求设置自己的，见 [routes.md](/docs/pages/routes#body-limit-and-read-time-of-a-route) |
+| `server.body_limit` | `1MiB` | `--server-body-limit`、`SERVER_BODY_LIMIT` | 请求体的最大大小。更大的会以 413 回答。`OnRequest` 里的 `c.SetBodyLimit` 可以为一个请求设置自己的，见 [routes.md](/docs/pages-and-data/routes#body-limit-and-read-time-of-a-route) |
 | `server.read_timeout` | `10s` | `--server-read-timeout`、`SERVER_READ_TIMEOUT` | 读完整个请求（包括请求体）的时间，从连接被接受起算。超过之后仍在到来的请求体会读取失败。见[长请求](#long-requests) |
 | `server.write_timeout` | `10s` | `--server-write-timeout`、`SERVER_WRITE_TIMEOUT` | 从请求头结束到响应结束的时间。超过之后仍在写的响应会被切断。见[长请求](#long-requests) |
 | `server.shutdown_timeout` | `10s` | `--server-shutdown-timeout`、`SERVER_SHUTDOWN_TIMEOUT` | 收到停止信号后，正在处理的请求用来完成的时间，之后是 `OnShutdown` 得到的时间。时间到了仍在运行的请求会被取消，并再得到一个 `shutdown_timeout` 的时间来返回。`OnShutdown` 在它们返回之后运行，没有返回就跳过。不管哪种，程序都以状态 1 退出 |
-| `server.compress` | `true` | `--server-compress`、`SERVER_COMPRESS` | 对接受的客户端用 gzip 或 zstd 发送文本响应（用 gzip，除非客户端把 zstd 排得更高或不接受 gzip），浏览器包则用 `tifa build` 写出的 gzip 文件发送，见[压缩](/docs/ship/build#compression)。前面有代理做压缩时（比如带 brotli 的 nginx），把它设为 `false` |
+| `server.compress` | `true` | `--server-compress`、`SERVER_COMPRESS` | 对接受的客户端用 gzip 或 zstd 发送文本响应（用 gzip，除非客户端把 zstd 排得更高或不接受 gzip），浏览器包则用 `tifa build` 写出的 gzip 文件发送，见[压缩](/docs/build-and-deploy/build#compression)。前面有代理做压缩时（比如带 brotli 的 nginx），把它设为 `false` |
 | `server.tls_domains` | 无 | `--server-tls-domains`、`SERVER_TLS_DOMAINS` | 为这些域名开启 [HTTPS](#https)，证书来自 Let's Encrypt，用逗号分隔，比如 `example.com,www.example.com` |
 | `server.tls_email` | 无 | `--server-tls-email`、`SERVER_TLS_EMAIL` | 和 `tls_domains` 一起交给 Let's Encrypt 的联系邮箱。可选 |
 | `server.tls_cache` | 无 | `--server-tls-cache`、`SERVER_TLS_CACHE` | 在重启之间保存 `tls_domains` 证书的文件夹。有 `tls_domains` 时需要它，并且必须在新部署之后仍然保留 |
@@ -117,37 +118,23 @@ Cloud Run、Heroku、Render、Railway 和 Fly 这样的托管平台，通过 `PO
 | `server.csp_policy` | `script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'self'` | `--server-csp-policy`、`SERVER_CSP_POLICY` | `server.csp` 的策略：用分号分隔的指令。它只检查能让它保持为一个头的条件：可打印 ASCII，没有逗号，指令名由字母、数字和连字符组成 |
 | `server.trusted_origins` | 无 | `--server-trusted-origins`、`SERVER_TRUSTED_ORIGINS` | 允许它们的页面从另一个站点发送写入（POST、PUT、PATCH、DELETE）的 origin，用逗号分隔，比如 `https://admin.example.com,http://localhost:3000`。见[跨站写入](#cross-site-writes) |
 | `server.cross_site_paths` | 无 | `--server-cross-site-paths`、`SERVER_CROSS_SITE_PATHS` | 路径模式，对这些路径的写入不检查它来自哪个站点，用逗号分隔，比如 `POST /auth/apple/callback`。见[跨站写入](#cross-site-writes) |
-| `ssr.vms` | CPU 数（`GOMAXPROCS`），最多 4 | `--ssr-vms`、`SSR_VMS` | 预热好的 JavaScript VM，也就是同时能渲染多少个页面。在容器里它跟随 CPU 限制。在 1、2、4 和 8 个 CPU 上，默认值分别是 1、2、4 和 4 个 VM：每个 VM 占内存，而一个有内存限制、没有 CPU 限制的容器能看到它宿主机的每个 CPU。在 CPU 更多、内存也够的机器上，请自己设置，比如 `ssr.vms: 8` 或 `SSR_VMS=8`。你设置的值原样使用。什么时候该改它，见[给机器定规格](/docs/reference/performance#sizing-a-machine)。在每个 P 都在渲染（每个 P 一个 VM，1 个 CPU 上 `GOMAXPROCS=1`）的情况下实测，短请求要在渲染后面等大约 20 毫秒，原因在 Go 的调度器（它 10 毫秒的监控周期，两次，见 slowjs 的 [A long call and the Go scheduler](https://github.com/liustack/slowjs/blob/main/docs/architecture.md#a-long-call-and-the-go-scheduler)）。在同一个 1 CPU 上设 `GOMAXPROCS=2` 时，它们的 P50 是 0.016 毫秒。要让它们保持快速，就让 `GOMAXPROCS` 大于 `ssr.vms`，不过多出来的 P 只有在还有 CPU 给它用时才有帮助。默认值在最多 4 个 CPU 时让两者相等，从 5 个起让 `GOMAXPROCS` 更大 |
+| `ssr.vms` | CPU 数（`GOMAXPROCS`），最多 4 | `--ssr-vms`、`SSR_VMS` | 预热好的 JavaScript VM，也就是同时能渲染多少个页面。在容器里它跟随 CPU 限制。在 1、2、4 和 8 个 CPU 上，默认值分别是 1、2、4 和 4 个 VM：每个 VM 占内存，而一个有内存限制、没有 CPU 限制的容器能看到它宿主机的每个 CPU。在 CPU 更多、内存也够的机器上，请自己设置，比如 `ssr.vms: 8` 或 `SSR_VMS=8`。你设置的值原样使用。什么时候该改它，见[给机器定规格](/docs/reference/performance#sizing-a-machine)。在每个 P 都在渲染（每个 P 一个 VM，1 个 CPU 上 `GOMAXPROCS=1`）的情况下实测，短请求要在渲染后面等大约 20 毫秒，原因在 Go 的调度器（它 10 毫秒的监控周期，两次，见 slowjs 的 [A long call and the Go scheduler](https://github.com/liustack/slowjs/blob/main/docs/internals/architecture.md#a-long-call-and-the-go-scheduler)）。在同一个 1 CPU 上设 `GOMAXPROCS=2` 时，它们的 P50 是 0.016 毫秒。要让它们保持快速，就让 `GOMAXPROCS` 大于 `ssr.vms`，不过多出来的 P 只有在还有 CPU 给它用时才有帮助。默认值在最多 4 个 CPU 时让两者相等，从 5 个起让 `GOMAXPROCS` 更大 |
 | `ssr.vm_memory` | `128MiB` | `--ssr-vm-memory`、`SSR_VM_MEMORY` | 每个 VM 的内存上限。内存用光的渲染会失败，VM 会被换成全新的。页面代码捕获不了它。引擎为复用而保留的 shape 也算在这里，最坏每个 VM 约 6 MiB（2048 个 shape，每个 32 个键，每个键约十个字符，键更长则更多），所以调低它时要给它们留出空间（见[内存](/docs/reference/performance#memory)）。一次回收后占用超过它一半的 VM 会在后台被换掉，所以 VM 稳定在那之上的应用需要更高的上限（见[内存](/docs/reference/performance#memory)） |
 | `ssr.vm_stack_depth` | `10000` | `--ssr-vm-stack-depth`、`SSR_VM_STACK_DEPTH` | 每个 VM 里 JavaScript 调用最多能嵌套多深，大约每次调用一层。更深的调用会抛出 `RangeError: Maximum call stack size exceeded`，深度和 Node 差不多。取值从 1 到 10000，见[栈深度](#stack-depth) |
 | `ssr.timeout` | `3s` | `--ssr-timeout`、`SSR_TIMEOUT` | 一次渲染的时间预算。运行更久的渲染会被停止，并作为意外错误处理，交给 `OnError`。页面代码捕获不了它 |
 | `ssr.queue_limit` | `32` | `--ssr-queue-limit`、`SSR_QUEUE_LIMIT` | 允许等待 VM 的渲染数，不含已经在运行的渲染。`0` 表示没有空闲 VM 时立刻拒绝。队列满了会以 503 回答，带 `Retry-After: 1` |
 | `ssr.wait_timeout` | `3s` | `--ssr-wait-timeout`、`SSR_WAIT_TIMEOUT` | 等待 VM 的最长时间。到期会以 503 回答，带 `Retry-After: 1`，不启动也不替换 VM。它和 `ssr.timeout` 是分开的，后者在拿到 VM 之后才开始计时 |
-| `ssr.memo_size` | `64MiB` | `--ssr-memo-size`、`SSR_MEMO_SIZE` | 渲染记忆 memo 的大小，按它保存的字节数算：每个页面一种形式，开了 `server.compress` 时是它的 gzip 形式，否则是它的 HTML（见[压缩](/docs/ship/build#compression)）。满了之后最近最少使用的页面会被丢掉。`0` 会关掉它，不过同时没命中同一个页面的请求仍然共用一次渲染。memo 是什么、为什么安全：[渲染记忆 memo](/docs/reference/memo)。页面可以用 `Memo = false` 为自己关掉 memo（见 [SSR 与缓存](/docs/pages/ssr-and-cache#ssr-and-cache)） |
-| `cache.s_maxage` | `1m` | `--cache-s-maxage`、`CACHE_S_MAXAGE` | 写了 `const Cache = true` 的页面的 `s-maxage`：程序前面的共享缓存（比如 CDN）可以保存它多久。至少一秒。写了 `const Cache = 10 * time.Minute` 的页面用它自己的时间。见[给 CDN 用的缓存](/docs/pages/ssr-and-cache#cache-for-cdns) |
-| `session.cookie` | `__Host-tifa_session` | `--session-cookie`、`SESSION_COOKIE` | 会话 cookie 的名字。在 `tifa dev` 下会去掉 `__Host-` 前缀，见[会话](/docs/pages/sessions) |
+| `ssr.memo_size` | `64MiB` | `--ssr-memo-size`、`SSR_MEMO_SIZE` | 渲染记忆 memo 的大小，按它保存的字节数算：每个页面一种形式，开了 `server.compress` 时是它的 gzip 形式，否则是它的 HTML（见[压缩](/docs/build-and-deploy/build#compression)）。满了之后最近最少使用的页面会被丢掉。`0` 会关掉它，不过同时没命中同一个页面的请求仍然共用一次渲染。memo 是什么、为什么安全：[渲染记忆 memo](/docs/reference/memo)。页面可以用 `Memo = false` 为自己关掉 memo（见 [SSR 与缓存](/docs/pages-and-data/ssr-and-cache#ssr-and-cache)） |
+| `cache.s_maxage` | `1m` | `--cache-s-maxage`、`CACHE_S_MAXAGE` | 写了 `const Cache = true` 的页面的 `s-maxage`：程序前面的共享缓存（比如 CDN）可以保存它多久。至少一秒。写了 `const Cache = 10 * time.Minute` 的页面用它自己的时间。见[给 CDN 用的缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns) |
+| `session.cookie` | `__Host-tifa_session` | `--session-cookie`、`SESSION_COOKIE` | 会话 cookie 的名字。在 `tifa dev` 下会去掉 `__Host-` 前缀，见[会话](/docs/pages-and-data/sessions) |
 | `session.max_age` | `720h` | `--session-max-age`、`SESSION_MAX_AGE` | 会话从 `tifa.SetSession` 创建它的那一刻起能持续多久，至少一秒。它不会续期 |
 | `session.memory_limit` | `64MiB` | `--session-memory-limit`、`SESSION_MEMORY_LIMIT` | 内存会话存储最多能保存的字节数，在 `OnStart` 没有用 `tifa.SetSessionStore` 设置存储时使用。存储满了会丢掉最先过期的会话 |
-| `deploy.front` | `none` | 仅项目文件 | 访客在到达服务器之前经过什么：`none` 或 `cloudflare`。选 `cloudflare` 时，`tifa deploy setup` 会用 `cf` 把应用放在 Cloudflare Tunnel 后面，主机是 `site.url` 的主机，`deploy` 和 `rollback` 会清除那个主机名的 CDN 缓存。需要不带端口的 `site.url`。见[按方案设置](/docs/ship/deploy#set-up-with-a-plan) |
+| `deploy.front` | `none` | 仅项目文件 | 访客在到达服务器之前经过什么：`none` 或 `cloudflare`。选 `cloudflare` 时，`tifa deploy setup` 会用 `cf` 把应用放在 Cloudflare Tunnel 后面，主机是 `site.url` 的主机，`deploy` 和 `rollback` 会清除那个主机名的 CDN 缓存。需要不带端口的 `site.url`。见[按方案设置](/docs/build-and-deploy/deploy#set-up-with-a-plan) |
 | `deploy.connect` | `direct` | 仅项目文件 | 部署如何经 ssh 连到服务器，从你的机器和从 CI 都一样：`direct`、`cloudflare`（经 Cloudflare Tunnel）或 `tailscale`（CI 的 runner 加入你的 tailnet）。`cloudflare` 需要 `deploy.front: cloudflare`，`tailscale` 需要 `deploy.auto` 这个块 |
-| `deploy.auto.branch` | 仓库的默认分支 | 仅项目文件 | 有 `deploy.auto` 块时：从 GitHub Actions 部署的分支。见[从 GitHub Actions 部署](/docs/ship/deploy#deploy-from-github-actions) |
+| `deploy.auto.branch` | 仓库的默认分支 | 仅项目文件 | 有 `deploy.auto` 块时：从 GitHub Actions 部署的分支。见[从 GitHub Actions 部署](/docs/build-and-deploy/deploy#deploy-from-github-actions) |
 | `deploy.auto.needs` | `ci.yml` | 仅项目文件 | 有 `deploy.auto` 块时：`.github/workflows` 里必须先通过才会部署的那个文件，比如 `ci.yml`，写 `none` 就什么也不等 |
 
 `deploy.auto` 这个块只要写上就会开启从 GitHub Actions 的部署：`auto: {}` 用默认值，写了它不认识的键，或者写成后面什么都没有的 `auto:`，都是错误。没有这个块，就没有从 GitHub Actions 的部署。`tifa deploy setup` 会设置好它们。
-
-### 已停用的设置 {#retired-settings}
-
-Tifa 去掉的设置，至少在下一个 minor 版本之前会列在这里。程序或构建如果仍然收到其中一个（来自参数、环境变量、`.env`、`-c` 的文件或 `tifa.yaml`），会打印一条 "no longer used" 警告，说明该改用什么。它照样启动和构建，但这个值不会被使用：改名的设置不会沿用它的值，所以要设置新名字，否则用它的默认值。
-
-| 已停用 | 改用 |
-| --- | --- |
-| `cache_control.s_maxage`（`--cache-control-s-maxage`、`CACHE_CONTROL_S_MAXAGE`） | `cache.s_maxage`（`--cache-s-maxage`、`CACHE_S_MAXAGE`） |
-| `cache.size`（`--cache-size`、`CACHE_SIZE`） | `ssr.memo_size`（`--ssr-memo-size`、`SSR_MEMO_SIZE`） |
-| `cache.whole_page` | 无。带 `Cache` 的页面不再保存在程序里 |
-| `cache.ignore_query` | 无。已经没有需要清理的键 |
-| `deploy.host`（仅在 `tifa.yaml` 里） | 应用的 `.env` 里的 `TIFA_DEPLOY_HOST`，`tifa deploy` 的 `--host`，或 `~/.tifa/config.yaml` 里的服务器。`tifa.yaml` 是要提交的，所以不放服务器。见[用 tifa deploy 部署](/docs/ship/deploy#deploy-with-tifa-deploy) |
-
-更早版本的 `deploy.ssh` 和 `deploy.ci` 没有停用，只是改了名，项目文件会在它们那一行停下，并给出新的写法：`deploy.ssh` 改叫 `deploy.connect`，值不变，`ci: github` 改成 `auto: {}`（`ci: none` 直接删掉）。
 
 ## 应用的选项 {#options-of-the-app}
 
@@ -276,7 +263,7 @@ func POST(c *tifa.Ctx) error {
 - 要在截止时间过去之前移动它，也就是在处理函数一开始。在 HTTP/2 上，已经过去的写截止时间已经结束了响应，已经过去的读截止时间已经切断了请求体：新设一个并不能把它们找回来。同样的代码在 HTTP/1.1 上能工作，所以这个错误只在开了 HTTPS 时才显现。
 - 在两次写之间要等待的流（等事件或等语言模型），在等待时清掉写截止时间，并在每次写的前后设一个，这样不再读取的客户端不会永远占着处理函数，见[流式传输](/docs/guides/streaming)。
 - 写超时从请求头结束起算，所以读长请求体的处理函数要把两个都放宽：它的响应是在请求体之后写的。
-- 带类型输入的处理函数，它的请求体在它运行之前就读完了，所以在处理函数里设置的截止时间对请求体来说太晚了。请改为在 `OnRequest` 里调用 `c.SetReadTimeout`，它在任何东西读取请求体之前放宽两个截止时间，见[路由的请求体限制和读取时间](/docs/pages/routes#body-limit-and-read-time-of-a-route)和[上传](/docs/guides/uploads#the-settings-and-the-body-limit)。
+- 带类型输入的处理函数，它的请求体在它运行之前就读完了，所以在处理函数里设置的截止时间对请求体来说太晚了。请改为在 `OnRequest` 里调用 `c.SetReadTimeout`，它在任何东西读取请求体之前放宽两个截止时间，见[路由的请求体限制和读取时间](/docs/pages-and-data/routes#body-limit-and-read-time-of-a-route)和[上传](/docs/guides/uploads#the-settings-and-the-body-limit)。
 - `c.Writer()` 通过 Tifa 的 writer 和压缩层一路到达连接。
 - 前面的代理有它自己的超时，比如 nginx 的 `proxy_read_timeout` 的 60 秒。请为同样的路径把它们调高。
 
@@ -284,7 +271,7 @@ func POST(c *tifa.Ctx) error {
 
 HTTPS 默认关闭，程序仍和以前一样在 `server.addr` 上提供普通 HTTP。如果前面有终结 TLS 的 CDN 或代理（比如 Cloudflare、nginx 或 Caddy），就保持关闭：它们已经和浏览器说 HTTPS 和 HTTP/2，而程序的证书只会有它们看到。
 
-当程序自己面对互联网时，才开启它。这时浏览器还会得到 HTTP/2，浏览器只通过 TLS 说它：页面的每个文件共用一个连接，而在 HTTP/1.1 上，浏览器对一个主机最多开 6 个，见[预加载页面的分块](/docs/ship/build#preloading-the-chunks-of-a-page)。有两种方式，两种都设置会失败。无论哪种，都要设置 `server.addr`：开启 HTTPS 时，默认的 `127.0.0.1:9527` 会拒绝启动，因为只有本机能连到它。在配置里把它写出来也一样。当 systemd 传入 `server.addr` 的 socket（[socket 激活](/docs/ship/deploy#restart-without-dropping-requests)）时，程序监听那个 socket 而不是地址，所以地址可以保持默认。另一个回环地址，比如 `127.0.0.1:8443`，启动时日志里会有一条警告，用于在本机上测试。
+当程序自己面对互联网时，才开启它。这时浏览器还会得到 HTTP/2，浏览器只通过 TLS 说它：页面的每个文件共用一个连接，而在 HTTP/1.1 上，浏览器对一个主机最多开 6 个，见[预加载页面的分块](/docs/build-and-deploy/build#preloading-the-chunks-of-a-page)。有两种方式，两种都设置会失败。无论哪种，都要设置 `server.addr`：开启 HTTPS 时，默认的 `127.0.0.1:9527` 会拒绝启动，因为只有本机能连到它。在配置里把它写出来也一样。当 systemd 传入 `server.addr` 的 socket（[socket 激活](/docs/build-and-deploy/deploy#restart-without-dropping-requests)）时，程序监听那个 socket 而不是地址，所以地址可以保持默认。另一个回环地址，比如 `127.0.0.1:8443`，启动时日志里会有一条警告，用于在本机上测试。
 
 ### 来自 Let's Encrypt 的证书 {#certificates-from-lets-encrypt}
 
@@ -338,7 +325,7 @@ sudo setcap cap_net_bind_service=+ep ./bin/myapp
 - 压缩、构建出来的 `.gz` 文件、渲染记忆 memo、ETag、重定向和 server-sent events 的工作方式和 HTTP/1.1 一样，flush 会立刻发送已经写出的内容。
 - 在 HTTP/2 上，即使处理函数没有在读或写，截止时间也会到期：已经过去的写截止时间会结束响应，已经过去的读截止时间会让请求体剩下的部分读取失败。之后再移动它们没有用。在 HTTP/1.1 上，已经过去的截止时间在下一次读或写之前还能移动。请在截止时间过去之前移动它们，见[长请求](#long-requests)。
 - 在 HTTP/2 连接上，`Hijack` 会以 `http.ErrNotSupported` 失败，因为那个连接还承载着其他请求。除非设置了 `GODEBUG=http2xconnect=1`，服务器不在 HTTP/2 上提供 WebSocket，所以浏览器会通过另一个 HTTP/1.1 连接打开它们，在那里 `Hijack` 能用。
-- 在 HTTPS 上，压缩可能泄露什么，请看[压缩](/docs/ship/build#compression)。
+- 在 HTTPS 上，压缩可能泄露什么，请看[压缩](/docs/build-and-deploy/build#compression)。
 
 `tifa dev` 始终提供普通 HTTP，并忽略这些设置，项目文件里设置了它们也一样。
 
@@ -468,4 +455,4 @@ server:
 
 当 `server.addr` 或 `server.http_addr` 没法监听时，错误里会写出这项设置，对于只有 root 才能占用的端口，还会说明该怎么做。
 
-`serve --dist <folder>` 和 `serve --lifeline-fd <fd>` 是只给 [`tifa dev`](/docs/ship/dev) 用的参数。它们不是设置，也没有环境变量。`tifa build` 生成的程序没有 `--lifeline-fd`。
+`serve --dist <folder>` 和 `serve --lifeline-fd <fd>` 是只给 [`tifa dev`](/docs/build-and-deploy/dev) 用的参数。它们不是设置，也没有环境变量。`tifa build` 生成的程序没有 `--lifeline-fd`。

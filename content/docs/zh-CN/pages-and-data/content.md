@@ -1,15 +1,16 @@
 ---
 title: 内容
-description: 应用如何把文章、文档等文字内容保存成 content/ 下的 Markdown 文件，并在 Go 里读取
-source: docs/content.md
-group: Pages and data
+description: 应用怎样把文章、文档和其他文字作为 Markdown 文件放在 content/ 下，并在 Go 里读取
+source: docs/pages-and-data/content.zh-CN.md
+group: 页面与数据
 groupOrder: 2
 order: 4
-translatedFrom: ae835d8a601f
 ---
 
 
 集合（collection）是 `content/` 下的一个 Markdown 文件夹，应用在 Go 里把它读成有类型的值：博客、一套文档、发布说明。构建会读取这些文件，对照一个 Go 结构体检查每份 front matter，把每篇正文转成 HTML，再把结果放进程序里。运行时，`Load` 或处理函数像读任何其他数据一样读取这些条目，不再做任何解析。
+
+**适用范围。** 集合适合每个应用大约 1000 篇以内的条目。1000 篇、每篇约 10 KB 时，程序会增大约 10 MB，构建转换它们大约需要 2 秒。正文用到的每张图片也会进入程序，所以大图或很多图片请放在对象存储里，用 URL 链接。超过 1000 篇，或者站点运行期间还有人在编辑的文字，请放进数据库，并用 Tifa 做编辑页面，就像一个小型 CMS。
 
 四步把一个条目放到页面上：
 
@@ -18,7 +19,7 @@ translatedFrom: ae835d8a601f
 3. 在 `Load` 里用集合的方法读取它们。
 4. 用 `<HTML>` 显示正文。
 
-本页的代码来自 [test/apps/content](https://github.com/liustack/tifa/blob/v0.3.0/test/apps/content)，一个有两种语言的博客和文档的应用。
+本页的代码来自 [test/apps/content](https://github.com/liustack/tifa/blob/v0.4.1/test/apps/content)，一个有两种语言的博客和文档的应用。
 
 ## 声明集合 {#declaring-a-collection}
 
@@ -138,7 +139,7 @@ tags: [search]
 ---
 ```
 
-它的键是 schema 结构体各字段的 `json` 名，构建按和 `Load` 结果、处理函数输入同样的 JSON 规则来检查它们（[JSON 规则](/docs/pages/routes#json-rules)）。
+它的键是 schema 结构体各字段的 `json` 名，构建按和 `Load` 结果、处理函数输入同样的 JSON 规则来检查它们（[JSON 规则](/docs/pages-and-data/routes#json-rules)）。
 
 - 字段可以是字符串、数字、布尔值、`time.Time`、指针、切片、键为字符串的 map，或嵌套结构体。`time.Time` 接受 `2006-01-02`（UTC 午夜）和 RFC 3339，加不加引号都行。自己读取 JSON 的类型、`[]byte`、`time.Duration`、接口，以及除 `omitempty` 和 `omitzero` 之外的 json 选项（比如 `,string`），都会让构建失败。
 - 字段是必填的，除非它是指针、切片或 map，或者带 `omitempty` 或 `omitzero`。这和页面的 TypeScript 类型里可选字段的规则一样。
@@ -276,7 +277,7 @@ export default function PostPage() {
 }
 ```
 
-- `Body() tifa.HTML` 每次被调用时，都从程序里读取条目的 HTML（`tifa dev` 从 `.tifa/dist` 读取），不保留副本。页面用 `<HTML>` 显示它，见[显示应用信任的 HTML](/docs/pages/pages#showing-html-the-app-trusts)。正文里的链接走路由器。
+- `Body() tifa.HTML` 每次被调用时，都从程序里读取条目的 HTML（`tifa dev` 从 `.tifa/dist` 读取），不保留副本。页面用 `<HTML>` 显示它，见[显示应用信任的 HTML](/docs/pages-and-data/pages#showing-html-the-app-trusts)。正文里的链接走路由器。
 - `Headings() []content.Heading` 按顺序列出正文的 `h1` 到 `h6`，每个写成 `{Depth, ID, Text}`：它的级别、它在 HTML 里的 `id` 和它的文字。
 
 ## Markdown 转 HTML {#markdown-to-html}
@@ -401,7 +402,7 @@ tifa: content: blog zh-CN/202611/launch and en/202611/release-notes are publishe
 
 ## `tifa dev` {#tifa-dev}
 
-`tifa dev` 从 `.tifa/dist` 读取内容，所以改动 `content/` 下的内容不需要 go build，也不需要重启（见[每种改动会触发什么](/docs/ship/dev#what-each-change-triggers)）：
+`tifa dev` 从 `.tifa/dist` 读取内容，所以改动 `content/` 下的内容不需要 go build，也不需要重启（见[每种改动会触发什么](/docs/build-and-deploy/dev#what-each-change-triggers)）：
 
 - Markdown 文件被修改、添加或删除，不管是正文还是 front matter：`tifa dev` 会重新扫描 `content/`，转换那个条目，写入 `.tifa/dist/content/` 和 `content.json`，运行中的应用加载它们。应用对每个条目运行 `Validate` 并取用新数据，之后你加载的页面会显示它。`OnStart` 不会再运行，打开的页面会重新加载。
 - `content/` 下的其他文件，比如图片：它所在文件夹里的条目会重新转换，回退到那个文件夹的翻译也一样。

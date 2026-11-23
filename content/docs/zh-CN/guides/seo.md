@@ -1,17 +1,16 @@
 ---
 title: 搜索引擎和语言模型
-description: Tifa 站点如何被搜索引擎找到、被语言模型读到
-source: docs/guides/seo.md
-group: Guides
+description: Tifa 站点怎样被搜索引擎找到、被语言模型读到
+source: docs/guides/seo.zh-CN.md
+group: 做法
 groupOrder: 3
 order: 8
-translatedFrom: 9dd9812ff622
 ---
 
 
 你希望别人能在搜索结果里，以及在 ChatGPT、Claude 这类工具的回答里找到你的站点。做完之后，搜索引擎会拿到一份 sitemap，里面有每个公开页面、它的日期和它其他语言的版本，语言模型会拿到一份简短的站点索引，以及你的文章的 Markdown 文本。
 
-这一切来自一个设置和一个函数。下面的代码来自 [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.3.0/test/apps/i18n) 和 [examples/shop](https://github.com/liustack/tifa/blob/v0.3.0/examples/shop/sitemap.go)。
+这一切来自一个设置和一个函数。下面的代码来自 [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.4.1/test/apps/i18n) 和 [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop/sitemap.go)。
 
 ## 打开它 {#turn-it-on}
 
@@ -43,7 +42,7 @@ site:
 
 ## 分享卡片 {#share-cards}
 
-把你的页面链接发到聊天或社交动态里，会显示一张卡片：标题、一行文字和一张图。卡片读取 `og:` meta 标签，缺了的会被猜一个，或者留空。把它们写在页面的 `head` 里（见[标题和 meta 标签](/docs/pages/pages#title-and-meta-tags)），数据来自它的 `Load`。`og:url` 由 Tifa 自己写。
+把你的页面链接发到聊天或社交动态里，会显示一张卡片：标题、一行文字和一张图。卡片读取 `og:` meta 标签，缺了的会被猜一个，或者留空。把它们写在页面的 `head` 里（见[标题和 meta 标签](/docs/pages-and-data/pages#title-and-meta-tags)），数据来自它的 `Load`。`og:url` 由 Tifa 自己写。
 
 ```go
 // app/products/product+/route.go
@@ -230,7 +229,7 @@ shop 的 `/sitemap.xml`，一篇文章：
 [news](https://i18n.example.com/en-US/store/news) [projects](https://i18n.example.com/projects) [icon](https://i18n.example.com/favicon.svg)
 ```
 
-- `tifa build` 把每个条目的 Markdown 保存在它的 HTML 旁边，草稿除外，和保存 HTML 的方式一样。链接和图片指向 HTML 里它们指向的地方，用 `site.url` 写成完整的形式：图片指向 `/assets/` 下它们的文件，以根路径开头的链接会得到条目的语言前缀（见 [图片和链接](/docs/pages/content#images-and-links)）。在 `tifa dev` 下它们保持本地路径。
+- `tifa build` 把每个条目的 Markdown 保存在它的 HTML 旁边，草稿除外，和保存 HTML 的方式一样。链接和图片指向 HTML 里它们指向的地方，用 `site.url` 写成完整的形式：图片指向 `/assets/` 下它们的文件，以根路径开头的链接会得到条目的语言前缀（见 [图片和链接](/docs/pages-and-data/content#images-and-links)）。在 `tifa dev` 下它们保持本地路径。
 - HTML 注释会略去。front matter 不在里面：读者需要的内容放进标题。
 - 响应带 `Content-Type: text/markdown; charset=utf-8`，以及一个带页面 canonical URL 的 `Link` 头，这样搜索引擎不会把它当成副本。
 - 只有被列出、带 `Content` 的页面的 URL 才会响应。其他以 `.md` 结尾的路径照常交给路由，没有 `Content` 的页面没有 Markdown 版本。
@@ -272,7 +271,7 @@ sitemap、`llms` 文件和 Markdown 版本和其他请求一样：`OnRequest` �
 
 ## 测试它 {#test-it}
 
-`tifatest.Start` 运行整个应用，包括 `OnStart`，所以测试可以像搜索引擎那样读 sitemap（取自 [examples/shop](https://github.com/liustack/tifa/blob/v0.3.0/examples/shop/sitemap_test.go)）：
+`tifatest.Start` 运行整个应用，包括 `OnStart`，所以测试可以像搜索引擎那样读 sitemap（取自 [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop/sitemap_test.go)）：
 
 ```go
 func TestSitemapListsTheStorefront(t *testing.T) {
@@ -289,7 +288,7 @@ func TestSitemapListsTheStorefront(t *testing.T) {
 }
 ```
 
-函数的错误会让测试以 500 失败。它返回内容里的错误会出现在测试的日志里，以及缺失的 `<loc>` 上。用 `tifatest` 设置的条目，它的正文是一个占位符（见 [测试](/docs/pages/content#tests)），它的 Markdown 版本里也是占位符。
+函数的错误会让测试以 500 失败。它返回内容里的错误会出现在测试的日志里，以及缺失的 `<loc>` 上。用 `tifatest` 设置的条目，它的正文是一个占位符（见 [测试](/docs/pages-and-data/content#tests)），它的 Markdown 版本里也是占位符。
 
 ## Tifa 不做的事 {#what-tifa-does-not-do}
 

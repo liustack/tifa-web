@@ -1,11 +1,10 @@
 ---
 title: 路由和 Ctx
-description: 如何在 route.go 里写路由的 Go 部分
-source: docs/routes.md
-group: Pages and data
+description: 怎样在 route.go 里写路由的 Go 部分
+source: docs/pages-and-data/routes.zh-CN.md
+group: 页面与数据
 groupOrder: 2
 order: 1
-translatedFrom: a505c7afdde6
 ---
 
 
@@ -33,7 +32,7 @@ func POST(c *tifa.Ctx, in ShipInput) (orders.Shipment, error) {
 
 - `Load` 返回页面数据。它的返回类型必须能转换成 TypeScript（见下面的「JSON 规则」）。
 - `GET`、`POST`、`PUT`、`PATCH` 和 `DELETE` 处理与它们同名的 HTTP 方法。
-- `Layout` 返回这个文件夹的布局的数据（见[布局](/docs/pages/pages#layout)）。
+- `Layout` 返回这个文件夹的布局的数据（见[布局](/docs/pages-and-data/pages#layout)）。
 - 有 `page.tsx` 的文件夹是一个页面。框架负责渲染它的 GET，所以你不能再写 `GET`。一个不需要数据、也不需要其他方法的页面，可以只有 `page.tsx`，不要 `route.go`。
 - 有 `route.go` 但没有 `page.tsx` 的文件夹，只要声明了方法处理函数，就是一个 API 路由：每个方法处理函数都按你写的方式响应，并且不允许有 `Load`，因为 `Load` 是用来加载页面数据的。只有 `Layout` 的 `route.go` 不是 API 路由，它只是给下面的页面提供布局数据。
 - 一切都是包级函数和常量。依赖请用应用已经设置好的全局变量。框架不做依赖注入。
@@ -44,7 +43,7 @@ func POST(c *tifa.Ctx, in ShipInput) (orders.Shipment, error) {
 | 返回的内容 | 结果 |
 | --- | --- |
 | `tifa.ErrNotFound` | 404 |
-| `tifa.Redirect(url, status)` | 重定向。页面加载和导航都会跟随它，从浏览器调用的处理函数也会（见[在浏览器里调用方法处理函数](/docs/pages/pages#calling-method-handlers-from-the-browser)）。`status` 不是 3xx 时会 panic |
+| `tifa.Redirect(url, status)` | 重定向。页面加载和导航都会跟随它，从浏览器调用的处理函数也会（见[在浏览器里调用方法处理函数](/docs/pages-and-data/pages#calling-method-handlers-from-the-browser)）。`status` 不是 3xx 时会 panic |
 | `tifa.Error{Status, Message}` | 以它的状态码和消息作为响应，不会交给 `OnError`。状态码在 400 到 599 之外时，按意外错误处理 |
 | `tifa.Fields{"carrier": "pick a carrier"}` | 422，按 json 名给每个输入字段一条消息，不会交给 `OnError` |
 | 其他任何错误，或 panic | 交给 `OnError`。没有 `OnError` 时，记入日志并以 500 响应 |
@@ -68,7 +67,7 @@ func POST(c *tifa.Ctx, in ShipInput) (Shipment, error)
 - 字段按它们的 `json` 标签命名，表单体和查询字符串里也一样。`form` 标签会让构建失败，传给 `c.Bind` 或 `c.BindQuery` 的结构体里也一样。路径参数、请求头和 cookie 仍然从 `c` 里取。
 - 输入和结果遵循下面的 JSON 规则，和 `Load` 的结果一样。输入还必须能从它的 TypeScript 类型所描述的 JSON 读回来：因 `MarshalText` 而成为字符串的类型，还需要 `UnmarshalText([]byte) error`，有 `UnmarshalText` 的类型在 TypeScript 里必须是字符串，除非它是 map 的键（键永远是 JSON 字符串），而 `UnmarshalJSON` 不被接受（`time.Time` 除外）。
 - 当输入类型有 `Validate` 方法时（必须是 `func() error` 或 `func(c *tifa.Ctx) error`），它在解码之后、处理函数之前运行。返回 `nil` 就继续。有了 Ctx，`Validate` 可以读取请求：用 `c.Language()` 给出访问者所用语言的消息（见[校验消息](/docs/guides/i18n#validation-messages)），还有 `c.Param`、`c.Query`、`c.QueryValues`、`c.Header`、`c.Cookie`、`c.Path()`、`c.Context()`、`c.Request()` 和 `tifa.Session`。它只做检查，只用返回的错误来回答，所以当 `Validate`，或它把 Ctx 传进去的函数，写响应（`c.JSON`、`c.Text`、`c.NoContent`、`c.SetHeader`、`c.SetCookie`、`c.Writer`）、再次读取请求体（`c.Bind`、`c.BindQuery`、`c.SetBodyLimit`、`c.SetReadTimeout`）、调用 `tifa.SetSession` 或 `tifa.ClearSession`，或调用 `tifa.Use` 时，构建会失败。Ctx 可以去 `Load` 里允许它去的地方（见 [Load 如何使用 Ctx](#how-load-may-use-ctx)）。`tifa.Error` 或 `tifa.Fields` 会原样作为响应，所以要标记单个字段，就返回 `tifa.Fields`。把它们收集到一个 `tifa.Fields{}` 里，最后 `return fields.Err()`，没有添加任何内容时它是 nil（空的 `tifa.Fields` 仍然是一个错误）。其他任何错误都以 400 响应，消息是它的 `err.Error()`，用户会看到这条消息。
-- 浏览器从另一个站点发来的 POST、PUT、PATCH 或 DELETE（包括表单和 multipart），会在处理函数运行之前被以 403 响应，所以处理函数不需要为此做自己的检查。`server.trusted_origins` 和 `server.cross_site_paths` 可以放行指定的来源和路径（见[跨站写入](/docs/ship/config#cross-site-writes)）。
+- 浏览器从另一个站点发来的 POST、PUT、PATCH 或 DELETE（包括表单和 multipart），会在处理函数运行之前被以 403 响应，所以处理函数不需要为此做自己的检查。`server.trusted_origins` 和 `server.cross_site_paths` 可以放行指定的来源和路径（见[跨站写入](/docs/build-and-deploy/config#cross-site-writes)）。
 - 无法解码的请求体或查询字符串，会以 400 响应（请求体超过限制是 413，内容类型不对或没有、或把 JSON 发给含文件的输入是 415，请求体没有按时到达是 408），并且处理函数不会运行。
 - 自己写响应的处理函数，用 `c.Bind(&in)` 解码请求体，用 `c.BindQuery(&in)` 解码查询字符串。它们按字段的 `json` 标签命名，再按 Go 名，和有类型的输入一样。传给它们的结构体里有 `form` 标签，会让构建失败，和有类型的输入一样（构建看不到类型的值，比如在接口后面的，不会检查，标签被忽略）。`c.Bind` 也会从 multipart 表单填充 `*multipart.FileHeader` 和 `[]*multipart.FileHeader` 字段。
 
@@ -133,10 +132,9 @@ func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
 }
 ```
 
-- `c.SetBodyLimit(n)` 的 `n` 是字节数。超过它的请求体，会在处理函数运行之前以 413 响应。这个上限统计整个请求体：文件、其他字段和 multipart 的分隔结构。如果想不重新构建就能改，数字可以取自[应用的选项](/docs/ship/config#options-of-the-app)：`c.SetBodyLimit(int64(UploadLimit))`，其中 `UploadLimit = tifa.Size("upload.limit", 4<<20, "Largest upload")`。
+- `c.SetBodyLimit(n)` 的 `n` 是字节数。超过它的请求体，会在处理函数运行之前以 413 响应。这个上限统计整个请求体：文件、其他字段和 multipart 的分隔结构。如果想不重新构建就能改，数字可以取自[应用的选项](/docs/build-and-deploy/config#options-of-the-app)：`c.SetBodyLimit(int64(UploadLimit))`，其中 `UploadLimit = tifa.Size("upload.limit", 4<<20, "Largest upload")`。
 - `c.SetReadTimeout(d)` 让请求体从现在起有 `d` 的时间到达，之后响应再得到 `server.write_timeout`，因为响应是在请求体收完之后才写的。时间到了请求体还在传，就以 408 响应。没有请求体的请求，比如 GET，保持它的期限，这个调用什么都不做。
 - 读取请求体开始之后，两者都会返回错误，`SetReadTimeout` 在 `d` 不大于 0 时，或响应到不了连接时（比如在一个不会解开包装的 `tifa.SetHTTPHandler` 中间件后面）也会返回错误。检查这个错误并返回它。
-- 路由里作为常量的 `BodyLimit` 和 `ReadTimeout` 已经没有了：声明它们会让构建失败，并显示这个路由该用的 `OnRequest`。
 
 ## Ctx {#ctx}
 
@@ -196,7 +194,7 @@ Tifa 只检查 `Load` 和 `Layout` 能到达的代码。如果你在 `OnRequest`
 | `bool` | `boolean` |
 | 整数、浮点数、`json.Number` | `number` |
 | `string`、`time.Time` | `string` |
-| `tifa.HTML` | `tifa/client` 的 `HTML`，见[显示应用信任的 HTML](/docs/pages/pages#showing-html-the-app-trusts)。不能作为 map 的键、处理函数的输入、会话，也不能作为整个结果 |
+| `tifa.HTML` | `tifa/client` 的 `HTML`，见[显示应用信任的 HTML](/docs/pages-and-data/pages#showing-html-the-app-trusts)。不能作为 map 的键、处理函数的输入、会话，也不能作为整个结果 |
 | `*multipart.FileHeader`、`[]*multipart.FileHeader` | `Blob \| null`、`Blob[]`。只能出现在 POST、PUT 或 PATCH 处理函数输入的字段里，见[输入里的文件](#files-in-the-input) |
 | 指针 | `T \| null` |
 | 切片 | `T[]`。nil 切片写成 `[]` |

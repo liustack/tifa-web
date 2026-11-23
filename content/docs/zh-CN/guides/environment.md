@@ -1,21 +1,20 @@
 ---
 title: 来自环境的值
-description: 公钥、API 基础地址这类来自环境的值，如何到达 Tifa 应用的页面
-source: docs/guides/environment.md
-group: Guides
+description: 环境里的值（比如公钥或 API 基础地址）怎样到达 Tifa 应用的页面
+source: docs/guides/environment.zh-CN.md
+group: 做法
 groupOrder: 3
 order: 10
-translatedFrom: 00b1410b3a5b
 ---
 
 
-在 Tifa 里，环境和密钥都留在 Go 进程里。程序启动时读取它的设置：命令行参数、环境变量、`.env` 和 `tifa.yaml`（见[配置](/docs/ship/config)）。前端构建看不到这些。Vite 不读 `.env`（`envDir: false`），而且同一个应用的构建要能在每个环境里运行。
+在 Tifa 里，环境和密钥都留在 Go 进程里。程序启动时读取它的设置：命令行参数、环境变量、`.env` 和 `tifa.yaml`（见[配置](/docs/build-and-deploy/config)）。前端构建看不到这些。Vite 不读 `.env`（`envDir: false`），而且同一个应用的构建要能在每个环境里运行。
 
 想把一个值交给浏览器，就从 `Load` 返回它，或者从 `Layout` 返回，这样它下面的每个页面都能拿到。这行 Go 是值到达页面的唯一途径，所以一定是你有意写的，也很容易找到。
 
 ## 示例 {#an-example}
 
-先和应用的设置一起定义选项（见[应用的选项](/docs/ship/config#options-of-the-app)）：
+先和应用的设置一起定义选项（见[应用的选项](/docs/build-and-deploy/config#options-of-the-app)）：
 
 ```go
 // options.go

@@ -1,8 +1,7 @@
 ---
 title: Sessions
 description: How sessions work in a Tifa app
-source: docs/sessions.md
-sourceHash: 2161ba6d5c1d
+source: docs/pages-and-data/sessions.md
 group: Pages and data
 groupOrder: 2
 order: 5
@@ -44,7 +43,7 @@ err := tifa.ClearSession(c)
 
 ## The cookie
 
-The cookie is `__Host-tifa_session` with `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, and no `Domain`. A session lasts 30 days from `SetSession`. It does not renew, so a request never writes to the store. Change the name and the lifetime with `session.cookie` and `session.max_age` (see [Configuration](/docs/ship/config#settings)). Under `tifa dev` the cookie is `tifa_session` without `Secure`, since dev serves plain HTTP on localhost. Browsers drop a `Secure` cookie that comes over plain HTTP from anything but localhost, so a sign-in at `http://<IP>:9527` seems to work and the user is signed out on the next request. The first `SetSession` that answers such a request logs one warning, once per process. It counts a request as HTTPS when it came over TLS or carries `X-Forwarded-Proto: https` or `Forwarded: proto=https`, and as local when its host is `localhost`, a `.localhost` name or a loopback address. Test over HTTPS, through a proxy that sets the header, or at `http://localhost`. A cookie that is not 43 characters of `A-Z a-z 0-9 - _` is dropped without asking the store. A cookie whose record the store no longer has, because it expired or the process restarted with the memory store, is dropped too, and the request is signed out.
+The cookie is `__Host-tifa_session` with `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, and no `Domain`. A session lasts 30 days from `SetSession`. It does not renew, so a request never writes to the store. Change the name and the lifetime with `session.cookie` and `session.max_age` (see [Configuration](/docs/build-and-deploy/config#settings)). Under `tifa dev` the cookie is `tifa_session` without `Secure`, since dev serves plain HTTP on localhost. Browsers drop a `Secure` cookie that comes over plain HTTP from anything but localhost, so a sign-in at `http://<IP>:9527` seems to work and the user is signed out on the next request. The first `SetSession` that answers such a request logs one warning, once per process. It counts a request as HTTPS when it came over TLS or carries `X-Forwarded-Proto: https` or `Forwarded: proto=https`, and as local when its host is `localhost`, a `.localhost` name or a loopback address. Test over HTTPS, through a proxy that sets the header, or at `http://localhost`. A cookie that is not 43 characters of `A-Z a-z 0-9 - _` is dropped without asking the store. A cookie whose record the store no longer has, because it expired or the process restarted with the memory store, is dropped too, and the request is signed out.
 
 An answer that sets or drops the cookie goes out as `Cache-Control: no-store` without `ETag` or `Last-Modified`, whatever the app set, and it keeps its status: it is never turned into a 304.
 
@@ -80,7 +79,7 @@ type SessionStore interface {
 
 ### The memory store
 
-The store Tifa uses when `OnStart` sets none keeps records in the memory of the process, up to `session.memory_limit` bytes (see [Configuration](/docs/ship/config#settings)). Set that to give sessions more or less memory. `tifa.SetSessionStore(nil)` brings the memory store back after a store was set.
+The store Tifa uses when `OnStart` sets none keeps records in the memory of the process, up to `session.memory_limit` bytes (see [Configuration](/docs/build-and-deploy/config#settings)). Set that to give sessions more or less memory. `tifa.SetSessionStore(nil)` brings the memory store back after a store was set.
 
 - `session.memory_limit` counts, for each record, its key, its data and a fixed cost. When the store is full, a `Put` drops the records that expire first. A record that alone costs more than the limit makes `Put` return an error, so `SetSession` fails.
 - It runs a goroutine that removes expired records once a minute, and the server stops it. The store keeps working after that, as `Get` never returns an expired record.
@@ -139,13 +138,13 @@ A store on a database client that takes a `ctx` returns these errors by itself. 
 
 A `Load` runs for a GET, which must not change anything, so signing in belongs in a method handler or in `OnRequest`.
 
-On a page with `Cache` the GET and HEAD requests are anonymous: `Session` is nil there whoever asks, and `SetSession` and `ClearSession` return an error. The promise is about the request headers Tifa hands to your code. A value that a `net/http` middleware from `tifa.SetHTTPHandler` put into the context still arrives, so recognize visitors in `OnRequest` and not in that middleware (see [Cache for CDNs](/docs/pages/ssr-and-cache#cache-for-cdns)).
+On a page with `Cache` the GET and HEAD requests are anonymous: `Session` is nil there whoever asks, and `SetSession` and `ClearSession` return an error. The promise is about the request headers Tifa hands to your code. A value that a `net/http` middleware from `tifa.SetHTTPHandler` put into the context still arrives, so recognize visitors in `OnRequest` and not in that middleware (see [Cache for CDNs](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)).
 
 ## Sign-in libraries
 
 Tifa stores the session. Your app or a library checks who the user is: password hashes (bcrypt, argon2), the OAuth code flow and its `state` check (`golang.org/x/oauth2`), two-step verification. When that succeeds, call `tifa.SetSession`. The temporary state of such a library, an OAuth `state` for instance, goes in a short cookie of the library's own. Check access in Go by reading `tifa.Session`.
 
-Writes from other sites are refused before any of this runs (see [Cross-site writes](/docs/ship/config#cross-site-writes)), and the cookie is `SameSite=Lax`, so a form on another site cannot sign a user out or act for them. For that to hold, make sure GET, HEAD and OPTIONS never change anything: sign out with a POST.
+Writes from other sites are refused before any of this runs (see [Cross-site writes](/docs/build-and-deploy/config#cross-site-writes)), and the cookie is `SameSite=Lax`, so a form on another site cannot sign a user out or act for them. For that to hold, make sure GET, HEAD and OPTIONS never change anything: sign out with a POST.
 
 ## Checks at build time
 
@@ -201,7 +200,7 @@ A request without the header `X-Tifa-Call` (curl, a form, another program) gets 
 
 The browser keeps the session in memory and in `localStorage` under the cookie name and `:v1`, such as `__Host-tifa_session:v1`. Whatever answer arrives with a session writes both copies: signed in writes, signed out clears them, an answer without a session leaves them alone, and `<html data-session>` follows. The session a page carries wins over `localStorage`. If `localStorage` fails in any step, as in a private window, the copy in memory is used and nothing stops. When requests cross, the answer to the one sent last wins.
 
-A page the server answers for every visitor alike, such as one with `Cache` (see [Cache for CDNs](/docs/pages/ssr-and-cache#cache-for-cdns)), carries no session and no `data-session`. Only there, a script at the start of the head sets `data-session="in"` from `localStorage` before the first paint, `useSession` renders signed out until the page has hydrated, and then switches to the copy in `localStorage` and asks `/__tifa/session` once to check it. With no copy it asks nothing. If `localStorage` cannot be read it asks once too.
+A page the server answers for every visitor alike, such as one with `Cache` (see [Cache for CDNs](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)), carries no session and no `data-session`. Only there, a script at the start of the head sets `data-session="in"` from `localStorage` before the first paint, `useSession` renders signed out until the page has hydrated, and then switches to the copy in `localStorage` and asks `/__tifa/session` once to check it. With no copy it asks nothing. If `localStorage` cannot be read it asks once too.
 
 Calling a handler function from the browser updates the copy when the call changed the session. The data requests of later navigations bring the session too. This holds for every shape of handler, also one with no input and no result (`func POST(c *tifa.Ctx) error { return tifa.ClearSession(c) }`): when it wrote nothing, the answer is the session alone. A handler that writes its own response with `c.JSON` or `c.Text` cannot carry the session in its answer, so sign in and out in a handler that does not.
 
@@ -209,7 +208,7 @@ An answer that carries the session must say `Cache-Control: no-store`, or `priva
 
 `data-session` is an attribute Tifa keeps on `<html>`. A root Layout whose `documentHead.htmlAttributes` sets it stops the server when it starts (the VMs fail to prewarm, and `tifa dev` shows the error), and a route whose `htmlAttributes` sets it fails the render.
 
-**Content Security Policy.** The script and the style are inline and the same on every page. With `server.csp`, Tifa puts their hashes into the policy of each page itself (see [Content-Security-Policy](/docs/ship/config#content-security-policy)). With a CSP in a `<meta>` tag they are not affected, since they come before the tag. With a CSP of your own in a header, allow their hashes:
+**Content Security Policy.** The script and the style are inline and the same on every page. With `server.csp`, Tifa puts their hashes into the policy of each page itself (see [Content-Security-Policy](/docs/build-and-deploy/config#content-security-policy)). With a CSP in a `<meta>` tag they are not affected, since they come before the tag. With a CSP of your own in a header, allow their hashes:
 
 ```text
 script-src 'sha256-NWjzg1BGj/5CJBw80xzDV4Gmw6vQUG2ExZLUcX4mWkE='
@@ -231,7 +230,7 @@ tifatest.SignIn(t, c, &auth.Session{UserID: 1})
 
 `SignIn` only sets the state of the request. It does not check the cookie and store flow, which Tifa's own tests cover. To test a store of your own, see [Testing a store](#testing-a-store).
 
-To test signing in as a browser does, from the form through the cookie to the next page, start the app with `tifatest.Start`: its client keeps the cookie, and the store is the one the app sets in `OnStart`, or a memory store of the test server (see [Testing a whole request](/docs/pages/testing-apps#testing-a-whole-request)).
+To test signing in as a browser does, from the form through the cookie to the next page, start the app with `tifatest.Start`: its client keeps the cookie, and the store is the one the app sets in `OnStart`, or a memory store of the test server (see [Testing a whole request](/docs/pages-and-data/testing-apps#testing-a-whole-request)).
 
 ## Errors
 

@@ -2,7 +2,6 @@
 title: Sending email
 description: How to send email from a Tifa app over SMTP with a pure Go library
 source: docs/guides/email.md
-sourceHash: 66d5b3c1d087
 group: Guides
 groupOrder: 3
 order: 5
@@ -27,7 +26,7 @@ The examples use v0.8.1. Check the [documentation](https://pkg.go.dev/github.com
 
 ## Settings
 
-The host, port and password are different on every machine, so they are options of the app ([Options of the app](/docs/ship/config#options-of-the-app)):
+The host, port and password are different on every machine, so they are options of the app ([Options of the app](/docs/build-and-deploy/config#options-of-the-app)):
 
 ```go
 // options.go
@@ -56,7 +55,7 @@ SMTP_PASSWORD=...
 MAIL_FROM=notes@example.com
 ```
 
-- **Keep the password out of the code.** `tifa.Secret` has no default, and the program refuses it as a flag, which shows in the process list. Use the environment or the `.env` file of the working folder ([.env](/docs/ship/config#env)). `tifa.yaml` holds only settings of Tifa, so it is not a place for it. `./myapp config` says where the password came from and leaves it out.
+- **Keep the password out of the code.** `tifa.Secret` has no default, and the program refuses it as a flag, which shows in the process list. Use the environment or the `.env` file of the working folder ([.env](/docs/build-and-deploy/config#env)). `tifa.yaml` holds only settings of Tifa, so it is not a place for it. `./myapp config` says where the password came from and leaves it out.
 - **An empty `smtp.host` sends nothing.** The mail is written to the log with its text. That is what you want under `tifa dev` and in a first deploy, but do not leave it on in production, since a reset link would sit in the log.
 - **Use the SMTP service of a mail provider** and send from an address on a domain you own, with the SPF and DKIM records the provider tells you to set. Mail sent straight from a small VPS often lands in spam, and some hosts block outgoing port 25. Providers take port 587 (`starttls`) or 465 (`tls`).
 - A wrong `smtp.tls` should stop the app at start, not at the first mail. `OnStart` calls `clientOptions` (below) and returns its error.

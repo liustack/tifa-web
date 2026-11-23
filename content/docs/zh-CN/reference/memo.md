@@ -1,11 +1,10 @@
 ---
 title: 渲染记忆 memo
-description: 渲染记忆 memo 是什么，为什么它是 memo 而不是缓存，它和带 const Cache 的页面的 Cache-Control 有什么不同，为什么可以对每个页面都开着...
-source: docs/memo.md
-group: Reference
+description: 渲染记忆是什么、为什么它是记忆而不是缓存、它与带 const Cache 的页面的 Cache-Control 有什么不同、为什么可以对每个页面都开着、已登录的...
+source: docs/reference/memo.zh-CN.md
+group: 参考
 groupOrder: 5
 order: 1
-translatedFrom: de5ec909de94
 ---
 
 
@@ -34,7 +33,7 @@ memo 为一个输入保存输出。下一个请求来了，它比较输入。输
 | 请求 | 原样看到 | 被匿名化 |
 | 设置 | `ssr.memo_size`，路由里的 `Memo = false` | `Cache = true` 用 `cache.s_maxage` |
 
-对带 `Cache` 的页面，Tifa 自己什么都不保存。它的 `Load` 在每个请求上都运行，而在它们的数据相同时，memo 仍然会跳过渲染。见 [给 CDN 用的缓存](/docs/pages/ssr-and-cache#cache-for-cdns)。
+对带 `Cache` 的页面，Tifa 自己什么都不保存。它的 `Load` 在每个请求上都运行，而在它们的数据相同时，memo 仍然会跳过渲染。见 [给 CDN 用的缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)。
 
 ## 为什么对每个页面都安全 {#why-it-is-safe-on-every-page}
 
@@ -47,7 +46,7 @@ memo 为一个输入保存输出。下一个请求来了，它比较输入。输
 页面能看到的查询参数，是它的 `Load` 和上面的布局函数用 `c.Query` 或 `c.QueryValues` 读取的那些。`tifa build` 会找出它们。服务端渲染只拿到路径和这些参数，按名字排序，同名参数的多个值保持请求里的顺序，键里放的也是同样的内容。其他每个参数在渲染之前就被丢掉，也不在键里。地址栏里每个参数都保持访客写的样子（`a%20b` 还是 `a%20b`），不管是一种语言还是几种。`OnRequest`、`Load` 和方法处理函数看到的是原样的请求。
 
 - **跟踪参数不会增加键，也不会触发服务端渲染。** 页面上的 `?utm_source=mail`、`?fbclid=...` 或 `?x=random` 和不带它们的页面得到同一个键，memo 直接回答。`Load` 仍然在每个请求上运行。参数顺序不同，键也相同。
-- **要按某个参数来渲染，就在 `Load` 里读它。** 没有任何 `Load` 读的参数改变不了数据，所以渲染不需要它。在组件里按名字读，比如用 `route.gen` 里该路由的 `useSearch` 写 `page.useSearch().q`。这个 `useSearch` 带有 `Load` 读取的那些参数的类型，同时放行其他任何参数，所以它不会让别的参数变得安全。见 [Link 和 navigate 里的查询参数](/docs/pages/pages#query-parameters-in-link-and-navigate)。
+- **要按某个参数来渲染，就在 `Load` 里读它。** 没有任何 `Load` 读的参数改变不了数据，所以渲染不需要它。在组件里按名字读，比如用 `route.gen` 里该路由的 `useSearch` 写 `page.useSearch().q`。这个 `useSearch` 带有 `Load` 读取的那些参数的类型，同时放行其他任何参数，所以它不会让别的参数变得安全。见 [Link 和 navigate 里的查询参数](/docs/pages-and-data/pages#query-parameters-in-link-and-navigate)。
 - **读取其他参数的组件，水合时结果会不同。** 服务器渲染时没有这个参数，浏览器里有，所以 React 会报水合错误，并在浏览器里把这部分重新渲染。`tifa build` 会发出警告，带上文件和行号，指出这些渲染时的读取：服务器渲染那段代码时没有的参数，按名字通过 `useLocation`、`useRouterState`、`useSearch({ strict: false })` 或路由的 `useSearch` 读取，以及读取位置的整个 `search`、`searchStr` 或 `href`。它拿 `page.tsx` 和 `layout.tsx` 对照它们自己的参数检查，对其他模块里的每一处这样的读取都警告，因为那些模块可能在任何页面下渲染。在 `useEffect` 或 `useLayoutEffect` 里读取只在浏览器里运行，可以通过。这项检查一次只看一个模块，所以它调用的辅助函数里的读取看不到。这样的参数要在 `Load` 里读，或者只有浏览器需要时在 effect 里读。
 - **重定向保留 URL。** 路由把一个 URL 的另一种写法（如 `/%61`）重定向到它自己的写法时，重定向会把渲染没有看到的参数补回去。
 - **没有 SSR 的页面**（`SSR = false`）不在服务器上渲染，它的文档带着原样的 URL。
@@ -72,11 +71,11 @@ memo 为一个输入保存输出。下一个请求来了，它比较输入。输
 
 ### Tifa 会话 {#tifa-sessions}
 
-在使用 Tifa 会话的应用里，带着会话的响应不能是可共享的。不要动 `Cache-Control`，或者设成 `no-store`，或设成 `private` 加 `no-cache`，两者都不带字段列表。如果 `OnRequest`、`Load` 或处理函数设置了别的值，比如 `public, max-age=60`，这个请求会通过 `OnError` 以错误失败。你一试这个页面就会发现。见 [会话](/docs/pages/sessions#in-the-browser)。
+在使用 Tifa 会话的应用里，带着会话的响应不能是可共享的。不要动 `Cache-Control`，或者设成 `no-store`，或设成 `private` 加 `no-cache`，两者都不带字段列表。如果 `OnRequest`、`Load` 或处理函数设置了别的值，比如 `public, max-age=60`，这个请求会通过 `OnError` 以错误失败。你一试这个页面就会发现。见 [会话](/docs/pages-and-data/sessions#in-the-browser)。
 
 ### 带 `Cache` 的页面 {#pages-with-cache}
 
-页面在访客之间被共享的唯一办法是 `Cache`，在你写它之前它是关着的。保存页面的是前面的 CDN 或代理，绝不是 Tifa。Tifa 随后把请求匿名化，让页面不可能取决于是谁在问。除了 `Host`、`Accept-Encoding`、`If-None-Match`、`If-Modified-Since`、`Cache-Control`、`Pragma`、`Content-Length`、`Connection`、`Origin` 和 `Sec-Fetch-*`，每个请求头都会丢掉，所以 `Cookie` 和 `Authorization` 都没了。`tifa.Session` 返回 nil。如果 `Load` 或布局读取了 cookie、请求头或会话，构建会失败。HTML 上的 `Set-Cookie` 会被丢掉。显示谁已登录的页面不要用 `Cache`：见 [与用户无关的页面和私有数据](/docs/pages/ssr-and-cache#user-independent-pages-and-private-data)。
+页面在访客之间被共享的唯一办法是 `Cache`，在你写它之前它是关着的。保存页面的是前面的 CDN 或代理，绝不是 Tifa。Tifa 随后把请求匿名化，让页面不可能取决于是谁在问。除了 `Host`、`Accept-Encoding`、`If-None-Match`、`If-Modified-Since`、`Cache-Control`、`Pragma`、`Content-Length`、`Connection`、`Origin` 和 `Sec-Fetch-*`，每个请求头都会丢掉，所以 `Cookie` 和 `Authorization` 都没了。`tifa.Session` 返回 nil。如果 `Load` 或布局读取了 cookie、请求头或会话，构建会失败。HTML 上的 `Set-Cookie` 会被丢掉。显示谁已登录的页面不要用 `Cache`：见 [与用户无关的页面和私有数据](/docs/pages-and-data/ssr-and-cache#user-independent-pages-and-private-data)。
 
 ### 你的代码读取的 Cookie 和 Authorization {#cookies-and-authorization-that-your-code-reads}
 
@@ -84,13 +83,13 @@ memo 为一个输入保存输出。下一个请求来了，它比较输入。输
 
 只有一种泄漏的办法。如果你在一个取决于自己的 cookie 或 `Authorization` 的响应上，设置了可共享的 `Cache-Control`，比如 `public` 或 `max-age=60`，CDN 或共享代理就可能把它存下来，并给到下一个访客。Tifa 没办法知道你的 cookie 是私有的，所以它不会拦你。不要这样做。用 Tifa 会话（在那里这样的头是错误），或者不要动 `Cache-Control`。
 
-在 CDN 后面，保持默认值，让它跟着源站的头走。见 [在 CDN 或代理后面](/docs/ship/deploy#behind-a-cdn-or-proxy)。
+在 CDN 后面，保持默认值，让它跟着源站的头走。见 [在 CDN 或代理后面](/docs/build-and-deploy/deploy#behind-a-cdn-or-proxy)。
 
 ## 限制 {#limits}
 
 - **读取时间或随机数的组件**（`Date.now()`、`Math.random()`）会把一个不在输入里、因此也不在键里的值放进 HTML，memo 会把它给之后的访客。`tifa dev` 把每个页面渲染两次，两次不同时发出警告。对必须显示这种值的页面，在它的 `route.go` 里写 `const Memo = false`：它对每个请求都渲染，并且没有 `ETag`。
 - **带渲染时钟**（`tifa.WithRenderClock`）的请求既不读也不存页面。
-- **`ssr.memo_size`** 是渲染 memo 的内存，默认 64 MiB。满了之后，最近最少使用的页面会被丢掉。`0` 会把它关掉，同时没命中同一个页面的请求仍然共用一次渲染。见 [配置](/docs/ship/config)。
+- **`ssr.memo_size`** 是渲染 memo 的内存，默认 64 MiB。满了之后，最近最少使用的页面会被丢掉。`0` 会把它关掉，同时没命中同一个页面的请求仍然共用一次渲染。见 [配置](/docs/build-and-deploy/config)。
 
 ## 每个页面一个键 {#one-key-per-page}
 
@@ -98,12 +97,12 @@ memo 为一个输入保存输出。下一个请求来了，它比较输入。输
 
 代价是：改变某个布局数据的写入，比如项目页头里的一个计数，会让这个布局下的每个页面在下一个请求时重新渲染。不动布局数据的写入，只会让 `Load` 数据被它改动的那些页面重新渲染。
 
-memo 对每个页面只保存一种 gzip 形式，并以每个访客接受的编码发出。压缩一个页面的开销是它渲染时间的 1% 到 2%。见 [压缩](/docs/ship/build#compression) 和 [性能](/docs/reference/performance#compression)。
+memo 对每个页面只保存一种 gzip 形式，并以每个访客接受的编码发出。压缩一个页面的开销是它渲染时间的 1% 到 2%。见 [压缩](/docs/build-and-deploy/build#compression) 和 [性能](/docs/reference/performance#compression)。
 
 ## 看它怎么工作 {#seeing-it-work}
 
 - 页面上的 `X-Tifa-Render`：`vm` 是为这个请求做的一次渲染，`memo` 是一次命中，`shared` 是另一个请求同时发起的一次渲染，`none` 是 304 或没有经过 VM 的响应。
 - 带 `If-None-Match` 的请求，在输入没变时得到 304，这发生在询问 memo 之前。ETag 为已经有这个页面的浏览器省掉传输，memo 为其他所有人省掉渲染。
-- `tifa.Stats().Memo` 有 `Entries`、`Hits`、`Misses`、`Shared` 和 `Evictions`（为给别的页面腾地方而丢掉的页面，最近最少使用的先丢），`MemoBytes` 对照 `MemoSize` 能看出 memo 有多满。要看把它们写给 Prometheus 的路由，见 [部署](/docs/ship/deploy)。
+- `tifa.Stats().Memo` 有 `Entries`、`Hits`、`Misses`、`Shared` 和 `Evictions`（为给别的页面腾地方而丢掉的页面，最近最少使用的先丢），`MemoBytes` 对照 `MemoSize` 能看出 memo 有多满。要看把它们写给 Prometheus 的路由，见 [部署](/docs/build-and-deploy/deploy)。
 
 数字请见 [性能](/docs/reference/performance)。

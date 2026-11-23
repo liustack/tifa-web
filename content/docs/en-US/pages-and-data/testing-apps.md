@@ -1,8 +1,7 @@
 ---
 title: Testing
 description: How to test an app with go test
-source: docs/testing-apps.md
-sourceHash: 4b7db84fe3f3
+source: docs/pages-and-data/testing-apps.md
 group: Pages and data
 groupOrder: 2
 order: 9
@@ -75,7 +74,7 @@ func TestSignInLeadsBackToTheWorkbench(t *testing.T) {
 - `srv.Client()` trusts the certificate of the server, keeps the cookies it sets and does not follow redirects, so the test sees each 3xx with its `Location`.
 - The server listens on HTTPS on this machine. The settings of Tifa are those of the program, from the defaults and `tifa.yaml`, apart from the address and HTTPS. Options of the app keep their defaults, as flags and environment variables do not reach a test, so set the variable before `Start`: `myapp.DBPath = filepath.Join(t.TempDir(), "test.db")`.
 - Without a front end, a page answers the results of its `Load` and `Layout` functions as JSON, by route ID: `{"app/layout": …, "app/projects/project+/stats/route": …}`. Method handlers answer as in the program.
-- A number above 2^53 is refused only where a page reads it (see [JSON rules](/docs/pages/routes#json-rules)). With `Start`, a `Load` answer is checked as for a page, and a handler is checked only for a request that sets the header `X-Tifa-Call: 1`, as the generated function of a page does. To pin that a result reaches the browser whole, post to the handler with that header and expect 200 and the string. A test with `StartPages` gets the check for pages.
+- A number above 2^53 is refused only where a page reads it (see [JSON rules](/docs/pages-and-data/routes#json-rules)). With `Start`, a `Load` answer is checked as for a page, and a handler is checked only for a request that sets the header `X-Tifa-Call: 1`, as the generated function of a page does. To pin that a result reaches the browser whole, post to the handler with that header and expect 200 and the string. A test with `StartPages` gets the check for pages.
 - Each `Start` makes a new server, with sessions of its own unless `OnStart` sets a store. The app is one per test binary at a time, as the session store, `SetHTTPHandler` and the content belong to the process, so a test that calls `Start` cannot call `t.Parallel`.
 - `Start` fails the test when `.tifa/tifaapp` was made from other routes than the code has now. Run `go tool tifa check` again, or keep `tifa dev` running. In a fresh checkout `.tifa` is missing, and `go vet`, `go test` and `go mod tidy` fail on the import until `tifa check` writes it. `tifa check` generates before it runs `go vet` and `go test`, so it needs nothing first.
 

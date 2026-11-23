@@ -1,15 +1,14 @@
 ---
 title: 写一个应用
-description: 如何开始一个 Tifa 应用
-source: docs/app.md
-group: Start
+description: 怎样开始写一个 Tifa 应用
+source: docs/start/app.zh-CN.md
+group: 开始
 groupOrder: 1
 order: 2
-translatedFrom: 47881969629a
 ---
 
 
-完整的例子见 [examples/shop](https://github.com/liustack/tifa/blob/v0.3.0/examples/shop)。构建、生成的文件和怎么设置 go.mod，见 [build.md](/docs/ship/build)。
+完整的例子见 [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop)。构建、生成的文件和怎么设置 go.mod，见 [build.md](/docs/build-and-deploy/build)。
 
 ## 文件夹 {#folders}
 
@@ -59,7 +58,7 @@ myapp/
 - 文件夹名还必须在 Go 导入路径里有效，所以像 `con` 或 `x~1`（Windows 的保留名和短名）这样的名字会让构建失败。
 - 一个文件夹最多只有一个参数文件夹。`items/id+` 旁边有 `items/key+` 或 `items/path++` 会让构建失败，因为两者读的是同一个 URL 段。
 - 两个路由（页面或 API 路由）的 URL 重叠，而又没有哪个更具体，会让构建失败，和 Go 的 `http.ServeMux` 一样，比如 `a/b+` 旁边有 `a+/b`。字面值比参数更具体，所以 `items/new` 旁边有 `items/id+` 没有问题。
-- 有布局但没有页面的文件夹，它的 URL 会在那个布局里显示 404（见 [404](/docs/pages/pages#404)），除非它正下面的 `name++` 文件夹有页面，那个页面会以空的其余部分响应这个 URL。其他页面不能匹配这个 URL，除非它比布局的路径更具体：`settings/layout.tsx` 没有 `settings/page.tsx`，旁边又有 `user+/page.tsx`，会让构建失败，因为 `/settings` 也会匹配 `/{user}`，但 `items/id+` 里有布局、旁边有 `items/new` 就没有问题。
+- 有布局但没有页面的文件夹，它的 URL 会在那个布局里显示 404（见 [404](/docs/pages-and-data/pages#404)），除非它正下面的 `name++` 文件夹有页面，那个页面会以空的其余部分响应这个 URL。其他页面不能匹配这个 URL，除非它比布局的路径更具体：`settings/layout.tsx` 没有 `settings/page.tsx`，旁边又有 `user+/page.tsx`，会让构建失败，因为 `/settings` 也会匹配 `/{user}`，但 `items/id+` 里有布局、旁边有 `items/new` 就没有问题。
 - 声明 `const Path` 会让构建失败。文件夹就是 URL。
 
 ## 一个文件夹里的文件 {#the-files-of-a-folder}
@@ -71,12 +70,11 @@ myapp/
 | `route.go` | 这个文件夹所有的 Go 名字：`Layout`、`Load`、`SSR`、`Memo`、`Cache` 和方法处理函数 |
 | `page.tsx` | 页面组件。有 `page.tsx` 的文件夹就是一个页面 |
 | `layout.tsx` | 布局组件 |
-| `layout_.tsx` | 代替 `layout.tsx` 的布局组件，显示时不带上面的布局（见 [不带上层布局的布局](/docs/pages/pages#a-layout-without-the-layouts-above)） |
+| `layout_.tsx` | 代替 `layout.tsx` 的布局组件，显示时不带上面的布局（见 [不带上层布局的布局](/docs/pages-and-data/pages#a-layout-without-the-layouts-above)） |
 
 - `route.go` 里的这些名字只从那个文件里读。在包里的其他文件里声明其中任何一个，包括 `layout.go`，都会让构建失败。辅助函数和类型可以放在任何文件里。
 - 只有 `route.go` 的文件夹，在声明了方法处理函数时是一个 API 路由，在声明了 `Layout` 时给它下面的页面提供布局数据。两者可以同时有。`Load` 只允许和 `page.tsx` 放在一起。
-- `route.tsx` 不是约定文件。`route.tsx` 会让构建失败，并提示把它改名为 `page.tsx`，这样页面永远不会被当成普通组件。
-- `tifa build` 还会为每个有页面、布局或方法处理函数的文件夹写一个 `route.gen.ts` 模块，`page.tsx`、`layout.tsx` 和 `layout_.tsx` 会导入它（见 [page.tsx](/docs/pages/pages#pagetsx)）。
+- `tifa build` 还会为每个有页面、布局或方法处理函数的文件夹写一个 `route.gen.ts` 模块，`page.tsx`、`layout.tsx` 和 `layout_.tsx` 会导入它（见 [page.tsx](/docs/pages-and-data/pages#pagetsx)）。
 
 ## 静态文件 {#static-files}
 
@@ -123,21 +121,21 @@ Vite 说的是同一件事：优先导入资源，`public/` 给源码里从不�
 | `export const getServerSideProps`、`getStaticProps`、`loader`、`clientLoader` | `route.go` 里的 `Load` | 警告 |
 | `export const getStaticPaths`、`generateStaticParams` | 不需要：`name+` 文件夹匹配任何值，对不存在的值，`Load` 返回 `tifa.ErrNotFound` | 警告 |
 | `export const generateMetadata`、`metadata` | `head` 导出，以及根 `layout.tsx` 里的 `documentHead` | 警告 |
-| 在组件里用 JSX 写的 `<title>` 或 `<meta>`（`<svg>` 之外） | `head` 导出（见[标题和 meta 标签](/docs/pages/pages#title-and-meta-tags)）。在组件里，这个标签会落进 `<body>`，爬虫不读那里 | 警告 |
+| 在组件里用 JSX 写的 `<title>` 或 `<meta>`（`<svg>` 之外） | `head` 导出（见[标题和 meta 标签](/docs/pages-and-data/pages#title-and-meta-tags)）。在组件里，这个标签会落进 `<body>`，爬虫不读那里 | 警告 |
 | `export const action`、`clientAction` | `route.go` 里的方法处理函数，比如 `func POST(c *tifa.Ctx, in AddInput) (Todo, error)` | 警告 |
 | `export const revalidate`、`dynamic` | `route.go` 里的 `const Cache` 让 CDN 保存一个页面。每个页面本来就在每个请求上加载和渲染 | 警告 |
 | 在页面或布局里调用 `createFileRoute`、`createRootRoute`、`createServerFn` | 文件夹就是路由，`./route.gen` 把它导出为 `page`，服务器函数就是方法处理函数 | 警告 |
 | 名为 `[id]`、`[...slug]`、`$id`、`:id`、`(group)` 或 `@slot` 的文件夹 | `id+` 和 `slug++`（见 [URL 来自文件夹](#urls-come-from-folders)）。没有路由分组，也没有并行路由 | 错误 |
 | `+page.svelte`、`+page.server.ts`、`_index.tsx` | `page.tsx`、`layout.tsx` 和 `route.go`（见 [一个文件夹里的文件](#the-files-of-a-folder)） | 错误 |
 | `page.js`、`layout.jsx`、旁边没有 `page.tsx`、`layout.tsx` 或 `route.go` 的 `route.ts`、`$id.tsx` | 同上 | 警告 |
-| `middleware.ts`，以及路由文件夹里的 `loading`、`error` 或 `not-found` 文件 | `hooks.go` 里的 `OnRequest`，以及 `ErrorBoundary` 导出（见 [404](/docs/pages/pages#404)） | 警告 |
-| 在 `route.go` 里，接收 `http.ResponseWriter`、`*http.Request`、`*gin.Context`、`echo.Context` 或 `*fiber.Ctx` 的函数 `GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`Load` 或 `Layout` | `func POST(c *tifa.Ctx, in AddInput) (Todo, error)`，或 `func POST(c *tifa.Ctx) error` 加 `c.Writer()` 和 `c.Request()`（见 [带输入和结果的方法处理函数](/docs/pages/routes#method-handlers-with-input-and-result)） | 错误 |
+| `middleware.ts`，以及路由文件夹里的 `loading`、`error` 或 `not-found` 文件 | `hooks.go` 里的 `OnRequest`，以及 `ErrorBoundary` 导出（见 [404](/docs/pages-and-data/pages#404)） | 警告 |
+| 在 `route.go` 里，接收 `http.ResponseWriter`、`*http.Request`、`*gin.Context`、`echo.Context` 或 `*fiber.Ctx` 的函数 `GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`Load` 或 `Layout` | `func POST(c *tifa.Ctx, in AddInput) (Todo, error)`，或 `func POST(c *tifa.Ctx) error` 加 `c.Writer()` 和 `c.Request()`（见 [带输入和结果的方法处理函数](/docs/pages-and-data/routes#method-handlers-with-input-and-result)） | 错误 |
 
 Tifa 允许的写法不会被报告。`@tanstack/react-router` 和 `@tanstack/react-query` 没有问题。页面可以为自己的用途导出 `action`、`loader`、`metadata`、`revalidate` 或 `dynamic`，只要值不是别的框架会写的那种（`loader` 和 `action` 是函数，`metadata` 是对象，`revalidate` 是数字或 `false`，`dynamic` 是 `auto`、`force-dynamic`、`error` 和 `force-static` 之一）。导出和调用只在 `page.tsx`、`layout.tsx` 和 `layout_.tsx` 里读取。导入和指令在 `app/` 下的每个 TypeScript 文件和 `setup.ts` 里读取，测试除外。
 
 ### 没有静态生成 {#no-static-generation}
 
-Tifa 没有静态生成、预渲染或导出：构建时什么都不渲染，也没有要构建的页面列表。每个请求都运行它的 `Load`，所以页面永远不会旧，而且数据和上次一样时，[渲染记忆 memo](/docs/reference/memo) 会跳过渲染。对所有人都一样的页面，`const Cache = 10 * time.Minute` 让 CDN 保存它（见 [给 CDN 用的缓存](/docs/pages/ssr-and-cache#cache-for-cdns)）。这样 CDN 不经过程序就能响应大多数请求，也没有要加的构建步骤。完全不需要服务端渲染的页面写 `const SSR = false`。
+Tifa 没有静态生成、预渲染或导出：构建时什么都不渲染，也没有要构建的页面列表。每个请求都运行它的 `Load`，所以页面永远不会旧，而且数据和上次一样时，[渲染记忆 memo](/docs/reference/memo) 会跳过渲染。对所有人都一样的页面，`const Cache = 10 * time.Minute` 让 CDN 保存它（见 [给 CDN 用的缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)）。这样 CDN 不经过程序就能响应大多数请求，也没有要加的构建步骤。完全不需要服务端渲染的页面写 `const SSR = false`。
 
 ### 图片和字体 {#images-and-fonts}
 
@@ -145,11 +143,11 @@ Tifa 没有类似 `next/image` 或 `next/font` 的东西：没有缩放，没有
 
 ### 加载状态 {#loading-states}
 
-Tifa 没有 `loading.tsx`。页面在服务器上整个渲染，所以第一次访问没有加载状态可以显示。之后路由会去取下一个页面的数据，到了就显示。会等待的组件用 `Suspense`（见 [会等待的组件](/docs/pages/server-render#components-that-wait)）。对又慢又私有的数据，先返回不含它的页面，再由浏览器用 API 路由的 `GET` 函数去取（见 [与用户无关的页面和私有数据](/docs/pages/ssr-and-cache#user-independent-pages-and-private-data)），数据到来之前显示你自己的占位内容。
+Tifa 没有 `loading.tsx`。页面在服务器上整个渲染，所以第一次访问没有加载状态可以显示。之后路由会去取下一个页面的数据，到了就显示。会等待的组件用 `Suspense`（见 [会等待的组件](/docs/pages-and-data/server-render#components-that-wait)）。对又慢又私有的数据，先返回不含它的页面，再由浏览器用 API 路由的 `GET` 函数去取（见 [与用户无关的页面和私有数据](/docs/pages-and-data/ssr-and-cache#user-independent-pages-and-private-data)），数据到来之前显示你自己的占位内容。
 
 ## 多语言站点 {#a-site-in-several-languages}
 
-在 `app/` 的某个文件夹里放一个 `_locales` 文件夹，每种语言一个 `<language>.json` 文件，这个文件夹和它下面的页面与 API 路由就会以这些语言提供。[examples/shop](https://github.com/liustack/tifa/blob/v0.3.0/examples/shop) 的店面是 `app/store/`，带 `_locales/zh-CN.json` 和 `_locales/en-US.json`。
+在 `app/` 的某个文件夹里放一个 `_locales` 文件夹，每种语言一个 `<language>.json` 文件，这个文件夹和它下面的页面与 API 路由就会以这些语言提供。[examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop) 的店面是 `app/store/`，带 `_locales/zh-CN.json` 和 `_locales/en-US.json`。
 
 ```yaml
 # tifa.yaml
@@ -163,7 +161,7 @@ site:
 - 路由不在它的文件夹里写出自己的语言：没有 `lang+` 文件夹，没有语言列表，也没有检查语言的布局。在 Go 里，`Load`、`Layout` 或处理函数中用 `c.Language()` 得到语言，在 React 里用 `tifa/client` 的 `useLanguage()` 得到。
 - `<html lang>`、`hreflang` 链接、`x-default` 和 canonical 链接由 Tifa 写出。多语言站点要有 `site.url` 才能生成它们。有了 `site.url`，单语言站点的每个页面也会得到 canonical 链接，每个站点还会得到 sitemap、`robots.txt` 和 `llms.txt`（见 [搜索引擎和语言模型](/docs/guides/seo)）。
 - 链接保持你写的样子：`<Link to="/store/cart">` 在 `en-US` 页面里会变成 `/en-US/store/cart`。链到另一种语言，或链到文件夹之外的路由，会加载一个新页面，因为一个页面只含一种语言。
-- 翻译用 i18next 适配器 `tifa/i18n`，或任何从 `useLanguage()` 取语言的库。要同步加载翻译：把它们和应用一起打包，设置库时不要等待。服务端渲染不等任何东西，也不读文件，所以之后才到的消息不会出现在 HTML 里，浏览器水合时的文字也会不一样。数字和日期也要按语言来格式化（见 [格式化要让水合一致](/docs/pages/server-render#formatting-so-hydration-matches)）。
+- 翻译用 i18next 适配器 `tifa/i18n`，或任何从 `useLanguage()` 取语言的库。要同步加载翻译：把它们和应用一起打包，设置库时不要等待。服务端渲染不等任何东西，也不读文件，所以之后才到的消息不会出现在 HTML 里，浏览器水合时的文字也会不一样。数字和日期也要按语言来格式化（见 [格式化要让水合一致](/docs/pages-and-data/server-render#formatting-so-hydration-matches)）。
 - 带 `Cache` 的页面前面的共享缓存，会把每种语言保存在它自己的 URL 下。
 - Tifa 不会替访客选语言，也没有回退语言。
 
@@ -172,11 +170,11 @@ site:
 
 ## 接下来读什么 {#where-to-read-next}
 
-- [路由和 Ctx](/docs/pages/routes)：`route.go`、方法处理函数、错误、`Ctx`、`Load` 的规则和 JSON 规则。
-- [页面和布局](/docs/pages/pages)：`page.tsx`、`route.gen`、布局、head、404 和 `ErrorBoundary`，以及从浏览器调用处理函数。
-- [渲染开关与缓存](/docs/pages/ssr-and-cache)：`SSR`、`Memo`、`Cache`，以及服务端渲染里的查询参数。
-- [服务端渲染](/docs/pages/server-render)：服务器上有什么，只在浏览器里加载的组件，Intl 和 Temporal。
-- [样式](/docs/pages/styles)：CSS、Tailwind CSS 和 shadcn/ui。
-- [Hooks](/docs/pages/hooks)：`hooks.go` 和 `setup.ts`。
-- [测试](/docs/pages/testing-apps)：用 `go test` 和 `tifatest` 写测试。
-- [部署](/docs/ship/deploy)：你部署新版本时，在浏览器里打开的页面会怎么做。
+- [路由和 Ctx](/docs/pages-and-data/routes)：`route.go`、方法处理函数、错误、`Ctx`、`Load` 的规则和 JSON 规则。
+- [页面和布局](/docs/pages-and-data/pages)：`page.tsx`、`route.gen`、布局、head、404 和 `ErrorBoundary`，以及从浏览器调用处理函数。
+- [渲染开关与缓存](/docs/pages-and-data/ssr-and-cache)：`SSR`、`Memo`、`Cache`，以及服务端渲染里的查询参数。
+- [服务端渲染](/docs/pages-and-data/server-render)：服务器上有什么，只在浏览器里加载的组件，Intl 和 Temporal。
+- [样式](/docs/pages-and-data/styles)：CSS、Tailwind CSS 和 shadcn/ui。
+- [Hooks](/docs/pages-and-data/hooks)：`hooks.go` 和 `setup.ts`。
+- [测试](/docs/pages-and-data/testing-apps)：用 `go test` 和 `tifatest` 写测试。
+- [部署](/docs/build-and-deploy/deploy)：你部署新版本时，在浏览器里打开的页面会怎么做。

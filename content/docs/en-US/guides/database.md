@@ -2,14 +2,13 @@
 title: Keeping data in SQLite
 description: How to keep data in a Tifa app with SQLite
 source: docs/guides/database.md
-sourceHash: c911102a7980
 group: Guides
 groupOrder: 3
 order: 2
 ---
 
 
-Tifa has no database layer. Your app opens a database in `OnStart` and uses it with `database/sql`, like any Go program. This guide takes the SQLite setup that [`tifa new`](/docs/ship/build#tifa-new) writes and adds what a real app needs next: a setting for the file, migrations, a transaction, a backup and tests.
+Tifa has no database layer. Your app opens a database in `OnStart` and uses it with `database/sql`, like any Go program. This guide takes the SQLite setup that [`tifa new`](/docs/build-and-deploy/build#tifa-new) writes and adds what a real app needs next: a setting for the file, migrations, a transaction, a backup and tests.
 
 The code is from a scratch app made with `tifa new`, module `example.com/notes`. Where the files go is in [Structuring an app](/docs/start/structure#2-shared-resources-and-other-dependencies).
 
@@ -78,7 +77,7 @@ The parameters after `?` are read by the driver ([its README](https://github.com
 
 ## Where the file lives
 
-The path is an option of the app, in `options.go` ([Options of the app](/docs/ship/config#options-of-the-app)):
+The path is an option of the app, in `options.go` ([Options of the app](/docs/build-and-deploy/config#options-of-the-app)):
 
 ```go
 // options.go
@@ -86,7 +85,7 @@ var DBPath = tifa.String("db.path", "app.db", "SQLite database file")
 ```
 
 - A relative path is resolved against the folder the program runs in. That is the app root under `tifa dev`, and the folder you start the program from on a server.
-- On a server, put the file in a folder meant for data and name it with the environment: `DB_PATH=/var/lib/notes/app.db`. [Deploying](/docs/ship/deploy#run-it) says to back that folder up or mount it in a container.
+- On a server, put the file in a folder meant for data and name it with the environment: `DB_PATH=/var/lib/notes/app.db`. [Deploying](/docs/build-and-deploy/deploy#run-it) says to back that folder up or mount it in a container.
 - SQLite in WAL mode keeps two more files next to it, `app.db-wal` and `app.db-shm`. Do not copy the three by hand while the app runs, see the backup below. Keep all three out of git (the `.gitignore` of `tifa new` does).
 - One program owns the file. Two copies of the app on the same file work for a short overlap during a deploy, but a second server needs [Postgres](#when-to-use-postgres).
 
@@ -222,7 +221,7 @@ func Load(c *tifa.Ctx) (todos.Todo, error) {
 }
 ```
 
-- A missing row becomes `tifa.ErrNotFound`, which answers 404 ([route.go](/docs/pages/routes#routego)).
+- A missing row becomes `tifa.ErrNotFound`, which answers 404 ([route.go](/docs/pages-and-data/routes#routego)).
 - `Load` only reads. A `Load` can run more than once for one visit (navigation, the page cache), so writes belong in `POST`, `PUT`, `PATCH` and `DELETE` handlers.
 - Use `?` placeholders for every value that comes from a request. Never build SQL with string concatenation.
 - `QueryRowContext` with `RETURNING` does an insert and reads the new row in one call, as `AddTodo` in the `tifa new` app does.
@@ -337,7 +336,7 @@ func TestOpenDBMigratesOnce(t *testing.T) {
 }
 ```
 
-The root package cannot import `testdb` in its own tests (the import would loop back), so its tests keep a three-line helper of their own. Route code is tested with `tifatest.NewCtx`, see [Testing](/docs/pages/testing-apps).
+The root package cannot import `testdb` in its own tests (the import would loop back), so its tests keep a three-line helper of their own. Route code is tested with `tifatest.NewCtx`, see [Testing](/docs/pages-and-data/testing-apps).
 
 ## When to use Postgres
 
@@ -361,4 +360,4 @@ func OpenDB(ctx context.Context, url string) (*sql.DB, error) {
 
 Everything else in this guide keeps its shape: a `DB` variable opened in `OnStart`, an option for the address (`db.url`, now a `tifa.Secret` since it holds the password, see [Sending email](/docs/guides/email#settings)), queries through `database/sql`. What changes: placeholders are `$1`, `$2`, the pragmas go away, and the migration runner above is SQLite's, so use a library such as goose. Tests then need a real Postgres, so give them one through a setting and skip when it is not set.
 
-Sessions can live in the same database: [Sessions](/docs/pages/sessions#where-to-store-sessions).
+Sessions can live in the same database: [Sessions](/docs/pages-and-data/sessions#where-to-store-sessions).

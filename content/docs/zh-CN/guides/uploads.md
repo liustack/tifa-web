@@ -1,17 +1,16 @@
 ---
 title: 上传文件
-description: 如何在 Tifa 应用里让访客上传文件
-source: docs/guides/uploads.md
-group: Guides
+description: 怎样让访客在 Tifa 应用里上传文件
+source: docs/guides/uploads.zh-CN.md
+group: 做法
 groupOrder: 3
 order: 4
-translatedFrom: ef8b02f9b7d8
 ---
 
 
 一个让访客上传带标题的图片、并看到它们列表的页面。处理函数检查标题、大小和文件种类，把文件保存在一个文件夹里，再把它提供回去。
 
-这些代码是照写出来的样子运行过的：它就是 Tifa 仓库里的应用 `test/apps/upload`，端到端测试会构建它并在浏览器里操作它。这里用到的调用的参考文档：[输入里的文件](/docs/pages/routes#files-in-the-input)、[路由的请求体上限和读取时间](/docs/pages/routes#body-limit-and-read-time-of-a-route)、[应用的选项](/docs/ship/config#options-of-the-app)。
+这些代码是照写出来的样子运行过的：它就是 Tifa 仓库里的应用 `test/apps/upload`，端到端测试会构建它并在浏览器里操作它。这里用到的调用的参考文档：[输入里的文件](/docs/pages-and-data/routes#files-in-the-input)、[路由的请求体上限和读取时间](/docs/pages-and-data/routes#body-limit-and-read-time-of-a-route)、[应用的选项](/docs/build-and-deploy/config#options-of-the-app)。
 
 ## 文件如何到达处理函数 {#how-a-file-gets-to-the-handler}
 
@@ -39,7 +38,7 @@ var (
 )
 ```
 
-它们同时也是命令行参数 `--upload-limit`、环境变量 `UPLOAD_LIMIT` 等等，和每个 [应用的选项](/docs/ship/config#options-of-the-app) 一样。`4MiB` 和 `4<<20` 是一个意思。`hooks.go` 在应用启动时创建这个文件夹：
+它们同时也是命令行参数 `--upload-limit`、环境变量 `UPLOAD_LIMIT` 等等，和每个 [应用的选项](/docs/build-and-deploy/config#options-of-the-app) 一样。`4MiB` 和 `4<<20` 是一个意思。`hooks.go` 在应用启动时创建这个文件夹：
 
 ```go
 package uploads
@@ -388,7 +387,7 @@ export default function Photos() {
 - 留空的文件输入框仍然会给 `FormData` 一个名字为空的 `File`。这时页面发送 `null`，`Validate` 会要求一张图片。
 - 被拒绝时会抛出 `TifaError`。`e.fields` 放着 `tifa.Fields` 的消息，按输入的 `json` 名字。413 没有字段，所以页面给出它自己的消息。
 - 浏览器自己的 `accept` 过滤只是给文件选择器的提示，不是检查。决定权在 Go 一侧。
-- 对自己站点的调用是同源的写请求，所以 [跨站检查](/docs/ship/config#cross-site-writes) 会放行它。来自另一个站点的表单会以 403 响应。
+- 对自己站点的调用是同源的写请求，所以 [跨站检查](/docs/build-and-deploy/config#cross-site-writes) 会放行它。来自另一个站点的表单会以 403 响应。
 - 调用不会重新加载页面数据，所以页面在得到成功的响应之后调用 `router.invalidate({ sync: true })`。
 
 ## 测试处理函数 {#testing-the-handler}
@@ -432,11 +431,11 @@ func TestPOSTRefusesText(t *testing.T) {
 }
 ```
 
-这个测试直接调用处理函数：`Validate`、请求体上限和读取时间是服务器的部分，见 [测试](/docs/pages/testing-apps)。
+这个测试直接调用处理函数：`Validate`、请求体上限和读取时间是服务器的部分，见 [测试](/docs/pages-and-data/testing-apps)。
 
 ## 取舍 {#decisions}
 
-**文件放在哪里。** 像这里这样放在机器上的一个文件夹里，要运行的东西最少。它需要一个在部署之后还能保留的卷，并且和其余数据一起备份（见 [部署](/docs/ship/deploy)）。一台机器上的一个进程是 Tifa 的目标，所以这通常就够了。如果你有不止一台机器，或者文件很大，就把它们放在对象存储里，让处理函数往里写。上面的检查保持不变。从那里提供它们，或者重定向到一个签名链接。
+**文件放在哪里。** 像这里这样放在机器上的一个文件夹里，要运行的东西最少。它需要一个在部署之后还能保留的卷，并且和其余数据一起备份（见 [部署](/docs/build-and-deploy/deploy)）。一台机器上的一个进程是 Tifa 的目标，所以这通常就够了。如果你有不止一台机器，或者文件很大，就把它们放在对象存储里，让处理函数往里写。上面的检查保持不变。从那里提供它们，或者重定向到一个签名链接。
 
 **多大。** 选适合用途的最小上限。头像要 1 或 2 MiB。在表单里显示这个上限，并在浏览器里检查 `file.size`，在发送之前给出一个快速的消息。真正算数的仍然是服务器的上限。
 

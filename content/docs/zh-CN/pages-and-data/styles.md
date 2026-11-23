@@ -1,15 +1,14 @@
 ---
 title: 样式
-description: 如何给应用添加 CSS、Tailwind CSS 和 shadcn/ui
-source: docs/styles.md
-group: Pages and data
+description: 怎样给应用加 CSS、Tailwind CSS 和 shadcn/ui
+source: docs/pages-and-data/styles.zh-CN.md
+group: 页面与数据
 groupOrder: 2
 order: 3
-translatedFrom: e743d15088c1
 ---
 
 
-在布局或页面里 import CSS，例如在 `app/layout.tsx` 里写 `import './site.css'`。CSS 由 Vite 构建：每个页面都链接同一个样式表，里面是整个应用的 CSS。CSS 引用的字体和图片，名字里会带上内容哈希，放在 `/assets/` 下（小文件会内联）。以 `/` 开头的 URL（如 `/logo.svg`）保持原样，指向 public 文件夹里的文件。页面自己用的资源，请用相对 URL，如 `url(./font.woff2)`。public 文件夹留给名字固定的文件（见[静态文件](/docs/start/app#static-files)）。在 `tifa dev` 下，CSS 经过 Vite 的开发服务器，原地更新，见 [dev.md](/docs/ship/dev)。
+在布局或页面里 import CSS，例如在 `app/layout.tsx` 里写 `import './site.css'`。CSS 由 Vite 构建：每个页面都链接同一个样式表，里面是整个应用的 CSS。CSS 引用的字体和图片，名字里会带上内容哈希，放在 `/assets/` 下（小文件会内联）。以 `/` 开头的 URL（如 `/logo.svg`）保持原样，指向 public 文件夹里的文件。页面自己用的资源，请用相对 URL，如 `url(./font.woff2)`。public 文件夹留给名字固定的文件（见[静态文件](/docs/start/app#static-files)）。在 `tifa dev` 下，CSS 经过 Vite 的开发服务器，原地更新，见 [dev.md](/docs/build-and-deploy/dev)。
 
 ## Tailwind CSS {#tailwind-css}
 
@@ -66,4 +65,4 @@ pnpm dlx shadcn@latest add button card
 
 `add` 按这些别名放置文件并改写其中的 import：`add sidebar` 会写入 `components/hooks/use-mobile.ts`。如果 `lib/utils.ts` 只是从 `cn` 包重新导出 `cn`（shadcn 4 就是这样），就删掉它，页面代码里也像组件那样直接从 `cn` import `cn`。否则把它移到 `components/lib/utils.ts`。
 
-`@/` 是应用根目录，由应用 tsconfig 里的 `paths` 设置（见 [build.md](/docs/ship/build#the-apps-tsconfig-and-vite-config)）。组件和其他 React 代码一样在服务器上渲染。
+`@/` 是应用根目录，由应用 tsconfig 里的 `paths` 设置（见 [build.md](/docs/build-and-deploy/build#the-apps-tsconfig-and-vite-config)）。组件和其他 React 代码一样在服务器上渲染。

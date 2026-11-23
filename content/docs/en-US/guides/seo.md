@@ -2,7 +2,6 @@
 title: Search engines and language models
 description: How a Tifa site gets found by search engines and read by language models
 source: docs/guides/seo.md
-sourceHash: 9dd9812ff622
 group: Guides
 groupOrder: 3
 order: 8
@@ -11,7 +10,7 @@ order: 8
 
 You want people to find your site in search results and in the answers of ChatGPT, Claude and the like. By the end, search engines get a sitemap of every public page with its date and its versions in other languages, and language models get a short index of the site and the text of your posts as Markdown.
 
-It all comes from one setting and one function. The code below is from [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.3.0/test/apps/i18n) and [examples/shop](https://github.com/liustack/tifa/blob/v0.3.0/examples/shop/sitemap.go).
+It all comes from one setting and one function. The code below is from [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.4.1/test/apps/i18n) and [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop/sitemap.go).
 
 ## Turn it on
 
@@ -43,7 +42,7 @@ A site whose pages all have fixed paths, such as `/`, `/about` and `/pricing`, n
 
 ## Share cards
 
-A link to your page in a chat or a social feed shows a card: a title, a line of text and an image. The card reads `og:` meta tags, and a missing one is filled with a guess or left empty. Write them in the `head` of the page (see [Title and meta tags](/docs/pages/pages#title-and-meta-tags)), with data from its `Load`. Tifa writes `og:url` itself.
+A link to your page in a chat or a social feed shows a card: a title, a line of text and an image. The card reads `og:` meta tags, and a missing one is filled with a guess or left empty. Write them in the `head` of the page (see [Title and meta tags](/docs/pages-and-data/pages#title-and-meta-tags)), with data from its `Load`. Tifa writes `og:url` itself.
 
 ```go
 // app/products/product+/route.go
@@ -230,7 +229,7 @@ A page with `Content` has a Markdown version at its URL with `.md`: `/blog/hello
 [news](https://i18n.example.com/en-US/store/news) [projects](https://i18n.example.com/projects) [icon](https://i18n.example.com/favicon.svg)
 ```
 
-- `tifa build` keeps the Markdown of each entry next to its HTML, drafts excepted, as it keeps the HTML. The links and images point where those of the HTML point, written in full with `site.url`: images go to their file under `/assets/`, and root-relative links get the language prefix of the entry (see [Images and links](/docs/pages/content#images-and-links)). Under `tifa dev` they stay local paths.
+- `tifa build` keeps the Markdown of each entry next to its HTML, drafts excepted, as it keeps the HTML. The links and images point where those of the HTML point, written in full with `site.url`: images go to their file under `/assets/`, and root-relative links get the language prefix of the entry (see [Images and links](/docs/pages-and-data/content#images-and-links)). Under `tifa dev` they stay local paths.
 - HTML comments are left out. Front matter is not there: what a reader needs from it goes in the title.
 - The answer has `Content-Type: text/markdown; charset=utf-8` and a `Link` header with the canonical URL of the page, so a search engine does not take it for a copy.
 - Only the URL of a listed page with `Content` answers. Another path that ends in `.md` goes to the routes as before, and a page without `Content` has no Markdown version.
@@ -272,7 +271,7 @@ An error the function itself returns, such as a failed query, is an unexpected e
 
 ## Test it
 
-`tifatest.Start` runs the whole app, `OnStart` included, so a test can read the sitemap the way a search engine does (from [examples/shop](https://github.com/liustack/tifa/blob/v0.3.0/examples/shop/sitemap_test.go)):
+`tifatest.Start` runs the whole app, `OnStart` included, so a test can read the sitemap the way a search engine does (from [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop/sitemap_test.go)):
 
 ```go
 func TestSitemapListsTheStorefront(t *testing.T) {
@@ -289,7 +288,7 @@ func TestSitemapListsTheStorefront(t *testing.T) {
 }
 ```
 
-An error of the function fails the test with 500. A mistake in what it returns shows in the log of the test, and in a missing `<loc>`. An entry that a test sets with `tifatest` has a placeholder for its body (see [Tests](/docs/pages/content#tests)), and its Markdown version holds a placeholder too.
+An error of the function fails the test with 500. A mistake in what it returns shows in the log of the test, and in a missing `<loc>`. An entry that a test sets with `tifatest` has a placeholder for its body (see [Tests](/docs/pages-and-data/content#tests)), and its Markdown version holds a placeholder too.
 
 ## What Tifa does not do
 
