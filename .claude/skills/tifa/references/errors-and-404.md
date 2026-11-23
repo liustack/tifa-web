@@ -1,9 +1,9 @@
-<!-- Written by Tifa v0.3.0 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.4.1 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 # Errors, 404 and redirects
 
 Contents: what to return, what the user sees, writing `ErrorBoundary`, how a 404 is placed, render failures, `OnError`.
 
-Full docs (in the folder `go tool tifa docs` prints): `docs/pages.md#404` and `docs/build.md#page-requests`.
+Full docs (in the folder `go tool tifa docs` prints): `docs/pages-and-data/pages.md#404` and `docs/build-and-deploy/build.md#page-requests`.
 
 ## What to return from Load, Layout and handlers
 
