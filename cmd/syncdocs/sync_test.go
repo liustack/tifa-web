@@ -256,3 +256,45 @@ func TestStaleListsTheTranslationsBehindTheirEnglishDoc(t *testing.T) {
 		t.Errorf("a folder that is not there has no stale files: %q, %v", got, err)
 	}
 }
+
+func TestPinLinks(t *testing.T) {
+	root := t.TempDir()
+	old := "See [a](https://github.com/liustack/tifa/blob/v0.2.0/docs/a.md) and\n" +
+		"[b](https://github.com/liustack/tifa/tree/v0.2.0/examples/shop#x), also v0.2.0 and\n" +
+		"https://github.com/liustack/tifa/releases/tag/v0.2.0 stay.\r\n"
+	same := "[c](https://github.com/liustack/tifa/blob/v0.3.0/docs/c.md)\n"
+	none := "no links\n"
+	for name, text := range map[string]string{"old.md": old, "sub/same.md": same, "none.json": none} {
+		p := filepath.Join(root, name)
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	changed, err := PinLinks([]string{root}, "v0.3.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(changed) != 1 || changed[0] != filepath.Join(root, "old.md") {
+		t.Fatalf("changed = %v, want only old.md", changed)
+	}
+	got, _ := os.ReadFile(filepath.Join(root, "old.md"))
+	want := strings.NewReplacer("blob/v0.2.0/", "blob/v0.3.0/", "tree/v0.2.0/", "tree/v0.3.0/").Replace(old)
+	if string(got) != want {
+		t.Errorf("old.md = %q, want %q", got, want)
+	}
+	again, err := PinLinks([]string{root}, "v0.3.0")
+	if err != nil || len(again) != 0 {
+		t.Errorf("second run changed %v, err %v", again, err)
+	}
+	// A pseudo-version links at its commit.
+	if _, err := PinLinks([]string{root}, "v0.3.1-0.20261120205010-e5449dd316a7"); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = os.ReadFile(filepath.Join(root, "sub/same.md"))
+	if !strings.Contains(string(got), "blob/e5449dd316a7/docs/c.md") {
+		t.Errorf("same.md = %q", got)
+	}
+}

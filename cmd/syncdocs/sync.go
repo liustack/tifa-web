@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -465,4 +466,46 @@ func readKey(file, key string) (string, error) {
 	}
 	s, _ := m[key].(string)
 	return s, nil
+}
+
+// versionLink matches the part of a link to the Tifa repository that names a version.
+var versionLink = regexp.MustCompile(`github\.com/liustack/tifa/(blob|tree)/[^/\s)"]+/`)
+
+// PinLinks rewrites, in every file under the given folders, the version in links to the Tifa
+// repository (github.com/liustack/tifa/blob/<ref>/ and .../tree/<ref>/) to the ref of version.
+// Nothing else in a file changes. It returns the files it changed, in path order.
+func PinLinks(roots []string, version string) ([]string, error) {
+	ref := gitRef(version)
+	var changed []string
+	for _, root := range roots {
+		err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return err
+			}
+			b, err := os.ReadFile(p)
+			if err != nil {
+				return err
+			}
+			out := versionLink.ReplaceAllFunc(b, func(m []byte) []byte {
+				kind := versionLink.FindSubmatch(m)[1]
+				return []byte("github.com/liustack/tifa/" + string(kind) + "/" + ref + "/")
+			})
+			if bytes.Equal(out, b) {
+				return nil
+			}
+			info, err := d.Info()
+			if err != nil {
+				return err
+			}
+			if err := os.WriteFile(p, out, info.Mode().Perm()); err != nil {
+				return err
+			}
+			changed = append(changed, p)
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return changed, nil
 }
