@@ -79,8 +79,6 @@
   mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
 }
 .lp .hero-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: 56px; align-items: center; }
-.lp .eyebrow { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 28px; font: 500 13px var(--font-mono); color: var(--text-2); }
-.lp .eyebrow::before { content: ""; width: 18px; height: 1px; background: var(--accent); }
 .lp h1 { font-weight: 600; font-size: clamp(44px, 5.6vw, 76px); line-height: 1.02; letter-spacing: -0.035em; margin: 0; text-wrap: balance; }
 .lp .sub { margin: 28px 0 0; max-width: 540px; color: var(--text-2); font-size: 18px; line-height: 1.6; }
 .lp .install { display: flex; align-items: center; max-width: 560px; margin-top: 36px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--bg-raised); }
@@ -99,10 +97,12 @@
 .lp .status-line { margin: 28px 0 0; display: inline-flex; align-items: center; gap: 10px; font: 400 13px var(--font-mono); color: var(--muted); }
 .lp .status-line .tag { color: var(--wafer); border: 1px solid color-mix(in srgb, var(--wafer) 40%, transparent); border-radius: 4px; padding: 1px 6px; }
 
-/* A headline that has a comma breaks there, and a line is never split: in Chinese a break inside
-   it would cut a word. The Chinese headline is set smaller so that its longer line fits. */
-.lp .h1-line { display: inline-block; white-space: nowrap; }
+/* A headline that has a comma breaks there. In Chinese a line is never split, since a break inside
+   it would cut a word, and the Chinese headline is set smaller so that its longer line fits. English
+   lines wrap between words. */
+.lp .h1-line { display: inline-block; }
 .lp .h1-line + .h1-line { display: block; }
+html:lang(zh-CN) .lp .h1-line { white-space: nowrap; }
 html:lang(zh-CN) .lp h1 { font-size: clamp(36px, 4.4vw, 58px); letter-spacing: -0.02em; line-height: 1.15; }
 
 /* Terminal window */

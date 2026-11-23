@@ -95,7 +95,6 @@ export default function HomePage() {
         <section className="hero">
           <div className="wrap hero-grid">
             <div>
-              <p className="eyebrow">{t('hero.eyebrow')}</p>
               <h1>
                 {headlineLines(t('hero.tagline')).map((line, _, lines) =>
                   lines.length > 1 ? (
