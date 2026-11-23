@@ -5,7 +5,7 @@ source: docs/pages.md
 group: Pages and data
 groupOrder: 2
 order: 2
-translatedFrom: e74288dbc830
+translatedFrom: f5563c53d1bd
 ---
 
 
@@ -157,27 +157,25 @@ package project
 func Layout(c *tifa.Ctx) (projects.Project, error) {
 	return projects.GetProject(c.Param("project"))
 }
-
-const LayoutSSR = false // optional, default true
 ```
 
-- `Layout` 和 `LayoutSSR` 放在 `route.go` 里，与同一文件夹的 `Load`、`SSR`、`Memo`、`Cache`、`BodyLimit`、`ReadTimeout` 和方法处理函数放在一起。在包里的任何其他文件里（比如 `layout.go`）声明其中任何一个，构建都会失败。只有 `Layout` 的 `route.go` 不是 API 路由。
+- `Layout` 放在 `route.go` 里，与同一文件夹的 `Load`、`SSR`、`Memo`、`Cache` 和方法处理函数放在一起。在包里的任何其他文件里（比如 `layout.go`）声明它，构建都会失败。只有 `Layout` 的 `route.go` 不是 API 路由。
 - 布局的 `c.Param` 只能读取它自己文件夹路径里的参数。`app/projects/project+/route.go` 里的 `Layout` 可以读 `project`，不能读 `order`。页面的 `Load` 同样被限制在它自己的路径上。
 - 在同一个布局下的页面之间切换时，布局组件不会重新挂载，保持它的状态。当布局函数读取的路径参数变了（比如你转到另一个项目），布局会重新挂载，它的状态重置。查询参数变了时，即使是它读取的，布局也会重新加载它的数据并渲染，但不会重新挂载，保持它的状态，这是 TanStack Router 的默认行为。所以过滤条件会保持访客选的视图。组件根据 `Load` 的数据设置的状态，比如用 `useState(data.x)`，也不会因为新的查询而重置。需要它跟随新数据的地方，给组件一个来自这个值的 `key`，或者在 effect 里更新状态。页面的工作方式相同。
 - 页面和布局可以调用 `tifa.Use(c, project.Layout)`，为当前请求拿到包住它们的某个布局的结果：同一文件夹或上层文件夹的布局，除非中间的 `layout_.tsx` 把它去掉了。同一个 `Layout` 在每个请求里只运行一次。任何其他布局都会让构建失败，参数不是包级的 `Layout` 函数（比如闭包）也一样。`Layout` 函数不能使用它自己的布局，不管是直接还是通过辅助函数。
 - 在浏览器里导航时，导航数据请求只运行所列路由的 `Load` 和 `Layout` 函数。如果某个上层布局的数据还在缓存里，那个布局就不在列表里，它的 `Layout` 这次不会运行。所以不要只在布局里做权限检查。把它们放进 `OnRequest`，或者让页面的 `Load` 通过 `tifa.Use` 依赖做检查的布局，这样检查在每个请求上都会运行。
-- 文档外壳（`<html>`、`<head>`、资源和注入数据的脚本）由框架当作字符串写出。React 只渲染 `<body>` 里的应用根节点，所以不管哪一层失败或返回 404，页面仍然是完整的文档。根布局（`app/layout.tsx`）可以导出两个常量来定制外壳：`htmlAttributes` 设置每个页面起步用的 `<html>` 属性（不导出时是 `{ lang: 'en' }`，路由的 `head` 可以为它的页面改动它们，见下），`documentHead` 放每个页面都带的 head 标签（没有路由匹配或根 `Layout` 失败时也带），格式与 `head` 的返回值相同。把网站默认的 `title` 放在这里，这样没匹配到的 URL 的 404 页面也有标题。页面自己的 `head` 返回了 `title` 时，会覆盖它。导出 `Document` 组件会让构建失败。
+- 文档外壳（`<html>`、`<head>`、资源和注入数据的脚本）由框架当作字符串写出。React 只渲染 `<body>` 里的应用根节点，所以不管哪一层失败或返回 404，页面仍然是完整的文档。根布局（`app/layout.tsx`）可以导出 `documentHead` 来定制外壳，格式与 `head` 的返回值相同。每个页面都带它的标签（没有路由匹配或根 `Layout` 失败时也带），它的 `htmlAttributes` 是每个页面起步用的 `<html>` 属性（没有时是 `{ lang: 'en' }`，路由的 `head` 可以为它的页面改动它们，见下）。把网站默认的 `title` 放在这里，这样没匹配到的 URL 的 404 页面也有标题。页面自己的 `head` 返回了 `title` 时，会覆盖它。导出 `Document` 组件会让构建失败。
 
 ```tsx
-export const htmlAttributes = { lang: 'zh-CN' }
 export const documentHead = {
+  htmlAttributes: { lang: 'zh-CN' },
   meta: [{ title: 'Shop' }, { name: 'theme-color', content: '#f2f4f5' }],
   links: [{ rel: 'icon', href: '/favicon.svg' }],
 }
 ```
 
 - 页面的 head 来自匹配到的各路由的 `head` 返回值：`title` 和同名的 meta 标签取自拥有它们的最深一层路由，它写出的每一个都保留（每个 `media` 一个 `theme-color`，多个 `og:image`），link、style 和 script 标签按路由顺序去重。框架总是加上 `<meta charset="utf-8">` 和一个 viewport meta，路由的 `name: 'viewport'` meta 会替换后者。标签属性按 React DOM 在服务器上写出它们的方式来写：`className`、`htmlFor`、`httpEquiv`、`crossOrigin` 等变成它们的 HTML 名字。以 `on` 开头的事件属性、无效的属性名、`null`、`undefined` 和函数都不写出。`async` 和 `defer` 这样的布尔属性在为 true 时写成空值。对于其他属性，只有 `data-` 和 `aria-` 属性才会把布尔值写成字符串。`javascript:` 链接会被替换。head 标签不支持 `style` 属性，用了会让渲染失败。`htmlAttributes` 遵循同样的规则。style 和 script 标签的内容原样写出。只有会结束该元素的 `<script` 和 `</script`（在 style 里是 `<style` 和 `</style`）会被转义，做法和 React DOM 一样。浏览器导航之后和 `router.invalidate()` 之后，head 会更新以匹配新的路由。
-- `head` 也可以返回 `htmlAttributes`，也就是它的页面的 `<html>` 属性，比如主题 class 或 `data-` 属性。它们逐个属性地合并到根布局的 `htmlAttributes` 之上：给出某个属性的最深一层路由胜出，`undefined` 把它留给上层路由，`null` 把它去掉。属性按 React DOM 写出的名字来匹配，所以一个路由里的 `className` 和另一个里的 `class` 是同一个属性。`class` 整个被替换，从不和别处的值合并。`style` 不支持，和 head 的标签一样。它们按与 head 标签相同的规则写出。浏览器导航之后和 `router.invalidate()` 之后，它们也会跟随新的路由。在浏览器里，只有当 Tifa 想要的值变了，它才写 `<html>` 的属性，也只去掉它自己写的属性。所以页面上脚本设置的东西，比如深色模式脚本加的 `dark` class，或者翻译工具改的 `lang`，在 hydration 和导航期间会保留，只要各路由想要的是这个属性的同一个值。当这个值变了，比如某个路由设置了另一个 `class`，或者一次导航离开它，根布局的 `class` 回来了，Tifa 会写入它，脚本加的 class 就没了。请把这样的主题放在没有路由设置的属性里，比如 `data-theme`，或者让脚本再加一次。没有 SSR 的页面在浏览器里得到这些属性。
+- `head` 也可以返回 `htmlAttributes`，也就是它的页面的 `<html>` 属性，比如主题 class 或 `data-` 属性。它们逐个属性地合并到根布局 `documentHead` 里的 `htmlAttributes` 之上：给出某个属性的最深一层路由胜出，`undefined` 把它留给上层路由，`null` 把它去掉。属性按 React DOM 写出的名字来匹配，所以一个路由里的 `className` 和另一个里的 `class` 是同一个属性。`class` 整个被替换，从不和别处的值合并。`style` 不支持，和 head 的标签一样。它们按与 head 标签相同的规则写出。浏览器导航之后和 `router.invalidate()` 之后，它们也会跟随新的路由。在浏览器里，只有当 Tifa 想要的值变了，它才写 `<html>` 的属性，也只去掉它自己写的属性。所以页面上脚本设置的东西，比如深色模式脚本加的 `dark` class，或者翻译工具改的 `lang`，在 hydration 和导航期间会保留，只要各路由想要的是这个属性的同一个值。当这个值变了，比如某个路由设置了另一个 `class`，或者一次导航离开它，根布局的 `class` 回来了，Tifa 会写入它，脚本加的 class 就没了。请把这样的主题放在没有路由设置的属性里，比如 `data-theme`，或者让脚本再加一次。没有 SSR 的页面在浏览器里得到这些属性。
 
 ```tsx
 // app/guide/layout.tsx. Layout in route.go returns the theme of the guide.
@@ -226,7 +224,7 @@ app/
 
 - 它下面的页面，更深层的也一样，不会渲染它上面的布局，上面那些布局的 `Layout` 函数也不会为它们运行：不为页面，不为浏览器的导航数据请求，也不为它下面没有页面的 URL 的 404。所以它们的数据永远到不了这些页面。
 - 同一文件夹 `route.go` 里的 `Layout` 照常给它数据。它下面的文件夹照常嵌套：更深一层的 `layout.tsx` 显示在它里面，它的 `Layout` 会运行。更深一层的 `layout_.tsx` 则依次把它连同它上面的一切都去掉。
-- 属于文档的东西仍然适用：根布局的 `htmlAttributes` 和 `documentHead`，以及 `OnRequest`。属于上层布局的则不适用：它们的 `head`、它们的 `ErrorBoundary` 和它们的 `LayoutSSR`。当 `layout_.tsx` 的 `Layout` 失败，或返回 `tifa.ErrNotFound` 时，它上面没有布局来显示错误，所以显示框架的默认页面。它自己的 `ErrorBoundary` 显示它下面失败的东西，和任何布局一样。要在那个 `Layout` 失败时显示你自己的页面，把 `layout_.tsx` 放高一层文件夹，带上 `<Outlet />` 和 `ErrorBoundary`，就像 shop 在 `app/store` 里做的那样。
+- 属于文档的东西仍然适用：根布局的 `documentHead`（连同它的 `htmlAttributes`），以及 `OnRequest`。属于上层布局的则不适用：它们的 `head` 和它们的 `ErrorBoundary`。当 `layout_.tsx` 的 `Layout` 失败，或返回 `tifa.ErrNotFound` 时，它上面没有布局来显示错误，所以显示框架的默认页面。它自己的 `ErrorBoundary` 显示它下面失败的东西，和任何布局一样。要在那个 `Layout` 失败时显示你自己的页面，把 `layout_.tsx` 放高一层文件夹，带上 `<Outlet />` 和 `ErrorBoundary`，就像 shop 在 `app/store` 里做的那样。
 - 在浏览器里，从它下面的页面移到它外面的页面，会换掉整个框架，新页面的布局在路由器还没有它们的数据时加载数据。
 - 构建会在这些情况下失败：`app/` 里有 `layout_.tsx`（它上面没有布局），同一文件夹里同时有 `layout.tsx` 和 `layout_.tsx`，以及它下面的页面或布局对被某个 `layout_.tsx` 去掉的布局使用 `tifa.Use`。它也会在一个布局的页面全都在某个 `layout_.tsx` 下面时失败，因为它一个也没有包住。
 - React Router 和 TanStack Router 也用 `_` 结尾的名字来让路由不进入某个布局，但只是不进入它前一段的布局：根路由和更上层的布局仍然包着它。Tifa 的 `layout_.tsx` 会去掉它上面的每个布局，根布局也不例外。

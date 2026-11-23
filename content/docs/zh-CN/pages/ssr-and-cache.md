@@ -5,7 +5,7 @@ source: docs/ssr-and-cache.md
 group: Pages and data
 groupOrder: 2
 order: 8
-translatedFrom: 05d174313421
+translatedFrom: d512b24c223f
 ---
 
 
@@ -16,12 +16,11 @@ const SSR = false              // the page, default true
 const Memo = false             // the page, turns the render memo off, default on
 const Cache = true             // the page, the same for everyone, a CDN may keep it for cache.s_maxage, default off
 // const Cache = 10 * time.Minute
-const LayoutSSR = false        // the Layout of the folder, default true
 ```
 
-`SSR`、`Memo` 和 `Cache` 作用于 `page.tsx` 的页面。在没有 `page.tsx` 的 `route.go` 里写它们，构建会失败。`Memo` 只能是 `false`：渲染记忆 memo 默认就是开的，所以永远不用写 `true`。`Cache` 可以是 `true`、`false`，或不小于一秒的 `time.Duration` 常量，见 [给 CDN 用的缓存](#cache-for-cdns)。名字要按上面的大小写写。名为 `ssr`、`cache`、`memo` 或 `layoutssr` 的常量会让构建失败，因为它会被忽略。
+`SSR`、`Memo` 和 `Cache` 作用于 `page.tsx` 的页面。在没有 `page.tsx` 的 `route.go` 里写它们，构建会失败。`Memo` 只能是 `false`：渲染记忆 memo 默认就是开的，所以永远不用写 `true`。`Cache` 可以是 `true`、`false`，或不小于一秒的 `time.Duration` 常量，见 [给 CDN 用的缓存](#cache-for-cdns)。名字要按上面的大小写写。名为 `ssr`、`cache` 或 `memo` 的常量会让构建失败，因为它会被忽略。布局没有自己的开关：想让一个布局下的页面只在浏览器里渲染，就在每个这样的页面的 `route.go` 里写 `const SSR = false`。写 `LayoutSSR` 会让构建失败。
 
-- `SSR = false`：中间件和每个 `Load` 照常运行，但跳过 slowjs。响应是一个带数据的最小文档，由浏览器来渲染。`LayoutSSR = false` 对该布局包住的每个页面都生效。
+- `SSR = false`：中间件和每个 `Load` 照常运行，但跳过 slowjs。响应是一个带数据的最小文档，由浏览器来渲染。
 - 渲染记忆 memo 对每个页面都是开的（为什么叫 memo、为什么对已登录页面也安全、它不覆盖什么，见 [渲染记忆 memo](/docs/reference/memo)）。每个请求都会运行自己的中间件、`Load` 和布局。渲染出的 HTML 会存进一块大小为 `ssr.memo_size` 的 memo（见 [config.md](/docs/ship/config)），键由这些内容组成：构建版本、SSR 包、路径、`Load` 读取的查询参数（见 [服务端渲染里的查询参数](#query-parameters-in-the-server-render)）、每个 `Load` 和布局的数据，以及浏览器拿到的会话。这些都没变时，直接返回 HTML，不再渲染。响应会说明是哪种情况：`X-Tifa-Render` 为 `vm` 表示本次请求渲染了一次，`memo` 表示命中，`shared` 表示用了另一个请求发起的渲染（见 [页面请求](/docs/ship/build#page-requests)）。把 `ssr.memo_size` 设为 0 会关掉 memo，共享渲染仍然保留。
 - 组件不能把每次渲染都会变的值放进 HTML，比如 `Date.now()` 或 `Math.random()`。水合也要求这样，而且 memo 会把这种值冻住，之后的访客看到的都是旧值。在 `tifa dev` 下，每个页面都会再渲染一次，时钟拨快 36 小时，两次结果不同时，终端和开发浮层会告诉你，指出第一处不同的位置，并列出你代码里读取时间或随机数的地方。在修好之前，这个页面不会被 memo 记住。如果页面确实要显示这样的值，比如服务器的时间，就在它的 `route.go` 里写 `const Memo = false`。这个页面会对每个请求都渲染。构建好的应用不做这项检查。
 - 带渲染时钟（`tifa.WithRenderClock`）的请求会跳过 memo：既不读也不存页面，因为它的 HTML 取决于键里没有的时间。

@@ -5,7 +5,7 @@ source: docs/routes.md
 group: Pages and data
 groupOrder: 2
 order: 1
-translatedFrom: fa0d5daabbc5
+translatedFrom: a505c7afdde6
 ---
 
 
@@ -37,7 +37,7 @@ func POST(c *tifa.Ctx, in ShipInput) (orders.Shipment, error) {
 - 有 `page.tsx` 的文件夹是一个页面。框架负责渲染它的 GET，所以你不能再写 `GET`。一个不需要数据、也不需要其他方法的页面，可以只有 `page.tsx`，不要 `route.go`。
 - 有 `route.go` 但没有 `page.tsx` 的文件夹，只要声明了方法处理函数，就是一个 API 路由：每个方法处理函数都按你写的方式响应，并且不允许有 `Load`，因为 `Load` 是用来加载页面数据的。只有 `Layout` 的 `route.go` 不是 API 路由，它只是给下面的页面提供布局数据。
 - 一切都是包级函数和常量。依赖请用应用已经设置好的全局变量。框架不做依赖注入。
-- 开关的名字（`SSR`、`Cache`、`Memo`、`LayoutSSR`、`BodyLimit`、`ReadTimeout`）按字面读取，所以拼错的会被忽略。`route.go` 里一个小写的 bool 常量，名叫 `cache`、`memo`、`ssr` 或 `layoutssr`，构建会失败。一个导出的常量，与某个开关只差一两个字母（`Cahce`、`ReadTimout`），并且类型是那个开关接受的，构建也会失败：`SSR`、`Memo` 和 `LayoutSSR` 是 bool，`Cache` 是 bool 或 `time.Duration`，`BodyLimit` 是整数，`ReadTimeout` 是 `time.Duration`。错误消息会指出它大概想写哪个开关。其他类型的常量，比如 `const Demo = "demo"`，像 `ID` 或 `Max` 这样的短名字，以及像 `Mode` 这样与四个字母的开关差两处编辑的名字，都不管。
+- 开关的名字（`SSR`、`Cache`、`Memo`）按字面读取，所以拼错的会被忽略。`route.go` 里一个小写的 bool 常量，名叫 `cache`、`memo` 或 `ssr`，构建会失败。一个导出的常量，与某个开关只差一两个字母（`Cahce`、`Memoo`），并且类型是那个开关接受的，构建也会失败：`SSR` 和 `Memo` 是 bool，`Cache` 是 bool 或 `time.Duration`。错误消息会指出它大概想写哪个开关。其他类型的常量，比如 `const Demo = "demo"`，像 `ID` 或 `Max` 这样的短名字，以及像 `Mode` 这样与四个字母的开关差两处编辑的名字，都不管。
 
 返回错误时：
 
@@ -79,10 +79,6 @@ POST、PUT 或 PATCH 处理函数的输入里，类型为 `*multipart.FileHeader
 ```go
 package photos
 
-// BodyLimit and ReadTimeout hold for the requests the method handlers of this route.go answer.
-const BodyLimit = 20 << 20          // 20 MiB, in place of server.body_limit
-const ReadTimeout = 5 * time.Minute // in place of server.read_timeout
-
 type UploadInput struct {
 	Title  string                  `json:"title"`
 	Photo  *multipart.FileHeader   `json:"photo"`
@@ -120,13 +116,7 @@ await POST({ input: { title, photo: file instanceof File ? file : null, extras: 
 
 ### 路由的请求体上限和读取时间 {#body-limit-and-read-time-of-a-route}
 
-`route.go` 里的 `BodyLimit` 和 `ReadTimeout`，会替换它的方法处理函数所响应的请求的 `server.body_limit` 和 `server.read_timeout`，任何方法都一样。页面的 GET 和它的导航数据沿用设置，因为它们不读请求体。
-
-- `BodyLimit` 是字节数，可以是任何整数类型。超过它的请求体，会在处理函数运行之前以 413 响应。这个上限统计整个请求体：文件、其他字段和 multipart 的分隔结构。
-- `ReadTimeout` 是一个 `time.Duration`。时间从 Tifa 匹配到路由的那一刻开始算，在 `OnRequest` 之前，并且只对这个请求有效。之后响应还会再得到 `server.write_timeout`，因为响应是在请求体收完之后才写的。时间到了请求体还在传，就以 408 响应。
-- 每个都可以是常量（必须大于 0），也可以是变量，比如[应用的选项](/docs/ship/config#options-of-the-app)：`var BodyLimit = uploads.UploadLimit`，其中 `UploadLimit = tifa.Size("upload.limit", 4<<20, "Largest upload")`。变量只在应用启动时读取一次。值为 0 的变量沿用设置，负数则会让应用在启动时停下。
-- 没有方法处理函数却声明了其中任何一个的 `route.go`，会让构建失败。带 POST 的页面的 `route.go` 可以声明它们，它们对这个 POST 有效。
-- 现在写它们的办法是 `OnRequest`。也要匹配方法，因为路由里的常量只对方法处理函数有效，而同一个页面的 GET 没有请求体可等：`c.SetBodyLimit` 和 `c.SetReadTimeout` 为单个请求设置它们，要在任何东西读取请求体之前调用。这些常量在这个版本里继续有效，下一个 minor 版本会去掉。
+每个请求体都受 `server.body_limit` 限制，每个请求也只有 `server.read_timeout` 的时间把它发完。接收上传的路由这两样都要更大。在 `OnRequest` 里为需要的请求设置它们，要在任何东西读取请求体之前设置。也要匹配方法：页面的 GET 没有请求体可等。
 
 ```go
 // hooks.go
@@ -143,7 +133,10 @@ func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
 }
 ```
 
-- `c.SetReadTimeout(d)` 对这个请求做 `ReadTimeout` 做的事：请求体从现在起有 `d` 的时间到达，之后响应再得到 `server.write_timeout`。没有请求体的请求，比如 GET，保持它的期限，这个调用什么都不做。读取请求体开始之后，两者都会返回错误，`SetReadTimeout` 在 `d` 不大于 0 时，或响应到不了连接时（比如在一个不会解开包装的 `tifa.SetHTTPHandler` 中间件后面）也会返回错误。检查这个错误并返回它。
+- `c.SetBodyLimit(n)` 的 `n` 是字节数。超过它的请求体，会在处理函数运行之前以 413 响应。这个上限统计整个请求体：文件、其他字段和 multipart 的分隔结构。如果想不重新构建就能改，数字可以取自[应用的选项](/docs/ship/config#options-of-the-app)：`c.SetBodyLimit(int64(UploadLimit))`，其中 `UploadLimit = tifa.Size("upload.limit", 4<<20, "Largest upload")`。
+- `c.SetReadTimeout(d)` 让请求体从现在起有 `d` 的时间到达，之后响应再得到 `server.write_timeout`，因为响应是在请求体收完之后才写的。时间到了请求体还在传，就以 408 响应。没有请求体的请求，比如 GET，保持它的期限，这个调用什么都不做。
+- 读取请求体开始之后，两者都会返回错误，`SetReadTimeout` 在 `d` 不大于 0 时，或响应到不了连接时（比如在一个不会解开包装的 `tifa.SetHTTPHandler` 中间件后面）也会返回错误。检查这个错误并返回它。
+- 路由里作为常量的 `BodyLimit` 和 `ReadTimeout` 已经没有了：声明它们会让构建失败，并显示这个路由该用的 `OnRequest`。
 
 ## Ctx {#ctx}
 
@@ -162,8 +155,8 @@ func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
 | `c.SetHeader(key, value)`、`c.SetCookie(cookie)` | 一个响应头，一个响应 cookie。`Load` 里也允许 |
 | `c.JSON(code, v)`、`c.Text(code, s)`、`c.NoContent(code)` | 写出响应。`Load` 里不允许 |
 | `c.Bind(&v)`、`c.BindQuery(&v)` | 把请求体或查询字符串解码进结构体，见上文。`Load` 里不允许 |
-| `c.SetBodyLimit(n)` | 改变这个请求的请求体上限（默认是 `server.body_limit`，或者路由的 `BodyLimit`，见[路由的请求体上限和读取时间](#body-limit-and-read-time-of-a-route)）。要在任何东西读取请求体之前调用，通常在 `OnRequest` 里。读取一旦开始，它会返回错误 |
-| `c.SetReadTimeout(d)` | 给这个请求的请求体 `d` 的时间到达，代替 `server.read_timeout`，之后响应再得到 `server.write_timeout`（路由的 `ReadTimeout` 对它的每个请求做同样的事）。要在任何东西读取请求体之前调用，通常在 `OnRequest` 里。读取一旦开始，它会返回错误 |
+| `c.SetBodyLimit(n)` | 改变这个请求的请求体上限（默认是 `server.body_limit`，见[路由的请求体上限和读取时间](#body-limit-and-read-time-of-a-route)）。要在任何东西读取请求体之前调用，通常在 `OnRequest` 里。读取一旦开始，它会返回错误 |
+| `c.SetReadTimeout(d)` | 给这个请求的请求体 `d` 的时间到达，代替 `server.read_timeout`，之后响应再得到 `server.write_timeout`。要在任何东西读取请求体之前调用，通常在 `OnRequest` 里。读取一旦开始，它会返回错误 |
 | `c.Request()`、`c.Writer()` | 原始的 `*http.Request` 和 `http.ResponseWriter`，只给方法处理函数和 `OnRequest` 用 |
 
 ## Load 如何使用 Ctx {#how-load-may-use-ctx}

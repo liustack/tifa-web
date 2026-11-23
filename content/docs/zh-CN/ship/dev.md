@@ -5,7 +5,7 @@ source: docs/dev.md
 group: Build and deploy
 groupOrder: 4
 order: 1
-translatedFrom: 9a5f02aee43e
+translatedFrom: cffed9bdd25c
 ---
 
 
@@ -38,7 +38,7 @@ tifa dev [--dir app-root] [--addr 127.0.0.1:9527] [--background]
 | --- | --- | --- |
 | `content/` 之外的 `.ts`、`.tsx`、`.js`、`.css`、`.json`，比如一个组件，或者只导出组件和 `ErrorBoundary` 的 `page.tsx` | bundle（SSR 包） | 通过 Vite 原地更新 |
 | SSR 包里某个模块导入的 `.css` 文件，在 `content/` 和 public 目录之外，编辑时没有错误在显示，并且 SSR 包导入每个样式表都只为了它的副作用（没有 CSS modules，也没有用 `?inline`、`?url` 或 `?raw` 导入的） | styles：Vite 开发服务器编译页面链接的样式表，失败时显示为构建错误。SSR 包里没有 CSS，所以保持不变。如果样式表现在导入的文件和上一个包记录的不同，bundle 也会跑 | 通过 Vite 原地更新 |
-| 导出内容不止组件的模块，比如导出 `head` 的 `page.tsx` 或 `layout.tsx`，或者带 `htmlAttributes` 或 `documentHead` 的根 `layout.tsx` | bundle（SSR 包） | 重新加载，由 Vite 触发 |
+| 导出内容不止组件的模块，比如导出 `head` 的 `page.tsx` 或 `layout.tsx`，或者带 `documentHead` 的根 `layout.tsx` | bundle（SSR 包） | 重新加载，由 Vite 触发 |
 | 应用根目录里上一个 SSR 包读过的文件，任何类型，比如用 `?raw` 导入的 Markdown 或 YAML 文件：被编辑或删除 | bundle（SSR 包） | 通过 Vite，和任何前端改动一样 |
 | 在 public 文件夹里增加或删除一个文件 | bundle（先重新生成代码） | 通过 Vite，和任何前端改动一样 |
 | 应用根目录里的 `.env` | 无：应用重新启动并读取它 | 重新加载 |

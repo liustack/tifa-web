@@ -5,7 +5,7 @@ source: docs/guides/sign-in.md
 group: Guides
 groupOrder: 3
 order: 3
-translatedFrom: d1783ef00676
+translatedFrom: 3bebd7ce8d51
 ---
 
 
@@ -635,9 +635,8 @@ import { SignedIn, SignedOut, useSession } from 'tifa/client'
 import { POST as signOut } from './logout/route.gen'
 import './styles.css'
 
-export const htmlAttributes = { lang: 'en' }
-
 export const documentHead = {
+  htmlAttributes: { lang: 'en' },
   meta: [{ title: 'Sign-in example' }],
   links: [{ rel: 'icon', href: 'data:,' }],
 }

@@ -5,7 +5,7 @@ source: docs/structure.md
 group: Start
 groupOrder: 1
 order: 4
-translatedFrom: 4c20b1bfe345
+translatedFrom: 988021f02628
 ---
 
 
@@ -19,7 +19,7 @@ translatedFrom: 4c20b1bfe345
 myapp/
   go.mod
   hooks.go                  OnStart, OnShutdown, OnRequest, OnError
-  hooks.ts                  onStart of the JavaScript side: i18next formatters and other setup
+  setup.ts                  top-level code of the JavaScript side: i18next formatters and other setup
   options.go                the options of the app: var DBPath = tifa.String(...)
   db.go                     var DB, opened in OnStart and closed in OnShutdown
   schema.sql                the tables of every domain

@@ -5,7 +5,7 @@ source: docs/sessions.md
 group: Pages and data
 groupOrder: 2
 order: 5
-translatedFrom: f09b95e84050
+translatedFrom: 2161ba6d5c1d
 ---
 
 
@@ -207,7 +207,7 @@ function Header() {
 
 带会话的响应必须声明 `Cache-Control: no-store`，或者同时声明 `private` 和 `no-cache`，两者都不能带字段列表（`private="Set-Cookie"` 不算），也不能有 `must-understand`。不去动这个头，它就是 `private, no-cache`。它与渲染记忆 memo 和 CDN 如何配合，见 [渲染记忆 memo](/docs/reference/memo#signed-in-and-private-pages)。如果 `OnRequest`、某个 `Load` 或某个处理函数在页面、页面的启动数据或调用的信封上设置了别的值，请求会通过 `OnError` 以意外错误失败，错误响应是 `no-store`，不带 `ETag` 或 `Last-Modified`。导航重定向，以及已经在报告错误的导航响应，不会再次抛出：服务器会记录它，清除验证头，并发送 `no-store`。`/__tifa/session` 永远是 `private, no-store`，没有验证头，中间件自己响应它时也一样。自己写响应的处理函数不检查。
 
-`data-session` 是 Tifa 在 `<html>` 上维护的属性。根布局的 `htmlAttributes` 如果设置了它，服务器启动时就会停下（VM 预热失败，`tifa dev` 会显示错误），路由的 `htmlAttributes` 如果设置了它，渲染就会失败。
+`data-session` 是 Tifa 在 `<html>` 上维护的属性。根布局的 `documentHead.htmlAttributes` 如果设置了它，服务器启动时就会停下（VM 预热失败，`tifa dev` 会显示错误），路由的 `htmlAttributes` 如果设置了它，渲染就会失败。
 
 **Content Security Policy。** 这段脚本和样式是内联的，每个页面都一样。设置了 `server.csp` 时，Tifa 会自己把它们的哈希放进每个页面的策略里（见 [Content-Security-Policy](/docs/ship/config#content-security-policy)）。用 `<meta>` 标签里的 CSP 时它们不受影响，因为它们出现在这个标签之前。如果你在响应头里放了自己的 CSP，请允许它们的哈希：
 

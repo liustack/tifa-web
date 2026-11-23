@@ -1,11 +1,11 @@
 ---
 title: Hooks
-description: 如何在 hooks.go 里设置整个应用（OnStart、OnShutdown、OnRequest、OnError、日志 handler、net/http 中间件），以及在 hooks.ts 里设置（运行的启动设置...
+description: 如何在 hooks.go 里设置整个应用（OnStart、OnShutdown、OnRequest、OnError、日志 handler、net/http 中间件），以及在 setup.ts 里设置（运行的启动设置...
 source: docs/hooks.md
 group: Pages and data
 groupOrder: 2
 order: 6
-translatedFrom: f0e0a487e7b7
+translatedFrom: 4c6c7fcd2094
 ---
 
 
@@ -68,31 +68,29 @@ func OnStart(ctx context.Context) error {
 
 `tifa.SetHTTPHandler(wrap)` 拿到 Tifa 的 handler，返回要对外服务的那个。这个包装在其他一切之外：静态文件、跨站检查和路由。它用原始的 `http.ResponseWriter` 看到每个请求，包括被拒绝的跨站写请求的 403。它包住的 handler 返回之后，该请求的 `r.Pattern` 就是路由模板，和 `c.Pattern()` 一样（如 `/projects/{project}`，没有路由匹配时为空），所以指标中间件可以按路由计数，而不是按 URL。浏览器用 `_tifa` 参数请求导航的数据，`.p` 表示预加载。不要用这些请求来统计页面浏览量：一次预加载可以不再发请求就满足一次导航，而一次重新加载会多出一个请求。要统计浏览器完成的客户端导航，加上完整的页面请求（见 [页面请求](/docs/ship/build#page-requests)）。它是纯 `net/http`，所以 `OnRequest`、`OnError` 和跨站检查不适用于它自己服务的路径，比如上面的 `/debug/pprof/`。把这样的路径放在你自己的检查后面，或放在另一个监听器上。关闭时仍然会等它包住的请求。只能在 `OnStart` 里调用它：服务器开始监听之后调用会 panic。`tifa.SetHTTPHandler(nil)` 会移除这个包装。它在带 `Cache` 的页面的匿名请求之外运行（见 [给 CDN 用的缓存](/docs/pages/ssr-and-cache#cache-for-cdns)）：它放进请求 context 的值会到达这种页面的 `OnRequest` 和 `Load`，所以不要在里面识别访客，要在 `OnRequest` 里做。
 
-## hooks.ts {#hooksts}
+## setup.ts {#setupts}
 
-项目根目录里的 `hooks.ts` 是 `hooks.go` 在 JavaScript 一侧的对应物。它导出一个可选的函数：
+项目根目录里的 `setup.ts` 是 `hooks.go` 在 JavaScript 一侧的对应物。它就是普通的顶层代码，不用导出函数：
 
 ```ts
-// hooks.ts
+// setup.ts
 import { i18n } from 'tifa/i18n'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
-export function onStart() {
-  dayjs.extend(relativeTime)
-  i18n.services.formatter?.addCached('currency', (lng, options) => {
-    const f = new Intl.NumberFormat(lng, { currency: 'USD', ...options, style: 'currency' })
-    return (value) => f.format(value)
-  })
-}
+dayjs.extend(relativeTime)
+i18n.services.formatter?.addCached('currency', (lng, options) => {
+  const f = new Intl.NumberFormat(lng, { currency: 'USD', ...options, style: 'currency' })
+  return (value) => f.format(value)
+})
 ```
 
-- `onStart` 在每个 JavaScript 运行时里，于任何页面渲染之前运行一次，不管是哪个页面：在服务器的每个 VM 里，是 SSR 包加载的时候，在浏览器里，是水合之前。它用来放整个应用只需设置一次的东西，比如 i18next 的 formatter、dayjs 插件、图表类型或错误上报器。
+- 它的顶层代码在每个 JavaScript 运行时里，于任何路由模块求值之前运行一次：在服务器的每个 VM 里，是 SSR 包加载的时候，在浏览器里，是水合之前。路由模块如果在自己的顶层读取 `setup.ts` 设置好的东西，能读到它。它用来放整个应用只需设置一次的东西，比如 i18next 的 formatter、dayjs 插件、图表类型或错误上报器。
 - 它在两侧都运行，所以服务器和浏览器用同样的设置来渲染。Tifa 没有只在服务器上运行的 JavaScript：数据和 I/O 都在 Go 里。
 - 它是同步的。它启动但不等待的工作，比如动态 `import()`，可能在第一次渲染之后才完成。
 - 如果它在服务器上抛出错误，程序在开始服务之前就停止。在浏览器里页面不会水合：它保持服务器发来的 HTML，链接加载整个页面，错误出现在控制台里。
-- `hooks.ts` 不导出别的东西：多一个导出，构建就会失败，并指出它的名字，因为 Tifa 永远不会运行它。没有页面的应用没有 JavaScript，那里有 `hooks.ts` 同样会让构建失败。
-- `hooks.ts` 连同它导入的东西都在浏览器的主包里。请保持它很小。
+- Tifa 会忽略它导出的东西。没有页面的应用没有 JavaScript，那里有 `setup.ts` 会让构建失败。
+- `setup.ts` 连同它导入的东西都在浏览器的主包里。请保持它很小。
 
 ## 会话 {#sessions}
 

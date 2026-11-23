@@ -5,7 +5,7 @@ source: docs/guides/uploads.md
 group: Guides
 groupOrder: 3
 order: 4
-translatedFrom: 216bf70ecf9f
+translatedFrom: ef8b02f9b7d8
 ---
 
 
@@ -47,6 +47,9 @@ package uploads
 import (
 	"context"
 	"os"
+	"time"
+
+	"github.com/liustack/tifa"
 )
 
 func OnStart(context.Context) error {
@@ -54,27 +57,35 @@ func OnStart(context.Context) error {
 }
 ```
 
-每个请求体都限制在 `server.body_limit`，默认 1 MiB，每个请求有 `server.read_timeout` 的 10 秒来送达。只对上传路由把两者调高，让其他路由保持小的值。在 `app/photos/route.go` 的开头：
+每个请求体都限制在 `server.body_limit`，默认 1 MiB，每个请求有 `server.read_timeout` 的 10 秒来送达。只对上传路由把两者调高，让其他路由保持小的值。`hooks.go` 里的 `OnRequest` 来做这件事，只针对这个路由的 POST：
 
 ```go
-// BodyLimit lets the requests of this route be as large as upload.limit. The other routes keep
-// server.body_limit.
-var BodyLimit = uploads.UploadLimit
-
-// ReadTimeout gives a phone on a slow line the time to send a large picture.
-const ReadTimeout = 5 * time.Minute
+func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
+	if c.Request().Method == "POST" && c.Pattern() == "/photos" {
+		// The requests of this route may be as large as upload.limit. The other routes keep
+		// server.body_limit.
+		if err := c.SetBodyLimit(int64(UploadLimit)); err != nil {
+			return err
+		}
+		// A phone on a slow line needs time to send a large picture.
+		if err := c.SetReadTimeout(5 * time.Minute); err != nil {
+			return err
+		}
+	}
+	return next(c)
+}
 ```
 
-- 超过 `BodyLimit` 的请求体会以 413 响应，处理函数不会运行。这个上限计算的是整个请求体：文件、其他字段和 multipart 的封装。比上限稍小一点的文件，仍然可能被拒绝。
-- `ReadTimeout` 从路由匹配上的那一刻开始算。时间到了请求体还在传，就以 408 响应。响应之后还有 `server.write_timeout` 的时间。
-- 两者对这个 `route.go` 的方法处理函数所响应的请求都有效，页面的 GET 保留原来的设置。变量在应用启动时读取一次，所以 `--upload-limit 8MiB` 可以用。
+- 超过上限的请求体会以 413 响应，处理函数不会运行。这个上限计算的是整个请求体：文件、其他字段和 multipart 的封装。比上限稍小一点的文件，仍然可能被拒绝。
+- 读取时间从调用 `SetReadTimeout` 的那一刻开始算，在任何东西读取请求体之前。时间到了请求体还在传，就以 408 响应。响应之后还有 `server.write_timeout` 的时间。
+- 请求体一旦开始被读取，这两个调用就会返回错误，所以要在 `OnRequest` 里调用，并把错误返回。`UploadLimit` 在请求到来时读取，所以 `--upload-limit 8MiB` 可以用。
 - 应用前面的代理或 CDN 有它们自己的请求体上限和超时。请相应调高，否则访客会得到它们的错误，而不是你的。
 
 ### 一次上传占多少内存 {#how-much-memory-an-upload-takes}
 
 表单用 Go 的 `mime/multipart` 的预算来解析。最多 32 MiB 的文件内容留在内存里，文本字段以及各部分的名字和头，与它共用约 42 MiB 的一份预算。放不下的文件会进入临时文件，Tifa 在请求结束时把它删掉。请求体上限比这个高也没问题：多出来的部分进磁盘。
 
-这份预算不是峰值。最终落在磁盘上的文件，先要读进一个最多 32 MiB 的缓冲区，它随着填充而增长，所以一个大文件在一瞬间可能占到约 64 MiB，每个同时进行的上传都要占它自己的一份。在内存很少的机器上，只让少数几个上传同时读它们的表单。`hooks.go` 的其余部分，它同样导入 `github.com/liustack/tifa`：
+这份预算不是峰值。最终落在磁盘上的文件，先要读进一个最多 32 MiB 的缓冲区，它随着填充而增长，所以一个大文件在一瞬间可能占到约 64 MiB，每个同时进行的上传都要占它自己的一份。在内存很少的机器上，只让少数几个上传同时读它们的表单。把下面的内容加到 `hooks.go`，等待的部分加进上面的 `OnRequest`：
 
 ```go
 // parsing lets two uploads read their form at a time. The others wait here, before their body is
@@ -83,6 +94,7 @@ var parsing = make(chan struct{}, 2)
 
 func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
 	if c.Request().Method == "POST" && c.Pattern() == "/photos" {
+		// (SetBodyLimit and SetReadTimeout, as above)
 		select {
 		case parsing <- struct{}{}:
 			defer func() { <-parsing }()
@@ -94,7 +106,7 @@ func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
 }
 ```
 
-上传在这里等待的时间，要算进它的 `ReadTimeout`，后者从路由匹配时开始，所以要给等待留出余地。
+上传在这里等待的时间，要算进它的读取时间，所以要给等待留出余地。
 
 
 ## 处理函数 {#the-handler}
@@ -114,14 +126,11 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/liustack/tifa"
 
 	"uploads"
 )
-
-// (BodyLimit and ReadTimeout, as above)
 
 // Photo is one stored picture. ID is also its file name.
 type Photo struct {
@@ -176,7 +185,7 @@ var extensions = map[string]string{
 	"image/gif":  ".gif",
 }
 
-// POST stores the picture. The framework has refused a body over BodyLimit with 413 and run
+// POST stores the picture. The framework has refused a body over upload.limit with 413 and run
 // Validate before this runs.
 func POST(c *tifa.Ctx, in UploadInput) (Photo, error) {
 	file, err := in.File.Open()
@@ -431,7 +440,7 @@ func TestPOSTRefusesText(t *testing.T) {
 
 **多大。** 选适合用途的最小上限。头像要 1 或 2 MiB。在表单里显示这个上限，并在浏览器里检查 `file.size`，在发送之前给出一个快速的消息。真正算数的仍然是服务器的上限。
 
-**多久。** `ReadTimeout` 是你服务的最慢的访客发送你接受的最大文件可能花的时间。4 MiB 在 1 Mbit/s 的线路上大约要 34 秒，所以 5 分钟留有余地。时间长会让慢客户端占住连接那么久，所以不要把它给不需要的路由。
+**多久。** 读取时间是你服务的最慢的访客发送你接受的最大文件可能花的时间。4 MiB 在 1 Mbit/s 的线路上大约要 34 秒，所以 5 分钟留有余地。时间长会让慢客户端占住连接那么久，所以不要把它给不需要的路由。
 
 **接受什么。** 一份种类的名单，由字节来决定。对文档，用它们自己的类型做同样的事，并用 `Content-Disposition: attachment` 来提供它们，让浏览器保存而不是打开它们。
 

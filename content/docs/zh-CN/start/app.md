@@ -5,7 +5,7 @@ source: docs/app.md
 group: Start
 groupOrder: 1
 order: 2
-translatedFrom: d9d8e3331c00
+translatedFrom: 47881969629a
 ---
 
 
@@ -17,7 +17,7 @@ translatedFrom: d9d8e3331c00
 myapp/
   go.mod
   hooks.go                          process and request hooks (optional)
-  hooks.ts                          onStart, run before the first render on the server and in the browser (optional)
+  setup.ts                          top-level code, run before the first render on the server and in the browser (optional)
   options.go                        options of the app, see Configuration (optional)
   db.go                             resources the whole app shares: package-level variables and functions (optional)
   app/
@@ -68,7 +68,7 @@ myapp/
 
 | 文件 | 它放什么 |
 | --- | --- |
-| `route.go` | 这个文件夹所有的 Go 名字：`Layout`、`LayoutSSR`、`Load`、`SSR`、`Memo`、`Cache`、`BodyLimit`、`ReadTimeout` 和方法处理函数 |
+| `route.go` | 这个文件夹所有的 Go 名字：`Layout`、`Load`、`SSR`、`Memo`、`Cache` 和方法处理函数 |
 | `page.tsx` | 页面组件。有 `page.tsx` 的文件夹就是一个页面 |
 | `layout.tsx` | 布局组件 |
 | `layout_.tsx` | 代替 `layout.tsx` 的布局组件，显示时不带上面的布局（见 [不带上层布局的布局](/docs/pages/pages#a-layout-without-the-layouts-above)） |
@@ -133,7 +133,7 @@ Vite 说的是同一件事：优先导入资源，`public/` 给源码里从不�
 | `middleware.ts`，以及路由文件夹里的 `loading`、`error` 或 `not-found` 文件 | `hooks.go` 里的 `OnRequest`，以及 `ErrorBoundary` 导出（见 [404](/docs/pages/pages#404)） | 警告 |
 | 在 `route.go` 里，接收 `http.ResponseWriter`、`*http.Request`、`*gin.Context`、`echo.Context` 或 `*fiber.Ctx` 的函数 `GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`Load` 或 `Layout` | `func POST(c *tifa.Ctx, in AddInput) (Todo, error)`，或 `func POST(c *tifa.Ctx) error` 加 `c.Writer()` 和 `c.Request()`（见 [带输入和结果的方法处理函数](/docs/pages/routes#method-handlers-with-input-and-result)） | 错误 |
 
-Tifa 允许的写法不会被报告。`@tanstack/react-router` 和 `@tanstack/react-query` 没有问题。页面可以为自己的用途导出 `action`、`loader`、`metadata`、`revalidate` 或 `dynamic`，只要值不是别的框架会写的那种（`loader` 和 `action` 是函数，`metadata` 是对象，`revalidate` 是数字或 `false`，`dynamic` 是 `auto`、`force-dynamic`、`error` 和 `force-static` 之一）。导出和调用只在 `page.tsx`、`layout.tsx` 和 `layout_.tsx` 里读取。导入和指令在 `app/` 下的每个 TypeScript 文件和 `hooks.ts` 里读取，测试除外。
+Tifa 允许的写法不会被报告。`@tanstack/react-router` 和 `@tanstack/react-query` 没有问题。页面可以为自己的用途导出 `action`、`loader`、`metadata`、`revalidate` 或 `dynamic`，只要值不是别的框架会写的那种（`loader` 和 `action` 是函数，`metadata` 是对象，`revalidate` 是数字或 `false`，`dynamic` 是 `auto`、`force-dynamic`、`error` 和 `force-static` 之一）。导出和调用只在 `page.tsx`、`layout.tsx` 和 `layout_.tsx` 里读取。导入和指令在 `app/` 下的每个 TypeScript 文件和 `setup.ts` 里读取，测试除外。
 
 ### 没有静态生成 {#no-static-generation}
 
@@ -177,6 +177,6 @@ site:
 - [渲染开关与缓存](/docs/pages/ssr-and-cache)：`SSR`、`Memo`、`Cache`，以及服务端渲染里的查询参数。
 - [服务端渲染](/docs/pages/server-render)：服务器上有什么，只在浏览器里加载的组件，Intl 和 Temporal。
 - [样式](/docs/pages/styles)：CSS、Tailwind CSS 和 shadcn/ui。
-- [Hooks](/docs/pages/hooks)：`hooks.go` 和 `hooks.ts`。
+- [Hooks](/docs/pages/hooks)：`hooks.go` 和 `setup.ts`。
 - [测试](/docs/pages/testing-apps)：用 `go test` 和 `tifatest` 写测试。
 - [部署](/docs/ship/deploy)：你部署新版本时，在浏览器里打开的页面会怎么做。

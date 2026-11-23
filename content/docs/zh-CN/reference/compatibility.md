@@ -5,7 +5,7 @@ source: docs/compatibility.md
 group: Reference
 groupOrder: 5
 order: 3
-translatedFrom: 22133c16756b
+translatedFrom: b167785a83fa
 ---
 
 
@@ -13,9 +13,9 @@ translatedFrom: 22133c16756b
 
 ## 稳定的内容 {#stable}
 
-**Go 包。** `github.com/liustack/tifa`、`github.com/liustack/tifa/content` 和 `github.com/liustack/tifa/tifatest` 导出的名称。包括 `hooks.go` 里各个 hook 的名称，`route.go` 里 `Load`、`Layout` 和方法处理函数的签名，`route.go` 会读取的常量（`SSR`、`LayoutSSR`、`Memo`、`Cache`、`BodyLimit`、`ReadTimeout`），`Validate` 和 `Exposed` 方法，`tifa.Stats()` 的字段，以及[路由](/docs/pages/routes)里的 JSON 规则。
+**Go 包。** `github.com/liustack/tifa`、`github.com/liustack/tifa/content` 和 `github.com/liustack/tifa/tifatest` 导出的名称。包括 `hooks.go` 里各个 hook 的名称，`route.go` 里 `Load`、`Layout` 和方法处理函数的签名，`route.go` 会读取的常量（`SSR`、`Memo`、`Cache`），`Validate` 和 `Exposed` 方法，`tifa.Stats()` 的字段，以及[路由](/docs/pages/routes)里的 JSON 规则。
 
-**文件约定。** 根目录的文件（`go.mod`、`tifa.yaml`、`hooks.go`、`hooks.ts`、`options.go`、`content.go`、`content/`、`public/`、`app/`），`app/` 里文件夹名的含义（`name`、`name+`、`name++`），文件夹里的约定文件（`route.go`、`page.tsx`、`layout.tsx`、`layout_.tsx`），`page.tsx` 和 `layout.tsx` 导出的内容，`_locales/<language>.json`，以及 `*.client.tsx`。
+**文件约定。** 根目录的文件（`go.mod`、`tifa.yaml`、`hooks.go`、`setup.ts`、`options.go`、`content.go`、`content/`、`public/`、`app/`），`app/` 里文件夹名的含义（`name`、`name+`、`name++`），文件夹里的约定文件（`route.go`、`page.tsx`、`layout.tsx`、`layout_.tsx`），`page.tsx` 和 `layout.tsx` 导出的内容，`_locales/<language>.json`，以及 `*.client.tsx`。
 
 **应用会 import 的生成路径。** `.tifa/vite.js`、`.tifa/tsconfig.json`、`tifa/client` 和 `tifa/i18n`（由应用的 `tsconfig.json` 映射），`./route.gen` 及其导出，`tifa/client` 的 `SessionData` 类型，以及 Go 包 `<module>/.tifa/tifaapp` 和它的变量 `App`。
 
