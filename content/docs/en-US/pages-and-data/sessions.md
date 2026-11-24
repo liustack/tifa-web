@@ -113,7 +113,7 @@ Rules for the test itself:
 - `t` can be a `*testing.T` or a `*testing.B`. It reports every failed check with `t.Errorf`, so one run lists all the problems. A failed first `Put` stops it with `t.Fatalf`.
 - It tests one process. Whether two servers see the same records, or what happens when the database is down, you test yourself.
 
-Each failure message names the rule. The file store above, without the `ctx.Err()` check at the top of each method, fails like this:
+Each failure message names the rule. A store that has no `ctx.Err()` check at the top of each method, such as a store that keeps its records in a file, fails like this:
 
 ```
 --- FAIL: TestFileStoreIsAValidStore (0.45s)
@@ -124,7 +124,7 @@ Each failure message names the rule. The file store above, without the `ctx.Err(
     Delete with a canceled context deleted the record
 ```
 
-A store on a database client that takes a `ctx` returns these errors by itself. The test app runs this test on its file store in `hooks_test.go`.
+A store on a database client that takes a `ctx` returns these errors by itself. The test app [test/apps/session](https://github.com/liustack/tifa/blob/v0.4.2/test/apps/session/hooks_test.go) runs this test on a store that keeps its records in a file.
 
 ## Where to call what
 
@@ -138,7 +138,7 @@ A store on a database client that takes a `ctx` returns these errors by itself. 
 
 A `Load` runs for a GET, which must not change anything, so signing in belongs in a method handler or in `OnRequest`.
 
-On a page with `Cache` the GET and HEAD requests are anonymous: `Session` is nil there whoever asks, and `SetSession` and `ClearSession` return an error. The promise is about the request headers Tifa hands to your code. A value that a `net/http` middleware from `tifa.SetHTTPHandler` put into the context still arrives, so recognize visitors in `OnRequest` and not in that middleware (see [Cache for CDNs](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)).
+On a page with `Cache` the GET and HEAD requests are anonymous: `Session` is nil there whoever asks, and `SetSession` and `ClearSession` return an error. What Tifa promises there, and where a `net/http` middleware from `tifa.SetHTTPHandler` fits in, is in [Cache for CDNs](/docs/pages-and-data/ssr-and-cache#cache-for-cdns).
 
 ## Sign-in libraries
 

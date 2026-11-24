@@ -33,7 +33,7 @@ order: 3
 
 ## 任何版本都可能改变的内容 {#may-change-in-any-release}
 
-- `tifa deploy`、`tifa deploy setup`、`tifa deploy rollback` 和 `tifa deploy env` 及其参数，setup 打印的计划，`tifa.yaml` 的 `deploy.*` 键，它们在服务器上保存的文件、unit 和记录，`tifa deploy setup` 写入的工作流（`.github/workflows/tifa-deploy.yml`），以及它在 GitHub 和 Cloudflare 里设置的内容。它们还很新，在通过 CI 和 Cloudflare 账号部署的流程稳定下来之前，可能会变。
+- `tifa deploy` 及它的全部子命令（`setup`、`rollback`、`env`、`logs`、`status` 和 `remove`）及其参数，setup 打印的计划，`tifa.yaml` 的 `deploy.*` 键，它们在服务器上保存的文件、unit 和记录，`tifa deploy setup` 写入的工作流（`.github/workflows/tifa-deploy.yml`），以及它在 GitHub 和 Cloudflare 里设置的内容。它们还很新，在通过 CI 和 Cloudflare 账号部署的流程稳定下来之前，可能会变。
 - `server` 包。它是公开的，只是因为你模块里生成的代码要 import 它。不要 import 它，用 `tifa` 和 `tifatest`。
 - `tifa routes --json` 和 `tifa errors --json` 的 JSON。在脚本里读取它们风险自负，或者改用文本输出。
 - 其他 `X-Tifa-*` 头（`X-Tifa-Redirect`、`X-Tifa-Session`、`X-Tifa-Dev`、`X-Tifa-Reload`），浏览器运行时和程序之间的 JSON 信封，`Server-Timing` 的细节，浏览器的 `localStorage` 和 `sessionStorage` 键，以及页面的元素 id。同一次构建的浏览器和程序彼此一致，而另一次构建的程序会回答 409，让页面重新加载。

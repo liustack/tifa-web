@@ -10,7 +10,7 @@ order: 7
 
 ## What the server render has
 
-Pages render on the server in a slowjs VM, not in Node or a browser. The VM has the JavaScript language itself, `Proxy`, `WeakRef`, `FinalizationRegistry` and `new Function` included, and these:
+Pages render on the server in a VM of beastjs (the pure Go JavaScript engine Tifa renders with), not in Node or a browser. The VM has the JavaScript language itself, `Proxy`, `WeakRef`, `FinalizationRegistry` and `new Function` included, and these:
 
 - `URL` and `URLSearchParams`, the whole standard, parsed in Go by the engine. Hosts go through UTS 46 with its Bidi and joiner checks, as in a browser. A URL has no properties of its own, an invalid one throws `TypeError: Failed to construct 'URL': Invalid URL`, and `URL.createObjectURL` and `URL.revokeObjectURL` are missing, as there is no `Blob`.
 - `TextEncoder`, `TextDecoder`, `AbortController`, `Headers`, `Response` and `queueMicrotask`. `TextDecoder` knows UTF-8 only: another encoding, such as `new TextDecoder('latin1')`, throws a `RangeError`.
@@ -27,7 +27,7 @@ Pages render on the server in a slowjs VM, not in Node or a browser. The VM has 
 It does not have:
 
 - Timers: `setTimeout`, `setInterval`, `requestAnimationFrame`, `requestIdleCallback`. A render ends when its microtasks run out, nothing waits for time.
-- `performance` and `crypto.subtle`.
+- The rest of `performance` (beyond `now()` and `timeOrigin`) and `crypto.subtle`.
 - The browser: `window`, `document`, `navigator`, `self`, `location`, `localStorage`, `matchMedia`, `ResizeObserver`, `Event`, `Blob`, `FormData` and the like.
 - I/O: `fetch`, `XMLHttpRequest`, `WebSocket`, `require`, `process`, `Buffer`. The build replaces `process.env.NODE_ENV` in the bundle, so code that reads only that works.
 
@@ -90,7 +90,7 @@ export default function StatsPage() {
 - Nothing the `.client.tsx` file imports reaches the SSR bundle. In the browser it is a chunk of its own, fetched the first time the component renders, also when the page itself is part of the entry script (the root Layout is).
 - The component shows a moment after the rest of the page, since its code is fetched after hydration. If the fetch fails, the component throws and the nearest `ErrorBoundary` shows.
 
-What this saved on the two charts of the example shop's stats page, with the two builds measured in turns on one machine: the SSR bundle went from 1.15 MB to 0.77 MB (a third less), compiling it when the program starts took 40% less time, loading each VM 24% less, each VM held 3.8 MB (a third) less memory after rendering, and the stats page rendered 21% faster. The browser entry script went from 1.08 MB to 0.70 MB, and the 0.38 MB of chart code is fetched only when a stats page opens.
+Keeping a browser-only library out of the SSR bundle this way made the bundle of the example shop a third smaller and its stats page render 21% faster. [Optimizations](https://github.com/liustack/tifa/blob/v0.4.2/docs/studies/optimizations.md#build) has the full numbers.
 
 ## Intl in server rendering
 
@@ -155,7 +155,7 @@ A VM carries only stand-ins for Intl, about 10 KB, until one of its renders uses
 
 ## Temporal in server rendering
 
-Pages can use `Temporal.Now`, `Instant`, `ZonedDateTime`, `PlainDate`, `PlainTime`, `PlainDateTime`, `PlainYearMonth`, `PlainMonthDay`, `Duration` and `Date.prototype.toTemporalInstant`, including at module load. slowjs provides the methods V8 ships, IANA time zones and the calendars supported by Intl. Temporal uses the same embedded tz 2026e data as Intl, without reading the machine's zoneinfo.
+Pages can use `Temporal.Now`, `Instant`, `ZonedDateTime`, `PlainDate`, `PlainTime`, `PlainDateTime`, `PlainYearMonth`, `PlainMonthDay`, `Duration` and `Date.prototype.toTemporalInstant`, including at module load. beastjs provides the methods V8 ships, IANA time zones and the calendars supported by Intl. Temporal uses the same embedded tz 2026e data as Intl, without reading the machine's zoneinfo.
 
 `Date.now()`, `new Date()`, `Date()`, `Temporal.Now` and Intl date formatting without a date share the VM clock. By default it stays live during a render. Go can supply a clock for one render with `tifa.WithRenderClock`, see [Render clock](/docs/pages-and-data/testing-apps#render-clock). `Temporal.Now.instant().epochMilliseconds` and `Date.now()` sample that clock separately, so they can differ if time passes between calls. `Temporal.Now.timeZoneId()` is `UTC`, the default zone of Intl, and the other Now methods use UTC when no zone is passed. The process's Go time zone stays unchanged.
 

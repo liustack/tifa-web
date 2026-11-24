@@ -122,7 +122,7 @@
         [
           "React SSR",
           "TanStack Start",
-          "TanStack Router，由 Go 进程内的 [slowjs](https://github.com/liustack/slowjs) 渲染，它是渲染 React 最快的纯 Go JavaScript 引擎"
+          "TanStack Router，由 Go 进程内的 [beastjs](https://github.com/liustack/beastjs) 渲染，它是渲染 React 最快的纯 Go JavaScript 引擎"
         ],
         [
           "缓存",
@@ -158,8 +158,8 @@
       "method": "测量方法",
       "costTitle": "代价",
       "cost": [
-        "Tifa 在 slowjs 里渲染页面，slowjs 是纯 Go 写的 JavaScript 引擎。它没有 JIT，所以一次渲染比在 Node 里更久。",
-        "每个请求都要渲染时，Next.js 每秒答出的页面请求是 Tifa 的 1.17 倍，TanStack Start 是 1.57 倍，峰值内存分别是 Tifa 的 7 倍和 6 倍。见[研究报告（英文）](https://github.com/liustack/tifa/blob/v0.4.1/docs/studies/nextjs-and-tanstack-start.md#conclusions)。"
+        "Tifa 在 beastjs 里渲染页面，beastjs 是纯 Go 写的 JavaScript 引擎。它没有 JIT，所以一次渲染比在 Node 里更久。",
+        "每个请求都要渲染时，Next.js 每秒答出的页面请求是 Tifa 的 1.17 倍，TanStack Start 是 1.57 倍，峰值内存分别是 Tifa 的 7 倍和 6 倍。见[研究报告（英文）](https://github.com/liustack/tifa/blob/v0.4.2/docs/studies/nextjs-and-tanstack-start.md#conclusions)。"
       ]
     },
     "pages": {

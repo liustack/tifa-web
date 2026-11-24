@@ -10,7 +10,7 @@ order: 7
 
 ## 服务端渲染有什么 {#what-the-server-render-has}
 
-页面在服务器上的一个 slowjs VM 里渲染，不是在 Node 或浏览器里。VM 有 JavaScript 语言本身，包括 `Proxy`、`WeakRef`、`FinalizationRegistry` 和 `new Function`，还有这些：
+页面在服务器上的一个 beastjs（Tifa 用来渲染的纯 Go JavaScript 引擎）VM 里渲染，不是在 Node 或浏览器里。VM 有 JavaScript 语言本身，包括 `Proxy`、`WeakRef`、`FinalizationRegistry` 和 `new Function`，还有这些：
 
 - `URL` 和 `URLSearchParams`，完整的标准，由引擎在 Go 里解析。主机名会经过 UTS 46，包含它的 Bidi 和连接符检查，和浏览器一样。URL 没有自己的属性，无效的 URL 会抛出 `TypeError: Failed to construct 'URL': Invalid URL`，而 `URL.createObjectURL` 和 `URL.revokeObjectURL` 不存在，因为没有 `Blob`。
 - `TextEncoder`、`TextDecoder`、`AbortController`、`Headers`、`Response` 和 `queueMicrotask`。`TextDecoder` 只认识 UTF-8：别的编码，比如 `new TextDecoder('latin1')`，会抛出 `RangeError`。
@@ -27,7 +27,7 @@ order: 7
 它没有：
 
 - 定时器：`setTimeout`、`setInterval`、`requestAnimationFrame`、`requestIdleCallback`。渲染在微任务用完时结束，没有东西会等时间。
-- `performance` 和 `crypto.subtle`。
+- `performance` 里除 `now()` 和 `timeOrigin` 以外的部分，以及 `crypto.subtle`。
 - 浏览器：`window`、`document`、`navigator`、`self`、`location`、`localStorage`、`matchMedia`、`ResizeObserver`、`Event`、`Blob`、`FormData` 等等。
 - I/O：`fetch`、`XMLHttpRequest`、`WebSocket`、`require`、`process`、`Buffer`。构建会替换包里的 `process.env.NODE_ENV`，所以只读它的代码可以工作。
 
@@ -90,7 +90,7 @@ export default function StatsPage() {
 - `.client.tsx` 文件 import 的任何东西，都不会进入 SSR 包。在浏览器里，它是一个单独的 chunk，在组件第一次渲染时才获取，即使页面本身属于入口脚本（根布局就是）也一样。
 - 组件会比页面的其余部分晚一会儿才出现，因为它的代码是在水合之后才获取的。如果获取失败，组件会抛出错误，最近的 `ErrorBoundary` 会显示出来。
 
-这样做在示例商店统计页的两张图表上省下了多少：在同一台机器上轮流测量两种构建，SSR 包从 1.15 MB 降到 0.77 MB（少了三分之一），程序启动时编译它的时间少了 40%，加载每个 VM 的时间少了 24%，渲染之后每个 VM 少占 3.8 MB（三分之一）内存，统计页的渲染快了 21%。浏览器入口脚本从 1.08 MB 降到 0.70 MB，那 0.38 MB 的图表代码只在打开统计页时才获取。
+这样把只在浏览器里用的库挡在 SSR 包之外，让示例商店的 SSR 包小了三分之一，统计页的渲染快了 21%。完整的数字见 [优化](https://github.com/liustack/tifa/blob/v0.4.2/docs/studies/optimizations.md#build)。
 
 ## 服务端渲染里的 Intl {#intl-in-server-rendering}
 
@@ -155,7 +155,7 @@ export default function ReceiptPage() {
 
 ## 服务端渲染里的 Temporal {#temporal-in-server-rendering}
 
-页面可以使用 `Temporal.Now`、`Instant`、`ZonedDateTime`、`PlainDate`、`PlainTime`、`PlainDateTime`、`PlainYearMonth`、`PlainMonthDay`、`Duration` 和 `Date.prototype.toTemporalInstant`，包括在模块加载时。slowjs 提供 V8 带的那些方法、IANA 时区，以及 Intl 支持的历法。Temporal 用的是和 Intl 相同的内置 tz 2026e 数据，不读取机器的 zoneinfo。
+页面可以使用 `Temporal.Now`、`Instant`、`ZonedDateTime`、`PlainDate`、`PlainTime`、`PlainDateTime`、`PlainYearMonth`、`PlainMonthDay`、`Duration` 和 `Date.prototype.toTemporalInstant`，包括在模块加载时。beastjs 提供 V8 带的那些方法、IANA 时区，以及 Intl 支持的历法。Temporal 用的是和 Intl 相同的内置 tz 2026e 数据，不读取机器的 zoneinfo。
 
 `Date.now()`、`new Date()`、`Date()`、`Temporal.Now` 和不带日期的 Intl 日期格式化，共用 VM 的时钟。默认情况下它在渲染期间保持实时。Go 可以用 `tifa.WithRenderClock` 为一次渲染提供一个时钟，见[渲染时钟](/docs/pages-and-data/testing-apps#render-clock)。`Temporal.Now.instant().epochMilliseconds` 和 `Date.now()` 各自单独读取这个时钟，所以如果两次调用之间过了一点时间，它们可能不同。`Temporal.Now.timeZoneId()` 是 `UTC`，也就是 Intl 的默认时区，其他 Now 方法在没有传入时区时也使用 UTC。进程的 Go 时区保持不变。
 

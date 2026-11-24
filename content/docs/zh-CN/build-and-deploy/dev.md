@@ -27,7 +27,7 @@ tifa dev [--dir app-root] [--addr 127.0.0.1:9527] [--background]
 `tifa dev` 在 Node 上运行应用自己的 Vite，用的是应用的 `vite.config.ts`（见 [build.md](/docs/build-and-deploy/build#the-apps-tsconfig-and-vite-config)）：
 
 - Vite 的开发服务器提供浏览器模块。它随带页面的应用的第一次构建一起启动，监听 127.0.0.1 上一个空闲端口，只有 `tifa dev` 会连它。页面从它那里加载 Vite 客户端、`@vitejs/plugin-react` 的 React Fast Refresh 运行时和 `.tifa/client.ts`。
-- SSR 包仍然是一个文件 `.tifa/dist/ssr.js`，应用把它加载进自己的 slowjs VM。它在开发服务器所在的同一个 Node 进程里构建，放在它自己的工作线程上：浏览器拿到的是 React 的开发版，slowjs 跑的是生产版，而 Vite 每个线程只选一次版本。Tifa 自己设置 `NODE_ENV`（开发服务器用 development，SSR 包用 production），所以 shell 里的 `NODE_ENV` 两边都不影响。SSR 包每构建 10 次（失败的也算）就换一个新的工作线程，因为 Node 不会把 Vite 构建留在线程里的东西全部释放。线程结束过的那次构建（比如插件没捕获的错误）之后也会换。把东西放在该线程 `globalThis` 上的插件，到那时会从头开始。
+- SSR 包仍然是一个文件 `.tifa/dist/ssr.js`，应用把它加载进自己的 beastjs VM。它在开发服务器所在的同一个 Node 进程里构建，放在它自己的工作线程上：浏览器拿到的是 React 的开发版，beastjs 跑的是生产版，而 Vite 每个线程只选一次版本。Tifa 自己设置 `NODE_ENV`（开发服务器用 development，SSR 包用 production），所以 shell 里的 `NODE_ENV` 两边都不影响。SSR 包每构建 10 次（失败的也算）就换一个新的工作线程，因为 Node 不会把 Vite 构建留在线程里的东西全部释放。线程结束过的那次构建（比如插件没捕获的错误）之后也会换。把东西放在该线程 `globalThis` 上的插件，到那时会从头开始。
 
 ## 每种改动会触发什么 {#what-each-change-triggers}
 
@@ -81,10 +81,10 @@ tifa dev: 07:35:36 bundle done in 90ms
 tifa dev: 07:35:36 ready in 260ms
 ```
 
-运行超过 5 秒的步骤会说明这一点，之后每 15 秒再说一次。应用的第一次 go build 要编译 slowjs、SQLite 和其他依赖，在 Apple M4 上构建缓存为空时大约 7 秒，机器慢些就更久，之后的构建会用 Go 的构建缓存。第一条 ready 行还会写出要打开的地址：
+运行超过 5 秒的步骤会说明这一点，之后每 15 秒再说一次。应用的第一次 go build 要编译 beastjs、SQLite 和其他依赖，在 Apple M4 上构建缓存为空时大约 7 秒，机器慢些就更久，之后的构建会用 Go 的构建缓存。第一条 ready 行还会写出要打开的地址：
 
 ```text
-tifa dev: 07:35:41 go build still running (5s). The first build compiles slowjs and the other dependencies, later builds use Go's build cache
+tifa dev: 07:35:41 go build still running (5s). The first build compiles beastjs and the other dependencies, later builds use Go's build cache
 tifa dev: 07:35:56 go build still running (20s)
 tifa dev: 07:36:30 go build done in 54.1s
 tifa dev: 07:36:30 ready in 58.3s, open http://127.0.0.1:9527
@@ -92,7 +92,7 @@ tifa dev: 07:36:30 ready in 58.3s, open http://127.0.0.1:9527
 
 浏览器在第一次构建期间打开的页面（接受 `text/html` 的 GET 或 HEAD）会等它 2 秒。如果构建还在跑，页面会返回 503，并说明 `tifa dev` 正在构建应用，应用跑起来后会自己重新加载。其他请求，比如脚本调用 API，会像应用重启时那样等应用。
 
-步骤的名字是 `static analysis`、`code generation`、`bundle`、`styles` 和 `go build`。静态分析之后还有一行 `route manifest changed` 或 `route manifest unchanged`。Vite 的警告和错误也会打印成 `tifa dev:` 行。应用自己的输出照常打印，但没有构建出来的程序那行 `tifa: listening on`，因为应用监听的端口只有 `tifa dev` 会连。它的 stderr 经过 `tifa dev`，`tifa dev` 会留下最后几行用于覆盖层（见下），所以只在终端里才给输出上色的日志库，在这里写的是纯文本。
+步骤的名字是 `static analysis`、`code generation`、`bundle`、`styles`、`content` 和 `go build`。静态分析之后还有一行 `route manifest changed` 或 `route manifest unchanged`。Vite 的警告和错误也会打印成 `tifa dev:` 行。应用自己的输出照常打印，但没有构建出来的程序那行 `tifa: listening on`，因为应用监听的端口只有 `tifa dev` 会连。它的 stderr 经过 `tifa dev`，`tifa dev` 会留下最后几行用于覆盖层（见下），所以只在终端里才给输出上色的日志库，在这里写的是纯文本。
 
 当一次渲染不带 locale 调用 Intl 或 `toLocale*` 方法，或者对日期不带 `timeZone` 时，应用会记一条 `tifa: ssr:` 警告，写出你源码里的位置，每个位置一次。页面照常渲染。见 [`tifa dev` 里的警告](/docs/pages-and-data/server-render#warnings-in-tifa-dev)。
 
@@ -107,7 +107,7 @@ tifa dev: 07:36:30 ready in 58.3s, open http://127.0.0.1:9527
 - 如果安装的 React 或 React DOM 低于 19.3.0（见 [build.md](/docs/build-and-deploy/build#the-apps-tsconfig-and-vite-config)），bundle 步骤会带着那条错误失败。装上更新的版本后要重启 `tifa dev`。
 - 如果最开始的第一次构建就失败，就没有旧版本可以提供。每个请求都得到 502 和原始错误，修好之后会自己恢复。
 - 如果应用启动后马上退出，或者 30 秒内没有监听，覆盖层的标题是 `The app did not start`。正文显示退出状态和应用写到 stderr 的最后 40 行，`OnStart` 的错误和 panic 都在那里。只要输出以那个 panic 的报告结尾，panic 那一行即使堆栈更长也会保留。应用记下日志后继续运行的 `panic: ` 行则不会。如果运行中的应用退出了（比如请求之外发生了 panic），标题是 `The app stopped`，正文相同。到下一次构建之前，页面请求会得到 502 和同样的文字。`tifa dev` 的日志只说应用退出了，因为应用自己的输出已经打印在它上面。
-- 如果运行中的应用无法加载重建后的 SSR 包（比如 slowjs 编译不了，或者它的顶层代码抛了错），覆盖层标题是 `The app did not load the SSR bundle`。应用继续使用它已有的包。堆栈给出源文件里的位置，调用了 slowjs 没有的 `require` 的包，会连同该怎么做一起指出来。
+- 如果运行中的应用无法加载重建后的 SSR 包（比如 beastjs 编译不了，或者它的顶层代码抛了错），覆盖层标题是 `The app did not load the SSR bundle`。应用继续使用它已有的包。堆栈给出源文件里的位置，调用了 beastjs 没有的 `require` 的包，会连同该怎么做一起指出来。
 
 你可以关掉覆盖层。关掉它不影响以后的重新加载。
 
@@ -137,6 +137,8 @@ go tool tifa dev status [--json] # is it running, where, and did the last build 
 go tool tifa dev logs [-n 100] [-f]
 go tool tifa dev stop
 ```
+
+`status`、`logs` 和 `stop` 也接受 `--dir app-root`。
 
 编码智能体或脚本没法让 `tifa dev` 一直开在终端里。`tifa dev --background` 会让它脱离终端启动，在构建结束且 `GET /` 有响应后返回。它打印地址和进程 ID，然后是怎么看日志、怎么停止：
 
@@ -184,7 +186,7 @@ tifa dev is running in this app
 
 ### 日志 {#logs}
 
-`tifa dev logs` 打印 `.tifa/dev.log` 的最后 100 行，用 `-n <lines>` 可以指定行数。带 `-f` 时，它接着在新行出现时打印，并在 `tifa dev` 结束时结束。服务器结束后日志仍在，所以 `tifa dev logs` 也能告诉你它为什么停了。没有用 `--background` 启动的 `tifa dev` 打印到它的终端，不留日志：`logs` 会这样告诉你。
+`tifa dev logs` 打印 `.tifa/dev.log` 的最后 100 行，用 `-n <lines>` 可以指定行数。带 `-f` 时，它接着在新行出现时打印，并在 `tifa dev` 结束时结束。服务器结束后日志仍在，所以 `tifa dev logs` 也能告诉你它为什么停了。没有用 `--background` 启动的 `tifa dev` 打印到它的终端，不留日志：`logs` 会这样告诉你。应用在这里写什么，以及怎样设置它的格式和级别，见[日志](/docs/guides/logs)。
 
 ### 停止 {#stop}
 

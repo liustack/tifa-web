@@ -149,6 +149,8 @@ func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
 | `c.Context()`、`c.WithContext(ctx)` | 请求的 context，以及携带另一个 context 的 `c` 的副本，用来保存请求范围内的值。`c` 本身不会变 |
 | `c.Pattern()` | 匹配到的路由的路径，比如 `/projects/{project}`，没有匹配到路由时为 `""` |
 | `c.Path()` | 访问者在地址栏里看到的页面路径：已转义，带语言前缀，不带查询，比如 `/en-US/store/items/a%20b`。页面加载和导航的数据请求得到的相同。在方法处理函数里，它是处理函数的路径。在 `Layout` 里不允许使用，见 [Load 如何使用 Ctx](#how-load-may-use-ctx) |
+| `c.Language()` | 正在回答的路由的语言：URL 里的语言，URL 没有语言时是默认语言，没有多语言的站点上为 `""`。见[代码里的语言](/docs/guides/i18n#the-language-in-code) |
+| `c.SetAlternates(list)` | 替换页面在其他语言里的版本，用于 `hreflang` 和站点地图。在 `Load` 里调用。见[搜索引擎得到什么](/docs/guides/i18n#what-search-engines-get) |
 | `c.IsDataRequest()` | 这是不是浏览器路由的导航数据请求，而不是页面加载 |
 | `c.SetHeader(key, value)`、`c.SetCookie(cookie)` | 一个响应头，一个响应 cookie。`Load` 里也允许 |
 | `c.JSON(code, v)`、`c.Text(code, s)`、`c.NoContent(code)` | 写出响应。`Load` 里不允许 |

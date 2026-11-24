@@ -46,7 +46,7 @@ The first start compiles SQLite and the JavaScript engine, so it takes longer th
 1. Press Add with an empty box. The message "Write what needs doing." appears under the box. Go sent it, see step 4.
 2. Add "Buy milk". It shows up in the list at once. The todo links to its own page, `/todos/1`, where a button marks it done.
 3. Open http://127.0.0.1:9527/nope and http://127.0.0.1:9527/todos/99. Both show a 404 page, the first from the root Layout and the second from the page of one todo.
-4. Change the heading in `app/page.tsx` from `Todos` to `My todos` and save. The terminal shows what `tifa dev` did, and a reload shows the new heading. Change it back.
+4. Change the heading in `app/page.tsx` from `Todos` to `My todos` and save. The terminal shows what `tifa dev` did, and the open page updates in place. A reload shows the new heading from the server too. Change it back.
 
 ```text
 tifa dev: 19:57:43 app/page.tsx modified
@@ -505,6 +505,6 @@ The program keeps its data in `app.db` in the folder it runs in, so run from the
 - Settings, HTTPS, the cache of rendered pages: [Configuration](/docs/build-and-deploy/config).
 - Sign users in: [Sessions](/docs/pages-and-data/sessions). The app keeps sessions in `app.db` (`sessions.go`), so a restart signs nobody out.
 - Styles and shadcn/ui: [Styles](/docs/pages-and-data/styles). A site in several languages: [Writing an app](/docs/start/app#a-site-in-several-languages). Caching a page: [Render switches and caches](/docs/pages-and-data/ssr-and-cache#cache-for-cdns).
-- A bigger app to read: [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop).
+- A bigger app to read: [examples/shop](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop).
 - How `tifa dev` reacts to each change, and how to read its log: [Dev server](/docs/build-and-deploy/dev).
 - Why the folders look the way they do: [Structuring an app](/docs/start/structure) and [Philosophy](/docs/start/philosophy).

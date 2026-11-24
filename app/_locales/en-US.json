@@ -61,7 +61,7 @@
         [
           "React SSR",
           "TanStack Start",
-          "TanStack Router, rendered inside the Go process by [slowjs](https://github.com/liustack/slowjs), the fastest pure Go JavaScript engine for rendering React"
+          "TanStack Router, rendered inside the Go process by [beastjs](https://github.com/liustack/beastjs), the fastest pure Go JavaScript engine for rendering React"
         ],
         [
           "Cache",
@@ -97,8 +97,8 @@
       "method": "How this was measured",
       "costTitle": "The cost",
       "cost": [
-        "Tifa renders pages in slowjs, a pure Go JavaScript engine. It has no JIT, so one render takes longer than in Node.",
-        "With every request rendering, Next.js answers 1.17 times as many page requests as Tifa and TanStack Start 1.57 times, at 7 and 6 times Tifa's peak memory. See [the study](https://github.com/liustack/tifa/blob/v0.4.1/docs/studies/nextjs-and-tanstack-start.md#conclusions)."
+        "Tifa renders pages in beastjs, a pure Go JavaScript engine. It has no JIT, so one render takes longer than in Node.",
+        "With every request rendering, Next.js answers 1.17 times as many page requests as Tifa and TanStack Start 1.57 times, at 7 and 6 times Tifa's peak memory. See [the study](https://github.com/liustack/tifa/blob/v0.4.2/docs/studies/nextjs-and-tanstack-start.md#conclusions)."
       ]
     },
     "pages": {

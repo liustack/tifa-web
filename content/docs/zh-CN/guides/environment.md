@@ -8,7 +8,7 @@ order: 10
 ---
 
 
-在 Tifa 里，环境和密钥都留在 Go 进程里。程序启动时读取它的设置：命令行参数、环境变量、`.env` 和 `tifa.yaml`（见[配置](/docs/build-and-deploy/config)）。前端构建看不到这些。Vite 不读 `.env`（`envDir: false`），而且同一个应用的构建要能在每个环境里运行。
+在 Tifa 里，环境和密钥都留在 Go 进程里。程序启动时读取它的设置：命令行参数、环境变量、`.env` 和 `-c` 指定的文件，Tifa 自己的设置还可以写在 `tifa.yaml` 里（见[配置](/docs/build-and-deploy/config)）。前端构建看不到这些。Vite 不读 `.env`（`envDir: false`），而且同一个应用的构建要能在每个环境里运行。
 
 想把一个值交给浏览器，就从 `Load` 返回它，或者从 `Layout` 返回，这样它下面的每个页面都能拿到。这行 Go 是值到达页面的唯一途径，所以一定是你有意写的，也很容易找到。
 
@@ -21,7 +21,7 @@ order: 10
 var PublicKey = tifa.String("stripe.public_key", "", "Public key the browser uses")
 ```
 
-在程序运行的地方设置它：`STRIPE_PUBLIC_KEY=pk_live_... ./bin/app`，或者 `.env` 里的一行，或者 `--stripe-public-key`。从 `Load` 返回它：
+在程序运行的地方设置它：`STRIPE_PUBLIC_KEY=pk_live_... ./bin/app`，或者 `.env` 里的一行，或者 `-c` 指定的文件，或者 `--stripe-public-key`。从 `Load` 返回它：
 
 ```go
 // app/checkout/route.go
