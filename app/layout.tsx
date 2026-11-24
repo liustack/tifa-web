@@ -24,7 +24,7 @@ export const documentHead = {
     { rel: 'icon', href: icon, type: 'image/svg+xml' },
     // The headings' weight arrives before the first paint, so the hero does not move when it
     // loads (it moved the terminal beside the heading by a fifth of the screen).
-    { rel: 'preload', href: headingFont, as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
+    { rel: 'preload', href: headingFont, as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' as const },
   ],
   scripts: [{ children: themeScript }],
 }
