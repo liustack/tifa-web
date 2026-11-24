@@ -9,5 +9,6 @@ import (
 // OnStart runs once before the app listens. A returned error stops the app.
 func OnStart(context.Context) error {
 	tifa.SetSitemap(sitemap)
+	tifa.SetHTTPHandler(markdownForAgents)
 	return nil
 }
