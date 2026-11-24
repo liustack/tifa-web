@@ -97,7 +97,7 @@
       "method": "How this was measured",
       "lighthouse": {
         "title": "This page in Lighthouse",
-        "caption": "Lighthouse 12.8 on tifago.com, desktop and mobile, 2026-11-24.",
+        "caption": "Lighthouse 12.8 on tifago.com, desktop and mobile, 2026-11-24. Over several runs, Performance scores 99 to 100.",
         "run": "Run it yourself",
         "performance": "Performance",
         "accessibility": "Accessibility",

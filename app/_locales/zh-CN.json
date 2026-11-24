@@ -158,7 +158,7 @@
       "method": "测量方法",
       "lighthouse": {
         "title": "这个页面的 Lighthouse 分数",
-        "caption": "用 Lighthouse 12.8 测 tifago.com，桌面和移动版，2026-11-24。",
+        "caption": "用 Lighthouse 12.8 测 tifago.com，桌面和移动版，2026-11-24。多次测量，性能在 99 和 100 之间。",
         "run": "自己测一下",
         "performance": "性能",
         "accessibility": "无障碍",
