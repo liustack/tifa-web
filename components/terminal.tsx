@@ -77,14 +77,29 @@ export function Terminal({ title, label, lines, type = false, cursor = false }: 
         <span className="title">{title}</span>
       </div>
       <pre>
-        {whole.map((line, i) => (
-          <span key={i}>
-            <Line line={line} />
-            {'\n'}
+        {view && (
+          // The whole text, unseen, keeps the window as tall as the server wrote it while the
+          // commands are typed out again, so nothing beside or below it moves.
+          <span className="layer" aria-hidden="true" style={{ visibility: 'hidden' }}>
+            {lines.map((line, i) => (
+              <span key={i}>
+                <Line line={line} />
+                {'\n'}
+              </span>
+            ))}
+            {cursor && <span className="cursor" />}
           </span>
-        ))}
-        {partial && view && <Line line={partial} shown={view.c} />}
-        {cursor && <span className="cursor" />}
+        )}
+        <span className="layer">
+          {whole.map((line, i) => (
+            <span key={i}>
+              <Line line={line} />
+              {'\n'}
+            </span>
+          ))}
+          {partial && view && <Line line={partial} shown={view.c} />}
+          {cursor && <span className="cursor" />}
+        </span>
       </pre>
     </div>
   )

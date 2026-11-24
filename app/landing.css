@@ -120,6 +120,8 @@ html:lang(zh-CN) .lp h1 { font-size: clamp(36px, 4.4vw, 58px); letter-spacing: -
 .lp .cursor { display: inline-block; width: 8px; height: 1.1em; vertical-align: -3px; background: var(--accent); animation: lp-blink 1s steps(1) infinite; }
 @keyframes lp-blink { 50% { opacity: 0; } }
 .lp .hero .win pre { min-height: 330px; white-space: pre-wrap; word-break: break-word; }
+.lp .win pre { display: grid; }
+.lp .win pre > .layer { grid-area: 1 / 1; min-width: 0; }
 
 /* Stack: two servers */
 .lp .servers { display: grid; grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr); align-items: stretch; margin-top: 64px; }
