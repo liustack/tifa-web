@@ -14,7 +14,7 @@ A Tifa app is one executable. The server needs that file, the settings in its en
 
 `tifa deploy` puts a Tifa app on your own server, and one command sets up the whole CI/CD path from push to live.
 
-`go tool tifa deploy` puts the app on a Linux server with systemd over ssh: it builds on your machine for the server, uploads the program, restarts the app without refusing a request, checks it on the server and goes back to the release before when the check fails. Several apps can share one server. The server needs no Docker, no Node and no deploy program of its own.
+`go tool tifa deploy` puts the app on a Linux server with systemd over ssh: it builds on your machine for the server, uploads the program, restarts the app without refusing a request, checks it on the server and goes back to the release before when the check fails. The app serves visitors itself, with its own HTTPS, or behind a Cloudflare Tunnel, where several apps can share one server. The server needs no Docker, no Node and no deploy program of its own.
 
 `tifa.yaml` says what you want. `go tool tifa deploy setup` makes the server, Cloudflare and GitHub match it. `tifa.yaml` is committed, so neither a secret nor the place of the server goes in it.
 
@@ -22,7 +22,7 @@ A Tifa app is one executable. The server needs that file, the settings in its en
 site:
   url: https://shop.example.com   # the domain is the host of this URL
 deploy:
-  front: none      # what visitors come through before the server: none | cloudflare
+  front: none      # what visitors come through before the server: none (the app serves them itself on ports 80 and 443) | cloudflare
   connect: direct  # how deploys reach the server over ssh: direct | cloudflare | tailscale
   auto:            # deploy by itself from GitHub Actions. No block: you deploy by hand only
     branch: main   # the branch that deploys. Left out: the default branch of the repository on GitHub
@@ -41,7 +41,7 @@ deploy:
   ```
 
   The value is what `ssh` takes as a destination, without a user: a Host of `~/.ssh/config` (an alias such as `vps`, so `~/.ssh/config` supplies the address, the port, the keys and a `ProxyJump`), a host name, or an `ssh://host[:port]` URL. Tifa picks the user itself, root for the first setup and `tifa` after, so a user, a path, a query or another scheme is refused. With none of the four set, every `tifa deploy` command stops and says so.
-- `front` is what visitors come through before they reach the server. With `cloudflare`, that is a Cloudflare Tunnel at the host of `site.url`, with its DNS record and rules, and `deploy` and `rollback` clear the CDN cache of that host name. `site.url` must be set and have no port. With `none`, the server takes visitors another way, such as Caddy, and no cache is cleared.
+- `front` is what visitors come through before they reach the server. With `cloudflare`, that is a Cloudflare Tunnel at the host of `site.url`, with its DNS record and rules, and `deploy` and `rollback` clear the CDN cache of that host name. `site.url` must be set and have no port. With `none`, the app serves visitors itself on port 80, and with a domain in `site.url` also on 443 with its own HTTPS, and no cache is cleared (see [The app serves visitors itself](#the-app-serves-visitors-itself)).
 - `connect` is the one path ssh takes to the server, from your machine and from the GitHub Actions runner. With `direct`, ssh uses the address you gave. With `cloudflare`, both go through the Cloudflare Tunnel, so the server needs no open ssh port (see [`connect: cloudflare`](#connect-cloudflare)). It needs `front: cloudflare`, because the ssh host name is made from the domain, and works with or without `auto`. With `tailscale`, the runner joins your tailnet, and it needs the block `auto` (see [`connect: tailscale`](#connect-tailscale)). Your own machine reaches the server however it already does, with the address in `TIFA_DEPLOY_HOST`, and the tailnet and the server are yours to set up.
 - `auto` turns the deploys from GitHub Actions on, by being there. Without the block you deploy by hand only. `auto: {}` takes the defaults, and `auto:` with nothing after it is an error. It has two keys, and no others:
   - `branch` is the branch that deploys: a push to it, once the workflow in `needs` passed. Left out, it is the default branch of the repository on GitHub.
@@ -124,15 +124,13 @@ The layers of the plan:
 | Layer | What | Needs |
 | --- | --- | --- |
 | server | The user `tifa`, which owns and runs every app of the server and may log in with the keys of root (home `/srv/tifa`), and linger, so its systemd runs at boot | `ssh root@<TIFA_DEPLOY_HOST>`, the first time only |
-| app | `/srv/tifa/<app>`, its empty `shared/.env`, the data folder `shared`, its port (the first free one from 9527) in `port`, and the user units `tifa-<app>.socket` and `.service` | ssh as `tifa` |
+| app | `/srv/tifa/<app>`, its empty `shared/.env`, the data folder `shared`, its port in `port` (80, or 443 with HTTPS, for `front: none`, else the first free one from 9527 on the loopback), and the user units `tifa-<app>.socket` and `.service`, with HTTPS also `tifa-<app>-http.socket`. For `front: none`, once per server as root, the setting that lets the systemd of `tifa` open ports 80 and 443 | ssh as `tifa`, and root once |
 | front | The Cloudflare Tunnel, cloudflared on the server, the route, the proxied DNS record and the cache rules of the host of `site.url`, and on the server the token that clears its cache | cf |
 | auto | A key for the repository, the secrets (where CI logs in, the host keys), and the workflow | gh or `TIFA_DEPLOY_GITHUB_TOKEN` |
 | connect: cloudflare | An ssh host name on the tunnel, an Access application that admits your email (and, with CI, a service token), and on your machine cloudflared and a block in `~/.ssh/config` | cf |
 | connect: tailscale | The variables of the Tailscale identity the runner joins your tailnet with | the client ID of the identity, gh |
 
 `<app>` is the last part of the module path in `go.mod`, the name `tifa build` gives the program. Fill `.env` on the server, as `tifa` or root: the app reads it at each start.
-
-The app listens on the loopback address only, so something on the server must take the visitors to it: the Tunnel of `front: cloudflare`, or a proxy of yours.
 
 **Cloudflare Tunnel** (`front: cloudflare`). The server opens no port: cloudflared on the server connects out to Cloudflare, and one tunnel serves every app of the server. Setup uses your login of cf. The Cloudflare tokens Tifa uses stay on your server: the token of the tunnel goes from cf to the server only, and the token that clears the cache goes from your paste to the server only.
 
@@ -146,13 +144,28 @@ The app listens on the loopback address only, so something on the server must ta
 
 `tifa deploy remove` of the last app on a server removes the tunnel and the cache token too (see [Logs, status and remove](#logs-status-and-remove)). To remove them by hand, run `systemctl disable --now tifa-tunnel tifa-tunnel-upgrade.path` and delete `/etc/tifa`, `/etc/systemd/system/tifa-tunnel*` and `/srv/tifa/.config/tifa` on the server, then delete the tunnel and the token `tifa cache purge <zone>` in Cloudflare. cloudflared stays installed: `apt-get purge cloudflared` and deleting `/etc/apt/sources.list.d/cloudflared.list`, `/usr/share/keyrings/cloudflare-main.gpg` and `/etc/apt/apt.conf.d/52tifa-cloudflared` remove it too.
 
-**Caddy**, or another proxy that gets certificates, when the server takes visitors itself: leave `front` at `none`. A Caddyfile:
+#### The app serves visitors itself
+
+With `front: none` the program meets visitors directly, with no nginx, Caddy or certbot in front:
+
+- **With a domain**, the host of `site.url` such as `https://shop.example.com`: systemd opens ports 443 and 80 for the app, and the app runs its [built-in HTTPS](/docs/build-and-deploy/config#https). Setup writes `SERVER_TLS_DOMAINS=<domain>` and `SERVER_TLS_CACHE=%h/<app>/certs` into the environment of the service, so the program gets its certificate from Let's Encrypt and keeps it in `/srv/tifa/<app>/certs`, which every release shares. Port 80 answers the checks of Let's Encrypt and sends everything else to HTTPS. DNS must point the domain at the server before the first deploy: until the program has its certificate it answers no HTTPS, and the health check of the deploy fails and says so.
+- **Without a domain**: no `site.url`, or its host is an IP address or `localhost`. The app serves plain HTTP on port 80.
+
+systemd holds the ports, so the app runs as `tifa` with no root and no capability, and restarts without refusing a connection. A user's systemd may only open ports from 1024 on Linux, so setup, once per server and as root, writes `net.ipv4.ip_unprivileged_port_start = 80` to `/etc/sysctl.d/60-tifa-ports.conf`. Ports from 80 to 1023 are then open to every user of the server, not only root. `tifa deploy remove` of the app deletes the file and puts back the value from before.
+
+**One app per server.** Only one program can listen on a port, so only one app on a server can serve visitors itself. Before it changes anything, setup looks at what listens on the ports the app needs (80, and 443 with a domain): `ss -ltnp`, and the sockets the systemd of `tifa` holds. When another app of Tifa holds them, or a program such as nginx, Caddy or Apache, setup stops, names it and the port, and changes nothing. Stop that program and keep it from starting at boot, remove the other app, or put this app behind Cloudflare with `front: cloudflare`, where several apps share a server.
+
+**ufw.** When ufw is on and does not let visitors reach the ports the app needs, 80 and 443, or 80 without a domain, the plan of setup allows them:
 
 ```
-shop.example.com {
-    reverse_proxy 127.0.0.1:9527
-}
+  change  firewall: allow ports 80 and 443 (tcp) in ufw, so visitors reach shop, in rules with the comment 'tifa shop', as root
 ```
+
+Once you agree, or with `--yes`, setup runs `ufw allow 80/tcp comment 'tifa <app>'` as root for each of those ports. Nothing changes in ufw when it is off or not installed, when a rule of yours already allows the port, or when its default lets everything in. A rule of yours that denies the port stays: setup says which and how to delete it. The comment `tifa <app>` marks the rules as Tifa's: `tifa deploy remove` deletes them, and so does setup once the app no longer serves visitors on a port, such as after a move to `front: cloudflare`. No other rule is ever touched, the one of ssh among them. Only root can read the rules of ufw: when root cannot log in, setup says what to check on the server instead.
+
+**The firewall of your provider is yours.** Tifa does not change the firewall or the security groups of your provider, nor a firewall on the server that is not ufw (firewalld, or rules of nftables or iptables that ufw did not write). The plan says which ports visitors need, and so does the end of setup: open them there if they block them. After a deploy, Tifa asks the app on those ports from your machine, and says when one did not answer.
+
+A server set up with an earlier version has the app on the loopback. The next `tifa deploy setup` plans the move: the setting of the ports as root, then the new sockets, after which the app restarts on them and must pass the health check of a deploy.
 
 Set up the CDN, if any, as [CDN settings](#cdn-settings) says, and clear its cache on each deploy as [After a deploy](#after-a-deploy) says.
 
@@ -162,12 +175,13 @@ Set up the CDN, if any, as [CDN settings](#cdn-settings) says, and clear its cac
 go tool tifa deploy
 ```
 
-1. Asks the server for its system and builds the app for it on your machine, as [Building for another system](/docs/build-and-deploy/build#building-for-another-system) does. Nothing is built on the server. On a server that setup prepared but that has no folder for this app yet, it makes the folder, port and units first, as `tifa` and without root. On a server that is not prepared, it stops and says to run `go tool tifa deploy setup`.
+1. Asks the server for its system and builds the app for it on your machine, as [Building for another system](/docs/build-and-deploy/build#building-for-another-system) does. Nothing is built on the server. On a server that setup prepared but that has no folder for this app yet, it makes the folder, port and units first, as `tifa` and without root. An app that serves visitors itself needs setup there first when `tifa` may not open port 80 yet, and the deploy says so. On a server that is not prepared, it stops and says to run `go tool tifa deploy setup`.
 2. Uploads the program, gzipped, into `/srv/tifa/<app>/releases/<id>/`, where `<id>` is the time of the deploy in UTC, and checks its SHA-256 there.
 3. Points `/srv/tifa/<app>/current` at it and restarts the service. The socket stays open, so requests that come meanwhile wait and get answered (see [Restart without dropping requests](#restart-without-dropping-requests)).
-4. Checks the new program on the server: `GET /healthz` once a second, for up to 30 seconds, until it answers with a status below 500. An app without a `/healthz` route passes with its 404 as soon as it answers. Write [a health check](#health-check) that looks at the database to make the check mean more.
+4. Checks the new program on the server: `GET /healthz` once a second, for up to 30 seconds, until it answers with a status below 500. It asks on the loopback, and an app with its own HTTPS over HTTPS for its domain, as a visitor would. An app without a `/healthz` route passes with its 404 as soon as it answers. Write [a health check](#health-check) that looks at the database to make the check mean more.
 5. When the check passes, writes the deploy down and keeps the last 5 releases. When it fails, it prints the last lines of the log of the app, starts the release that ran before again, and exits with 1. If there is no release that ever passed, it stops the app.
 6. With `front: cloudflare`, clears the CDN cache of that host name (see below).
+7. Says where visitors reach the app: `visitors: https://shop.example.com`, or `http://<address of the server>` without a domain. With `front: none` it then asks the app on its ports from your machine, and when one does not answer it says that the firewall or a security group of your provider may block it, which Tifa does not change.
 
 Every deploy and rollback is a line of `/srv/tifa/<app>/deploys.log`: the time, the release, the git commit (with `-dirty` when the app had changes not committed), `deploy` or `rollback`, and `ok` or `failed`. The upload never includes `.env`. One deploy of an app runs at a time.
 
@@ -241,7 +255,7 @@ The default. CI logs in to the address and port of `TIFA_DEPLOY_HOST`. The port 
 
 #### connect: cloudflare
 
-For a server that opens no port for ssh, with or without CI. It needs `front: cloudflare` and the tunnel. Both CI and your own machine reach the server through it, so once it works you may close the ssh port of the server. Tifa does not change the firewall: do that yourself, after a deploy through the tunnel worked. With your login of cf, setup:
+For a server that opens no port for ssh, with or without CI. It needs `front: cloudflare` and the tunnel. Both CI and your own machine reach the server through it, so once it works you may close the ssh port of the server. Tifa never closes it: do that yourself, after a deploy through the tunnel worked. With your login of cf, setup:
 
 1. Makes the Access application and its policies first, and only then adds the route `<ssh host> -> ssh://localhost:22` to the tunnel, keeping the other routes, and a proxied DNS record for it. When nothing can admit anyone yet (cf gives no email and there is no CI, or a policy cannot be made), setup publishes no route and no record, and says why: the ssh host name is never open to everyone. The ssh host is the domain with `-ssh-` and 12 random characters after its first label, because Cloudflare's free certificates cover one level of subdomain: `deploy-a.example.com` becomes `deploy-a-ssh-k3j9x2m5q7wt.example.com`, and the apex `example.com` becomes `ssh-k3j9x2m5q7wt.example.com`. The random part keeps the name from being guessed from the domain. Setup makes it once and reads it back on later runs from the route of the tunnel and the Access application it made, so it stays the same, with CI or without. A name from an earlier version, without the random part, shows in the plan as a replacement: the new route, record and Access application are added, `TIFA_DEPLOY_HOST` changes, and the old ones are removed.
 2. Makes a self-hosted Access application for the ssh host, named `tifa deploy ssh <ssh host>`, and a policy `tifa-people-<ssh host>` that admits the email of your cf login (read with `cf auth whoami`, which only reads). Only that application and that policy are touched, nothing of the zone or the account. Run again, with the same email, it changes nothing. Another person who runs setup with their own cf login adds their email to the same policy, and the plan says so: `change  cloudflare: the Access application of <host> admits ana@example.com, and keeps dev@example.com`. A cf logged in with an API token has no email: without CI that is something for you to do, with CI it is only a note.
@@ -389,7 +403,7 @@ It asks for `/healthz` only while the service runs, because a request to the soc
 
 `remove` takes the app off the server and takes back what Tifa made for it, and nothing else:
 
-- On the server, as `tifa`: it stops and disables `tifa-<app>.socket` and `.service`, and deletes their unit files and `/srv/tifa/<app>` with its releases, `shared/.env`, the data in `shared/` and `deploys.log`. Copy the data first if you want to keep it. Other apps, the user `tifa`, the firewall and sshd stay as they are.
+- On the server, as `tifa`: it stops and disables `tifa-<app>.socket`, `tifa-<app>-http.socket` and `.service`, and deletes their unit files and `/srv/tifa/<app>` with its releases, `shared/.env`, the data in `shared/`, the certificates in `certs/` and `deploys.log`. Copy the data first if you want to keep it. For an app that served visitors itself, as root, `/etc/sysctl.d/60-tifa-ports.conf`, and the first port users may open goes back to what it was, and with ufw the rules with the comment `tifa <app>` that setup added, which the plan lists. Other apps, the user `tifa`, the other rules of the firewall and sshd stay as they are.
 - With `front: cloudflare`: the route, the DNS record and the rules of the domain, and with `connect: cloudflare`, with or without CI, the Access application of the ssh host name with its people policy, its route and its DNS record, and the service token and policy of the repository. Everything that needs ssh runs first (the app, the cache tokens), then the stop of the tunnel, and only then the ssh host name goes: the route and record before the application and its policies, so a partial failure never leaves a route without Access, and only when the steps before it worked. A run again finds the ssh host name from the route of the tunnel when the application is already gone. When your ssh goes through the tunnel, the last app of a server stops the tunnel a few seconds after ssh left, so the command does not cut its own connection. The tunnel and cloudflared serve every app of the server, so they go only with the last app of Tifa there: then remove stops cloudflared as root, deletes `/etc/tifa`, uninstalls cloudflared when setup installed it, and deletes the tunnel.
 - The cache tokens on the server, `/srv/tifa/.config/tifa`, serve every app of the server too, and go with the last app of Tifa there. Remove looks for apps again under the lock of the file when it deletes, so an app set up while remove waited for your answer keeps them. Delete the token `tifa cache purge <zone>` in the Cloudflare dashboard yourself: Tifa cannot.
 - On your machine: the block of the app in `~/.ssh/config`, last, so a run that stopped halfway can still reach the server. Without a login of cf, when you reach the server by the ssh host name, the block stays and remove says so. cloudflared stays installed, and `TIFA_DEPLOY_HOST` in `.env` stays as it is.
@@ -402,7 +416,7 @@ Like setup, remove prints a plan first. On a terminal it then asks you to type t
 - The log of an app: `go tool tifa deploy logs`, or `journalctl --user -u tifa-<app>` as `tifa` (`sudo -iu tifa`).
 - Start, stop or look at it: `systemctl --user status tifa-<app>.service` as `tifa`. Restart the service, never the socket.
 - The apps start at boot, before the first visitor.
-- Several apps: each has its own folder, port and units. Run `tifa deploy` in each, after one `tifa deploy setup`.
+- Several apps: each has its own folder, port and units. Run `tifa deploy` in each, after one `tifa deploy setup`. Only one of them can serve visitors itself on ports 80 and 443: the others go behind the Cloudflare Tunnel.
 
 The rest of this page is the way to do it by hand, and what `tifa deploy` does underneath.
 

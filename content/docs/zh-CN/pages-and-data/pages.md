@@ -205,7 +205,7 @@ export const head = () => ({ meta: [{ title: 'Pour-over kettle' }] })
 
 ### 不带上层布局的布局 {#a-layout-without-the-layouts-above}
 
-把组件文件命名为 `layout_.tsx` 而不是 `layout.tsx`，这个文件夹的布局就会显示它的页面，而不带它上面的任何布局，根布局也包括在内。只有框架写出的文档外壳留在它们周围。[examples/shop](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop) 的店面就是这样工作的：它自己画页眉和页脚，根布局给其他页面画的工作台，它一点也没有。
+把组件文件命名为 `layout_.tsx` 而不是 `layout.tsx`，这个文件夹的布局就会显示它的页面，而不带它上面的任何布局，根布局也包括在内。只有框架写出的文档外壳留在它们周围。[examples/shop](https://github.com/liustack/tifa/blob/v0.5.0/examples/shop) 的店面就是这样工作的：它自己画页眉和页脚，根布局给其他页面画的工作台，它一点也没有。
 
 ```text
 app/

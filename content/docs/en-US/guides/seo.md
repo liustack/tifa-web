@@ -10,7 +10,7 @@ order: 8
 
 You want people to find your site in search results and in the answers of ChatGPT, Claude and the like. By the end, search engines get a sitemap of every public page with its date and its versions in other languages, and language models get a short index of the site and the text of your posts as Markdown.
 
-It all comes from one setting and one function. The code below is from [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.4.2/test/apps/i18n) and [examples/shop](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop/sitemap.go).
+It all comes from one setting and one function. The code below is from [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.5.0/test/apps/i18n) and [examples/shop](https://github.com/liustack/tifa/blob/v0.5.0/examples/shop/sitemap.go).
 
 ## Turn it on
 
@@ -271,7 +271,7 @@ An error the function itself returns, such as a failed query, is an unexpected e
 
 ## Test it
 
-`tifatest.Start` runs the whole app, `OnStart` included, so a test can read the sitemap the way a search engine does (from [examples/shop](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop/sitemap_test.go)):
+`tifatest.Start` runs the whole app, `OnStart` included, so a test can read the sitemap the way a search engine does (from [examples/shop](https://github.com/liustack/tifa/blob/v0.5.0/examples/shop/sitemap_test.go)):
 
 ```go
 func TestSitemapListsTheStorefront(t *testing.T) {

@@ -60,7 +60,7 @@ func OnStart(ctx context.Context) error {
 
 ## setup.ts {#setupts}
 
-项目根目录里的 `setup.ts` 是 `hooks.go` 在 JavaScript 一侧的对应物。它就是普通的顶层代码，不用导出函数：
+项目根目录里的 `setup.ts` 是 `hooks.go` 在 JavaScript 一侧的对应物。它是可选的：没有它时，应用的渲染和有一个空的 `setup.ts` 一样。它就是普通的顶层代码，不用导出函数：
 
 ```ts
 // setup.ts

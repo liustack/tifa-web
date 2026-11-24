@@ -246,6 +246,17 @@ return t, tx.Commit()
 
 事务要保持很短。SQLite 同一时间只让一个写入者进入，其他的等待，最多等 `busy_timeout`。事务开着的时候，不要调用别的服务，也不要等访客。
 
+### 写入报 `database is locked` 时 {#when-a-write-gets-database-is-locked}
+
+SQLite 同一时间只让一个写入进来。驱动把应用里的写入按到达顺序排队，所以一个写入会等前面的写入做完，而不是直接失败。但有两种情况仍然会以 `database is locked`（`SQLITE_BUSY`）结束：
+
+- **事务开始时没有拿写锁。** 不加 `_txlock=immediate` 时，`BEGIN` 不拿任何锁。事务先读，另一个请求写入并提交，这个事务接下来的第一次写入就会失败，`busy_timeout` 设多长都一样。这是 SQLite 为了让事务读到的数据前后一致而拒绝它，多等一会儿或者重试这条语句都没用。用 `_txlock=immediate` 打开数据库，就像上面的 `OpenDB` 和 `tifa new` 写出的 `db.go` 那样：每个事务在 `BEGIN` 时就拿写锁，在那里排队等。
+- **写入来得比磁盘提交得还快。** 这时一个写入等的时间超过 `busy_timeout`（默认 5 秒）就会失败。先像上面说的那样让事务保持很短，再考虑调大这个时间。
+
+只读的事务不需要写锁。用 `db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})` 开始它，它就不会排在写入后面等。不在事务里的查询两样都不需要。
+
+另一个写同一个文件的进程，比如脚本或者 `sqlite3` 命令行，不在驱动的队列里：它和应用在 SQLite 自己的锁上相遇，换哪个驱动都一样。
+
 ### 拒绝重复 {#reject-a-duplicate}
 
 比如两个访客不能预约同一个时段，表上有 `UNIQUE (doctor_slug, slot)`。让数据库用一条语句来决定。时段被占用时，`ON CONFLICT ... DO NOTHING` 不插入任何行，所以 `RETURNING` 不返回行，`Scan` 返回 `sql.ErrNoRows`。把它理解为「已被占用」。这是原子的，所以两个同时到达的请求不可能都成功：
