@@ -1,6 +1,6 @@
 ---
 title: 渲染记忆 memo
-description: 渲染记忆是什么、为什么它是记忆而不是缓存、它与带 const Cache 的页面的 Cache-Control 有什么不同、为什么可以对每个页面都开着、已登录的...
+description: 渲染记忆是什么，以及它和 Cache 有什么不同
 source: docs/reference/memo.zh-CN.md
 group: 参考
 groupOrder: 5

@@ -1,7 +1,7 @@
 # Notes for coding agents
 
 <!-- tifa:begin -->
-<!-- Written by Tifa v0.5.1 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
+<!-- Written by Tifa v0.5.2 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
 
 This is a [Tifa](https://github.com/liustack/tifa) app. Go routes requests, loads data and runs the hooks. React pages render to HTML inside the Go process (beastjs, no Node at run time), and TanStack Router takes over in the browser. The build bundles the front end with Vite, on Node, and makes one executable that needs no Node.
 
@@ -75,46 +75,46 @@ Never edit `.tifa/`. It is generated.
 The paths below are relative to the folder of the Tifa module in `go.mod`, which `go tool tifa docs` prints. Open the files there. Each has a Chinese copy beside it, `<name>.zh-CN.md`.
 
 `docs/start/`
-- `tutorial.md`: A getting-started tutorial
-- `app.md`: How to start a Tifa app
-- `philosophy.md`: The ideas behind how a Tifa app is organized and what each one gives you
-- `structure.md`: Where the files of a Tifa app go
-- `agents.md`: How to work on a Tifa app with a coding agent
+- `tutorial.md`: A getting-started tutorial: `tifa new`, `tifa dev`, a page, a form, tests, one executable
+- `app.md`: How to start a Tifa app: route.go, page.tsx, layout.tsx, URLs, `public/`, Next.js or Remix code
+- `philosophy.md`: The ideas behind how a Tifa app is organized and what each one gives you: domains, hand-wired dependencies, small starts
+- `structure.md`: Where the files of a Tifa app go: app/ domains, hooks, shared resources, package imports
+- `agents.md`: How to work on a Tifa app with a coding agent: AGENTS.md, Tifa skill, Claude Code, Cursor, Codex, `tifa agents`, `tifa dev --background`
 
 `docs/pages-and-data/`
-- `routes.md`: How to write the Go side of a route in route.go
-- `pages.md`: How to write the React side of a route
+- `routes.md`: How to write the Go side of a route in route.go: Load, method handlers, typed input, errors, Ctx, JSON rules
+- `pages.md`: How to write the React side of a route: page.tsx, route.gen, Link types, head, 404s, ErrorBoundary
 - `styles.md`: How to add CSS, Tailwind CSS and shadcn/ui to an app
-- `content.md`: How an app keeps posts, docs and other writing as Markdown files under content/ and reads them in Go
-- `sessions.md`: How sessions work in a Tifa app
-- `hooks.md`: How to set up the whole app in hooks.go
-- `server-render.md`: What the server render has and lacks
-- `ssr-and-cache.md`: How a page is rendered and kept
-- `testing-apps.md`: How to test an app with go test
+- `content.md`: How an app keeps its writing as Markdown under content/: content.go, front matter, slugs, drafts, remark, `tifa build`
+- `sessions.md`: How sessions work in a Tifa app: cookie, memory store, Redis or SQL store, `tifa.SetSessionStore`
+- `hooks.md`: How to set up the whole app in hooks.go and setup.ts: OnStart, OnShutdown, OnRequest, OnError, middleware
+- `server-render.md`: What the server render has and lacks: beastjs APIs, Node modules, Intl, Temporal, hydration
+- `ssr-and-cache.md`: How a page is rendered and kept: SSR, Memo, Cache, Cache-Control, CDN, private pages
+- `testing-apps.md`: How to test an app with go test: tifatest.NewCtx, tifatest.Start, Load, OnRequest, clock
 
 `docs/guides/`
-- `forms.md`: How to build a form in a Tifa app
-- `database.md`: How to keep data in a Tifa app with SQLite
-- `sign-in.md`: How to sign users in and out in a Tifa app with Tifa sessions
-- `uploads.md`: How to let visitors upload a file in a Tifa app
-- `email.md`: How to send email from a Tifa app over SMTP with a pure Go library
-- `jobs.md`: How to do work outside a request in a Tifa app
-- `i18n.md`: How to put a Tifa site in several languages
-- `seo.md`: How a Tifa site gets found by search engines and read by language models
-- `streaming.md`: How to send an answer while it is being made in a Tifa app
-- `environment.md`: How a value from the environment, such as a public key or an API base URL, reaches a page of a Tifa app
-- `logs.md`: Where the logs of a Tifa app are in `tifa dev`, on a server and in a container, what Tifa itself logs
+- `forms.md`: How to build a form in a Tifa app: method handler, tifa.Fields errors, useActionState, useOptimistic
+- `database.md`: How to keep data in a Tifa app with SQLite: migrations, `database is locked`, `db.backup` to R2 or S3, Postgres
+- `sign-in.md`: How to sign users in and out in a Tifa app with Tifa sessions: argon2id, SetSession, guarding pages, signing out
+- `uploads.md`: How to let visitors upload a file in a Tifa app: file input, body limit, type check, storage, tests
+- `email.md`: How to send email from a Tifa app over SMTP with a pure Go library: SMTP, mail.go, background job, same transaction
+- `jobs.md`: How to do work outside a request in a Tifa app: OnStart loops, OnShutdown, timers, SQLite jobs table with retries
+- `i18n.md`: How to put a Tifa site in several languages: _locales, i18n.default, hreflang, i18next, translated slugs
+- `seo.md`: How a Tifa site gets found by search engines and read by language models: site.url, /sitemap.xml, /robots.txt, /llms.txt, og tags, `tifa.SetSitemap`
+- `streaming.md`: How to send an answer while it is being made in a Tifa app: server-sent events, streamed replies, Memo, Cache
+- `environment.md`: How a value from the environment reaches a page: Load, `import.meta.env.VITE_*`, `process.env`
+- `logs.md`: Where the logs of a Tifa app are and how to write them: `tifa dev`, `log/slog`, format, level, `tifa.SetHTTPHandler`
 
 `docs/build-and-deploy/`
-- `dev.md`: How to use `tifa dev`
-- `build.md`: How `tifa new` starts an app, what `tifa build` does, what `tifa check` runs, what `tifa gen` writes
-- `deploy.md`: How to put a Tifa app on a server
-- `config.md`: Every setting of a Tifa app and how an app defines its own, and the security headers every answer carries
+- `dev.md`: How to use `tifa dev`: pages, build errors, `tifa errors`, `--background`, `status`, `logs`, `stop`
+- `build.md`: How to create, build, check and upgrade an app with `tifa` commands: `tifa new`, `build`, `check`, `gen`, `upgrade`, `agents`, .tifa/, go.mod
+- `deploy.md`: How to put a Tifa app on a server: `tifa deploy`, ssh, systemd, GitHub Actions, Cloudflare, health check, Prometheus
+- `config.md`: What each setting of a Tifa app means and where to set it: tifa.yaml, flags, environment, .env, server.csp, HTTPS, cross-origin writes
 
 `docs/reference/`
-- `memo.md`: What the render memo is, why it is a memo and not a cache
-- `performance.md`: What a Tifa app serves on one core against Next.js and TanStack Start, and how to size CPUs
-- `compatibility.md`: What Tifa v0.1 keeps stable for apps
+- `memo.md`: What the render memo is and how it differs from Cache: `ssr.memo_size`, ETag, query parameters, signed-in pages, limits
+- `performance.md`: What a Tifa app serves on one core and how to size it: Next.js, TanStack Start, CPUs, `ssr.vms`, memory, overload, compression
+- `compatibility.md`: What Tifa v0.1 keeps stable for apps and what may change: packages, file conventions, commands, settings, HTTP names
 
 <!-- tifa:end -->
 

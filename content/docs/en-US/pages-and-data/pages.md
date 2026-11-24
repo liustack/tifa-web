@@ -205,7 +205,7 @@ export const head = () => ({ meta: [{ title: 'Pour-over kettle' }] })
 
 ### A Layout without the Layouts above
 
-Name the component file `layout_.tsx` instead of `layout.tsx`, and the Layout of the folder shows its pages without any Layout above it, the root Layout included. Only the document shell the framework writes stays around them. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.5.1/examples/shop) works this way: it draws its own header and footer, and none of the workbench the root Layout draws around the other pages.
+Name the component file `layout_.tsx` instead of `layout.tsx`, and the Layout of the folder shows its pages without any Layout above it, the root Layout included. Only the document shell the framework writes stays around them. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.5.2/examples/shop) works this way: it draws its own header and footer, and none of the workbench the root Layout draws around the other pages.
 
 ```text
 app/

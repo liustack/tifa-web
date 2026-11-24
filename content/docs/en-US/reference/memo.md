@@ -1,6 +1,6 @@
 ---
 title: The render memo
-description: What the render memo is, why it is a memo and not a cache, how it differs from the Cache-Control of a page with const Cache, why it is safe to keep on for...
+description: What the render memo is and how it differs from Cache
 source: docs/reference/memo.md
 group: Reference
 groupOrder: 5

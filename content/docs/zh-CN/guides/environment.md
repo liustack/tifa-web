@@ -1,6 +1,6 @@
 ---
 title: 来自环境的值
-description: 环境里的值（比如公钥或 API 基础地址）怎样到达 Tifa 应用的页面
+description: 环境里的值怎样到达页面
 source: docs/guides/environment.zh-CN.md
 group: 做法
 groupOrder: 3

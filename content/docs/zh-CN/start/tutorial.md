@@ -505,6 +505,6 @@ built /path/to/tutorial-app/bin/tutorial-app (build 2e121916557701e0)
 - 设置、HTTPS、已渲染页面的缓存：[配置](/docs/build-and-deploy/config)。
 - 让用户登录：[会话](/docs/pages-and-data/sessions)。应用把会话存在 `app.db`（`sessions.go`）里，所以重启不会让任何人退出登录。
 - 样式和 shadcn/ui：[样式](/docs/pages-and-data/styles)。多语言站点：[编写应用](/docs/start/app#a-site-in-several-languages)。缓存页面：[渲染开关和缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)。
-- 一个可以读的更大的应用：[examples/shop](https://github.com/liustack/tifa/blob/v0.5.1/examples/shop)。
+- 一个可以读的更大的应用：[examples/shop](https://github.com/liustack/tifa/blob/v0.5.2/examples/shop)。
 - `tifa dev` 如何对每次改动做出反应，以及如何读它的日志：[开发服务器](/docs/build-and-deploy/dev)。
 - 文件夹为什么是这个样子：[应用的结构](/docs/start/structure)和[设计理念](/docs/start/philosophy)。
