@@ -156,6 +156,15 @@
       "cpu_hint": "越低越好",
       "caption": "每个框架都是出厂设置，先吃同样的预热。每个服务器只用 Google Cloud `t2d-standard-4` 虚拟机（AMD EPYC 7B13）的一个核，8 个并发、页面之间不停顿，3 轮取中位数，2026-11-18。Tifa v0.1.0，slowjs v0.31.6，Next.js 16.4.6，TanStack Start 1.169.3，Node 24.13.0。还没有在 1 核 1 GB 的 VPS 上测过。",
       "method": "测量方法",
+      "lighthouse": {
+        "title": "这个页面的 Lighthouse 分数",
+        "caption": "用 Lighthouse 12.8 测 tifago.com，桌面和移动版，2026-11-24。",
+        "run": "自己测一下",
+        "performance": "性能",
+        "accessibility": "无障碍",
+        "bestPractices": "最佳做法",
+        "seo": "SEO"
+      },
       "costTitle": "代价",
       "cost": [
         "Tifa 在 beastjs 里渲染页面，beastjs 是纯 Go 写的 JavaScript 引擎。它没有 JIT，所以一次渲染比在 Node 里更久。",
