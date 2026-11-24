@@ -233,6 +233,27 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
+            <div className="lighthouse" data-reveal>
+              <h3>{t('home.numbers.lighthouse.title')}</h3>
+              <ul>
+                {(['performance', 'accessibility', 'bestPractices', 'seo'] as const).map((k) => (
+                  <li key={k}>
+                    <svg viewBox="0 0 56 56" aria-hidden="true">
+                      <circle cx="28" cy="28" r="25" className="track" />
+                      <circle cx="28" cy="28" r="25" className="fill" />
+                    </svg>
+                    <b>100</b>
+                    <span>{t(`home.numbers.lighthouse.${k}`)}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="caption">
+                {t('home.numbers.lighthouse.caption')}{' '}
+                <a className="link-arrow" href={`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(site.url + '/')}`} target="_blank" rel="noreferrer">
+                  {t('home.numbers.lighthouse.run')}
+                </a>
+              </p>
+            </div>
           </div>
         </section>
 

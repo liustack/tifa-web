@@ -12,6 +12,7 @@
   --text-2: #3b454b;
   --muted: #69737a;
   --accent: #0a7ea4;
+  --lh-good: #0c8a4a;
   --accent-soft: rgba(10, 126, 164, 0.08);
   --accent-line: rgba(10, 126, 164, 0.45);
   --accent-ink: #ffffff;
@@ -40,6 +41,7 @@
   --text-2: #b3b8bc;
   --muted: #7a8288;
   --accent: #3ec3ec;
+  --lh-good: #0cce6b;
   --accent-soft: rgba(62, 195, 236, 0.11);
   --accent-line: rgba(62, 195, 236, 0.45);
   --accent-ink: #02202a;
@@ -165,6 +167,16 @@ html:lang(zh-CN) .lp h1 { font-size: clamp(36px, 4.4vw, 58px); letter-spacing: -
 .lp .cmp .us .bar i { background: var(--accent); opacity: 1; }
 .lp .spec-foot { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 48px; margin-top: 40px; }
 .lp .caption { margin: 0; font-size: 14px; line-height: 1.7; color: var(--muted); }
+.lp .lighthouse { margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--line); }
+.lp .lighthouse h3 { margin: 0 0 24px; font-size: 15px; font-weight: 500; color: var(--text); }
+.lp .lighthouse ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; max-width: 560px; margin: 0 0 20px; padding: 0; list-style: none; }
+.lp .lighthouse li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 0; text-align: center; font-size: 13px; color: var(--text-2); }
+.lp .lighthouse svg { width: 64px; height: 64px; transform: rotate(-90deg); }
+.lp .lighthouse circle { fill: none; stroke-width: 4; }
+.lp .lighthouse .track { stroke: color-mix(in srgb, var(--lh-good) 18%, transparent); fill: color-mix(in srgb, var(--lh-good) 10%, transparent); }
+.lp .lighthouse .fill { stroke: var(--lh-good); }
+.lp .lighthouse b { position: absolute; top: 0; height: 64px; display: flex; align-items: center; font: 500 18px var(--font-mono); color: var(--lh-good); }
+.lp .lighthouse .link-arrow { margin-left: 4px; }
 .lp .cost { border-left: 2px solid var(--wafer); padding: 2px 0 2px 20px; }
 .lp .cost h3 { margin: 0 0 8px; font: 500 12px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--wafer); }
 .lp .cost p { margin: 0 0 10px; font-size: 15px; color: var(--text-2); }

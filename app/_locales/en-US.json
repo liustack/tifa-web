@@ -95,6 +95,15 @@
       "cpu_hint": "lower is better",
       "caption": "Each framework as shipped and warmed up with the same visits, one process on one core of a Google Cloud `t2d-standard-4` VM (AMD EPYC 7B13), 8 concurrent sessions with no think time, the median of 3 rounds, 2026-11-18. Tifa v0.1.0 with slowjs v0.31.6, Next.js 16.4.6, TanStack Start 1.169.3, Node 24.13.0. Not yet measured on a 1 CPU / 1 GB VPS.",
       "method": "How this was measured",
+      "lighthouse": {
+        "title": "This page in Lighthouse",
+        "caption": "Lighthouse 12.8 on tifago.com, desktop and mobile, 2026-11-24.",
+        "run": "Run it yourself",
+        "performance": "Performance",
+        "accessibility": "Accessibility",
+        "bestPractices": "Best Practices",
+        "seo": "SEO"
+      },
       "costTitle": "The cost",
       "cost": [
         "Tifa renders pages in beastjs, a pure Go JavaScript engine. It has no JIT, so one render takes longer than in Node.",
