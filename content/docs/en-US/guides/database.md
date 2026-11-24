@@ -246,6 +246,17 @@ return t, tx.Commit()
 
 Keep a transaction short. SQLite lets one writer in at a time, and the others wait up to `busy_timeout`. Do not call another service, or wait on a visitor, while one is open.
 
+### When a write gets `database is locked`
+
+SQLite lets one write in at a time. The driver queues the writes of the app in the order they came, so a write waits for the ones ahead of it instead of failing. Two things still end in `database is locked` (`SQLITE_BUSY`):
+
+- **A transaction that does not take the write lock when it starts.** Without `_txlock=immediate`, `BEGIN` takes no lock. The transaction reads, another request writes and commits, and the first write of the transaction then fails, however long `busy_timeout` is. SQLite refuses it to keep what the transaction read consistent, and waiting longer or trying the statement again does not help. Open the database with `_txlock=immediate`, as `OpenDB` above and the `db.go` of `tifa new` do: every transaction then takes the write lock at `BEGIN` and waits its turn there.
+- **Writes that come faster than the disk can commit them.** A write then waits longer than `busy_timeout` (5 seconds by default) and fails. Keep transactions short, as above, before you raise the timeout.
+
+A transaction that only reads needs no write lock. Start it with `db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})`, so it does not wait behind the writes. A query outside a transaction needs neither.
+
+Another process that writes the same file, such as a script or the `sqlite3` shell, is not in the queue of the driver: it meets the app at the lock of SQLite, as with any driver.
+
 ### Reject a duplicate
 
 Say two visitors must not book the same slot, and the table has `UNIQUE (doctor_slug, slot)`. Let the database decide in one statement. `ON CONFLICT ... DO NOTHING` inserts no row when the slot is taken, so `RETURNING` returns no row, and `Scan` returns `sql.ErrNoRows`. Read that as "taken". It is atomic, so two requests at once cannot both win:

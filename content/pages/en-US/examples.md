@@ -48,7 +48,7 @@ To look at the workbench without signing in, start the program with `SHOP_OPEN=1
 
 ## Code on GitHub
 
-- [examples/shop](https://github.com/liustack/tifa/tree/v0.4.2/examples/shop)
-- [The storefront](https://github.com/liustack/tifa/tree/v0.4.2/examples/shop/app/store)
-- [The workbench](https://github.com/liustack/tifa/tree/v0.4.2/examples/shop/app/projects)
-- [README of the example](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop/README.md)
+- [examples/shop](https://github.com/liustack/tifa/tree/v0.5.0/examples/shop)
+- [The storefront](https://github.com/liustack/tifa/tree/v0.5.0/examples/shop/app/store)
+- [The workbench](https://github.com/liustack/tifa/tree/v0.5.0/examples/shop/app/projects)
+- [README of the example](https://github.com/liustack/tifa/blob/v0.5.0/examples/shop/README.md)
