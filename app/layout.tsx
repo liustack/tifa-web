@@ -7,6 +7,7 @@ import { SiteShell } from '@/components/site-shell'
 import { site } from '@/components/site'
 import { ThemeProvider, themeScript } from '@/components/theme'
 import icon from '@/components/brand/tifa-icon.svg'
+import headingFont from '@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-600-normal.woff2'
 import './styles.css'
 
 // Head tags of every page, also of the 404 page, that do not depend on the language. The title
@@ -19,7 +20,12 @@ export const documentHead = {
     { name: 'twitter:card', content: 'summary_large_image' },
     { name: 'twitter:site', content: '@liustack' },
   ],
-  links: [{ rel: 'icon', href: icon, type: 'image/svg+xml' }],
+  links: [
+    { rel: 'icon', href: icon, type: 'image/svg+xml' },
+    // The headings' weight arrives before the first paint, so the hero does not move when it
+    // loads (it moved the terminal beside the heading by a fifth of the screen).
+    { rel: 'preload', href: headingFont, as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
+  ],
   scripts: [{ children: themeScript }],
 }
 
