@@ -1,6 +1,6 @@
 ---
 title: 内容
-description: 应用怎样把文章、文档和其他文字作为 Markdown 文件放在 content/ 下，并在 Go 里读取
+description: 应用怎样把文字作为 Markdown 放在 content/ 下
 source: docs/pages-and-data/content.zh-CN.md
 group: 页面与数据
 groupOrder: 2
@@ -19,7 +19,7 @@ order: 4
 3. 在 `Load` 里用集合的方法读取它们。
 4. 用 `<HTML>` 显示正文。
 
-本页的代码来自 [test/apps/content](https://github.com/liustack/tifa/blob/v0.5.1/test/apps/content)，一个有两种语言的博客和文档的应用。
+本页的代码来自 [test/apps/content](https://github.com/liustack/tifa/blob/v0.5.2/test/apps/content)，一个有两种语言的博客和文档的应用。
 
 ## 声明集合 {#declaring-a-collection}
 

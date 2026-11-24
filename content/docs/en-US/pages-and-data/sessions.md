@@ -124,7 +124,7 @@ Each failure message names the rule. A store that has no `ctx.Err()` check at th
     Delete with a canceled context deleted the record
 ```
 
-A store on a database client that takes a `ctx` returns these errors by itself. The test app [test/apps/session](https://github.com/liustack/tifa/blob/v0.5.1/test/apps/session/hooks_test.go) runs this test on a store that keeps its records in a file.
+A store on a database client that takes a `ctx` returns these errors by itself. The test app [test/apps/session](https://github.com/liustack/tifa/blob/v0.5.2/test/apps/session/hooks_test.go) runs this test on a store that keeps its records in a file.
 
 ## Where to call what
 

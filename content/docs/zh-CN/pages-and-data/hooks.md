@@ -1,6 +1,6 @@
 ---
 title: Hooks
-description: 怎样在 hooks.go（OnStart、OnShutdown、OnRequest、OnError、日志处理器、net/http 中间件）和 setup.ts...
+description: 怎样在 hooks.go 和 setup.ts 里设置整个应用
 source: docs/pages-and-data/hooks.zh-CN.md
 group: 页面与数据
 groupOrder: 2

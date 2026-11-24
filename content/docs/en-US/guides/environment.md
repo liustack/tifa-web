@@ -1,6 +1,6 @@
 ---
 title: Values from the environment
-description: How a value from the environment, such as a public key or an API base URL, reaches a page of a Tifa app
+description: How a value from the environment reaches a page
 source: docs/guides/environment.md
 group: Guides
 groupOrder: 3

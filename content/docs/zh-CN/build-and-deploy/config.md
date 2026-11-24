@@ -1,6 +1,6 @@
 ---
 title: 配置
-description: Tifa 应用的每一项设置和应用怎样定义自己的设置，以及每个响应都带的安全头，其中包括 server.csp 的 Content-Security-Policy
+description: Tifa 应用每一项设置的含义和设置位置
 source: docs/build-and-deploy/config.zh-CN.md
 group: 构建与部署
 groupOrder: 4

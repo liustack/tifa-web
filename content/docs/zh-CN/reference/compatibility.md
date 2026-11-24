@@ -1,6 +1,6 @@
 ---
 title: 兼容性
-description: Tifa v0.1 对应用保持稳定的东西（包、文件约定、生成的路径、命令、设置、HTTP 名称），以及哪些东西在任何版本里都可能改变
+description: Tifa v0.1 对应用保持稳定的东西，以及哪些可能变
 source: docs/reference/compatibility.zh-CN.md
 group: 参考
 groupOrder: 5

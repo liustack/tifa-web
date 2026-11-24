@@ -1,6 +1,6 @@
 ---
 title: Content
-description: How an app keeps posts, docs and other writing as Markdown files under content/ and reads them in Go
+description: How an app keeps its writing as Markdown under content/
 source: docs/pages-and-data/content.md
 group: Pages and data
 groupOrder: 2
@@ -19,7 +19,7 @@ Four steps put an entry on a page:
 3. Read them in a `Load` with the methods of the collection.
 4. Show the body with `<HTML>`.
 
-The code in this page is from [test/apps/content](https://github.com/liustack/tifa/blob/v0.5.1/test/apps/content), an app with a blog and docs in two languages.
+The code in this page is from [test/apps/content](https://github.com/liustack/tifa/blob/v0.5.2/test/apps/content), an app with a blog and docs in two languages.
 
 ## Declaring a collection
 

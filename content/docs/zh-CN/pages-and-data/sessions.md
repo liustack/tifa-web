@@ -124,7 +124,7 @@ func TestRedisStoreIsAValidStore(t *testing.T) {
     Delete with a canceled context deleted the record
 ```
 
-基于接受 `ctx` 的数据库客户端的存储，会自己返回这些错误。测试应用 [test/apps/session](https://github.com/liustack/tifa/blob/v0.5.1/test/apps/session/hooks_test.go) 对一个把记录放在文件里的存储运行了这个测试。
+基于接受 `ctx` 的数据库客户端的存储，会自己返回这些错误。测试应用 [test/apps/session](https://github.com/liustack/tifa/blob/v0.5.2/test/apps/session/hooks_test.go) 对一个把记录放在文件里的存储运行了这个测试。
 
 ## 在哪里调用什么 {#where-to-call-what}
 

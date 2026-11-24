@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: Every setting of a Tifa app and how an app defines its own, and the security headers every answer carries, the Content-Security-Policy of server.csp among them
+description: What each setting of a Tifa app means and where to set it
 source: docs/build-and-deploy/config.md
 group: Build and deploy
 groupOrder: 4

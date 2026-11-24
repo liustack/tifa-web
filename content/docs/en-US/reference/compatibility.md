@@ -1,6 +1,6 @@
 ---
 title: Compatibility
-description: What Tifa v0.1 keeps stable for apps (packages, file conventions, generated paths, commands, settings, HTTP names) and what may change in any release
+description: What Tifa v0.1 keeps stable for apps and what may change
 source: docs/reference/compatibility.md
 group: Reference
 groupOrder: 5

@@ -1,6 +1,6 @@
 ---
 title: 日志
-description: Tifa 应用的日志在 tifa dev、服务器和容器里分别在哪，Tifa 自己记了什么，怎样用 log/slog 在自己的代码里记日志，怎样设置格式和级别，以...
+description: Tifa 应用的日志在哪里，以及怎样写日志
 source: docs/guides/logs.zh-CN.md
 group: 做法
 groupOrder: 3

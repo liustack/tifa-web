@@ -1,6 +1,6 @@
 ---
 title: Logs
-description: Where the logs of a Tifa app are in tifa dev, on a server and in a container, what Tifa itself logs, how to log from your own code with log/slog, how to set...
+description: Where the logs of a Tifa app are and how to write them
 source: docs/guides/logs.md
 group: Guides
 groupOrder: 3
