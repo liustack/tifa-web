@@ -90,7 +90,7 @@ export default function StatsPage() {
 - `.client.tsx` 文件 import 的任何东西，都不会进入 SSR 包。在浏览器里，它是一个单独的 chunk，在组件第一次渲染时才获取，即使页面本身属于入口脚本（根布局就是）也一样。
 - 组件会比页面的其余部分晚一会儿才出现，因为它的代码是在水合之后才获取的。如果获取失败，组件会抛出错误，最近的 `ErrorBoundary` 会显示出来。
 
-这样把只在浏览器里用的库挡在 SSR 包之外，让示例商店的 SSR 包小了三分之一，统计页的渲染快了 21%。完整的数字见 [优化](https://github.com/liustack/tifa/blob/v0.5.0/docs/studies/optimizations.md#build)。
+这样把只在浏览器里用的库挡在 SSR 包之外，让示例商店的 SSR 包小了三分之一，统计页的渲染快了 21%。完整的数字见 [优化](https://github.com/liustack/tifa/blob/v0.5.1/docs/studies/optimizations.md#build)。
 
 ## 服务端渲染里的 Intl {#intl-in-server-rendering}
 

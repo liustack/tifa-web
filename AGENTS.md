@@ -1,7 +1,7 @@
 # Notes for coding agents
 
 <!-- tifa:begin -->
-<!-- Written by Tifa v0.5.0 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
+<!-- Written by Tifa v0.5.1 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
 
 This is a [Tifa](https://github.com/liustack/tifa) app. Go routes requests, loads data and runs the hooks. React pages render to HTML inside the Go process (beastjs, no Node at run time), and TanStack Router takes over in the browser. The build bundles the front end with Vite, on Node, and makes one executable that needs no Node.
 
@@ -67,6 +67,7 @@ Never edit `.tifa/`. It is generated.
 - `tifa.yaml` lists every setting at its default, and `options.go` holds the options of the app. See `docs/build-and-deploy/config.md`.
 - `schema.sql` runs at every start, so keep its statements safe to repeat (`CREATE TABLE IF NOT EXISTS`).
 - `db.go` opens SQLite with `_txlock=immediate`, so a transaction takes the write lock at `BEGIN` and never fails halfway with `database is locked`. Keep it, and start a transaction that only reads with `sql.TxOptions{ReadOnly: true}`. See `docs/guides/database.md`.
+- The option `db.backup` (`DB_BACKUP`), empty by default, copies every commit to S3 or R2 and restores a missing database at start. See "Back it up" in `docs/guides/database.md`.
 - Under `tifa dev`, a page that fails answers with the whole error: `curl -i` the page, or run `go tool tifa errors`.
 
 ## Docs

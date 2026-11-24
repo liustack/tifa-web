@@ -21,8 +21,8 @@ tifa new <dir> [--module module-path] [--empty]
 | 文件 | 内容 |
 | --- | --- |
 | `go.mod` | Tifa，作为工具的 Tifa 命令，`github.com/liustack/sqlite`（一个纯 Go 的 SQLite 驱动），以及 `ignore node_modules` |
-| `db.go`, `schema.sql` | 都在根目录。`var DB`，开启了 WAL、`busy_timeout` 和外键的 `OpenDB`，以及所有领域的表，每次启动时用 `CREATE TABLE IF NOT EXISTS` 创建。数据库文件是应用运行目录里的 `app.db`，也可以用设置 `db.path`（`DB_PATH`、`--db-path`）指定 |
-| `options.go` | 在根目录。应用的选项，`var DBPath = tifa.String("db.path", "app.db", ...)`，见[应用的选项](/docs/build-and-deploy/config#options-of-the-app) |
+| `db.go`, `schema.sql` | 都在根目录。`var DB`，开启了 WAL、`busy_timeout` 和外键的 `OpenDB`，以及所有领域的表，每次启动时用 `CREATE TABLE IF NOT EXISTS` 创建。数据库文件是应用运行目录里的 `app.db`，也可以用设置 `db.path`（`DB_PATH`、`--db-path`）指定。设置了 `db.backup` 时，`StartBackup` 把每次提交复制到 S3 或 R2，见[备份](/docs/guides/database#back-it-up) |
+| `options.go` | 在根目录。应用的选项：`DBPath = tifa.String("db.path", "app.db", ...)`，`DBBackup`（`db.backup`，默认为空）和它的存储的密钥，见[应用的选项](/docs/build-and-deploy/config#options-of-the-app) |
 | `sessions.go` | 在根目录。一个把会话存进 SQLite 数据库的会话存储，在 `OnStart` 里用 `tifa.SetSessionStore` 设置，所以重启不会让任何人退出登录（见[会话](/docs/pages-and-data/sessions)） |
 | `hooks.go` | `OnStart` 打开数据库，`OnShutdown` 关闭数据库。`OnRequest` 和 `OnError` 只在注释里说明，因为写了 `OnError` 就会替换掉默认行为 |
 | `app/layout.tsx`, `app/styles.css` | 带导航的根布局，一个同时负责显示未知 URL 的 404 的 `ErrorBoundary`，以及它引入的样式 |
@@ -241,7 +241,7 @@ go tool tifa upgrade [version] [--dir app-root]
 2. 命令把剩下的事交给新的 Tifa，即 `go tool tifa upgrade --after <old version>`。旧的二进制不做这些，因为只有新的 Tifa 才知道它固定了哪些版本，以及它的 skill 写了什么。
 3. `tifa new` 用精确版本写出的那些包（`react`、`react-dom`、`@tanstack/react-router`、`vite`，以及它的 `package.json` 里的其他包），当应用把它们列成更旧的精确版本时，会被设成新 Tifa 的版本。其他每个包、其他每个键和文件的排版都保持原样。比固定版本更新的包会保留，并带一行类似 `react 19.4.0 is newer than the 19.3.0 Tifa is tested with, left as it is` 的提示。写成 `^19.2.0`、`~19.2.0`、范围、标签或 `workspace:` 的版本从不去猜：它会保留，并带一行说明。例外是 `@tanstack/react-router`，`tifa build` 只接受它恰好是固定的那个版本（见[应用的 tsconfig 和 Vite 配置](#the-apps-tsconfig-and-vite-config)）：它的精确版本，不管更旧还是更新，都会被设成固定的版本，写成范围的则保留，并带一行要你手动设置的提示。然后运行安装命令，`pnpm install` 或你的锁文件对应的那个命令。
 4. skill 和 `AGENTS.md` 里由 Tifa 管理的部分会重新写出，和 [`tifa agents`](#tifa-agents) 做的一样。
-5. 它会打印你旧版本之后、直到新版本为止的每个 [CHANGELOG.md](https://github.com/liustack/tifa/blob/v0.5.0/CHANGELOG.md) 条目里的每条 `Upgrading:` 说明，每条都带着它的版本。这些是需要你动手做的步骤：这个命令从不修改你的 Go 或 TypeScript 代码。
+5. 它会打印你旧版本之后、直到新版本为止的每个 [CHANGELOG.md](https://github.com/liustack/tifa/blob/v0.5.1/CHANGELOG.md) 条目里的每条 `Upgrading:` 说明，每条都带着它的版本。这些是需要你动手做的步骤：这个命令从不修改你的 Go 或 TypeScript 代码。
 6. 运行 `tifa check`，它的结果就是 `tifa upgrade` 的结果。
 
 Tifa 在各个发布版本之间保持稳定的是什么，以及哪些在任何版本里都可能改变，见[兼容性](/docs/reference/compatibility)。
@@ -267,7 +267,7 @@ check passed
 - 它会拒绝比 `go.mod` 里更旧的版本，是同一个版本时则说明应用已经在那个版本了。它会拒绝 `go.mod` 里替换了 Tifa 的应用，因为这时 `go.mod` 里的版本并不是应用构建所用的版本。拒绝时什么都不会改。当正在使用 `go.work` 文件时（设置了 `GOWORK`，或应用里或它上层有一个），它也会拒绝，因为 `go get` 会写到工作区里，而 `go tool` 会遵循它：请改运行 `GOWORK=off go tool tifa upgrade`。
 - 它从不转交给应用自己的 Tifa，所以在 Tifa 太旧、还没有这个命令的应用里也能用：用你安装的 Tifa 运行它（见[全局安装命令](#installing-the-command-globally)），或者运行 `go run github.com/liustack/tifa/cmd/tifa@latest upgrade`。
 - 版本按语义化版本比较，并且只比较精确版本。React 和 React DOM 可以比固定版本更新（`tifa build` 只需要 19.3.0 或更高），所以更新的版本由你自己保留。
-- `Upgrading:` 说明是这个词之后的文字，直到它在更新日志里所在的列表项结束，所以条目要把它写在最后（见 [commit.md](https://github.com/liustack/tifa/blob/v0.5.0/docs/internals/commit.md#changelog)）。
+- `Upgrading:` 说明是这个词之后的文字，直到它在更新日志里所在的列表项结束，所以条目要把它写在最后（见 [commit.md](https://github.com/liustack/tifa/blob/v0.5.1/docs/internals/commit.md#changelog)）。
 - 它不问任何问题，也没有试运行。它可能改动的文件有 `go.mod`、`go.sum`、`package.json`、锁文件、`AGENTS.md` 和 `.claude/skills/tifa/`，所以 `git diff` 就是试运行。
 
 当 `go get` 之后的某一步失败时（`pnpm install` 失败，或 `tifa check` 失败），命令会以那个失败的状态退出，并以一行结束：Go 已经在新版本了，后面的步骤没有完成。请修好原因，然后运行它打印的那一行 `cd <app> && go tool tifa upgrade --after <old version>`，它会把 `go mod tidy` 之后的步骤再做一遍。`--after` 接受应用原来的版本，写成 `v0.0.17` 这样。
@@ -282,7 +282,7 @@ tifa agents [--dir app-root] [--check] [--skills-dir .claude/skills/tifa]
 
 根据应用所用的 Tifa 版本，写出编码 agent 在应用里要读的东西（`go tool tifa` 是用 `go.mod` 里的模块构建的，所以它里面的文件就是那个版本的）：
 
-- Tifa skill，在 `.claude/skills/tifa/` 里：`SKILL.md` 和它的 `references/`。它们是 Tifa 仓库里 [`skills/tifa`](https://github.com/liustack/tifa/tree/v0.5.0/skills/tifa) 的文件，命令把它们带在自己里面，并多加了一行，说明是哪个 Tifa 写的这个文件，以及升级之后要再运行 `go tool tifa agents`。它里面的链接指向已安装版本的文档（`docs/testing-apps.md#testing`，在 `go tool tifa docs` 打印的文件夹里），而不是 GitHub。
+- Tifa skill，在 `.claude/skills/tifa/` 里：`SKILL.md` 和它的 `references/`。它们是 Tifa 仓库里 [`skills/tifa`](https://github.com/liustack/tifa/tree/v0.5.1/skills/tifa) 的文件，命令把它们带在自己里面，并多加了一行，说明是哪个 Tifa 写的这个文件，以及升级之后要再运行 `go tool tifa agents`。它里面的链接指向已安装版本的文档（`docs/testing-apps.md#testing`，在 `go tool tifa docs` 打印的文件夹里），而不是 GitHub。
 - `AGENTS.md` 里标记行之间的部分（见 [AGENTS.md 里由 Tifa 管理的部分](#the-managed-block-of-agentsmd)）。
 - `.github/workflows/ci.yml`，即 `tifa new` 写出的工作流，但只在应用没有 `.github/workflows/ci.yml` 也没有其他工作流文件时才写。它只写一次，从不替换，`--check` 也不要求它。用 yarn 或 bun 的应用会得到一条提示，因为这个工作流只有 pnpm 和 npm 的步骤。
 
@@ -386,9 +386,9 @@ go tool tifa build
 
 构建会打印 Vite 和 Rolldown 对应用自己的代码给出的警告。Tifa 关掉了应用无法处理的两条提示：Rolldown 对最慢的插件回调给出的 PLUGIN_TIMINGS 列表，以及 Vite 对浏览器包在 1000 kB 以下的代码块大小警告，Tifa 有意把浏览器包做成一个文件。超过 1000 kB 的浏览器入口仍然会得到警告。应用可以在自己的 Vite 配置里设置 `build.chunkSizeWarningLimit` 或 `build.rolldownOptions.checks` 来改变其中任何一条。
 
-SSR 包一开始会导入 `runtime/host.js`，它补上 beastjs 缺少的东西：`TextEncoder`/`TextDecoder`、`AbortController`、`Headers`、`Response`、`queueMicrotask`、`atob`、`btoa`、`DOMException`、`structuredClone`、`crypto.getRandomValues`、`crypto.randomUUID`、`AsyncLocalStorage`，以及一个什么都不打印、调用 `error` 时会抛出异常的 `console`。在运行包里的模块之前，SSR 加载器会注册引擎的 `URL` 和 `URLSearchParams`（`github.com/liustack/beastjs/url`，它在 Go 里解析），注册用于取新鲜随机字节的 Go 函数，以及用于引擎的异步上下文的 Go 函数，后者是 promise 任务携带的一个对象，`AsyncLocalStorage` 把它的存储放在里面。所以对于在模块加载时就用到 `crypto` 和 `AsyncLocalStorage` 的依赖，它们已经准备好了。克隆完全在 JS 里运行，使用内置的品牌检查和 `Error.isError`，不读引擎的私有字段。它不提供 `crypto.subtle`、`fetch` 或 `Request`。[服务端渲染里有什么](/docs/pages-and-data/server-render#what-the-server-render-has)列出了页面在那里能找到的一切。这个脚本已经预先打包进程序，所以应用不用安装构成它的那些包。它怎么构建，以及为什么其中两个包打了补丁，见 [宿主脚本](https://github.com/liustack/tifa/blob/v0.5.0/docs/internals/ssr-bundle-rewrites.md#the-host-script)。
+SSR 包一开始会导入 `runtime/host.js`，它补上 beastjs 缺少的东西：`TextEncoder`/`TextDecoder`、`AbortController`、`Headers`、`Response`、`queueMicrotask`、`atob`、`btoa`、`DOMException`、`structuredClone`、`crypto.getRandomValues`、`crypto.randomUUID`、`AsyncLocalStorage`，以及一个什么都不打印、调用 `error` 时会抛出异常的 `console`。在运行包里的模块之前，SSR 加载器会注册引擎的 `URL` 和 `URLSearchParams`（`github.com/liustack/beastjs/url`，它在 Go 里解析），注册用于取新鲜随机字节的 Go 函数，以及用于引擎的异步上下文的 Go 函数，后者是 promise 任务携带的一个对象，`AsyncLocalStorage` 把它的存储放在里面。所以对于在模块加载时就用到 `crypto` 和 `AsyncLocalStorage` 的依赖，它们已经准备好了。克隆完全在 JS 里运行，使用内置的品牌检查和 `Error.isError`，不读引擎的私有字段。它不提供 `crypto.subtle`、`fetch` 或 `Request`。[服务端渲染里有什么](/docs/pages-and-data/server-render#what-the-server-render-has)列出了页面在那里能找到的一切。这个脚本已经预先打包进程序，所以应用不用安装构成它的那些包。它怎么构建，以及为什么其中两个包打了补丁，见 [宿主脚本](https://github.com/liustack/tifa/blob/v0.5.1/docs/internals/ssr-bundle-rewrites.md#the-host-script)。
 
-Tifa 插件会改写 SSR 包里的许多 npm 包，比如 React DOM、TanStack Router、i18next，以及给组件加样式和绘图的库，让它们在 beastjs 里渲染得更快。它按代码的形态或文本找到要改的代码，而不是按包的版本，所以 `pnpm update` 不会弄坏构建。当某个发布版本改变了那段代码时，构建会打印一条警告，带上包的版本和文件，并让那段代码保持原样。页面仍然能渲染，只是慢一些。如果 React DOM 的某个发布版本，其字符串渲染器插件没有完整读过，会收到一条这样说明的警告，页面渲染结果相同，只是更慢。每条这样的警告都以 `tifa rewrite not recognized: ` 开头，所以 `grep` 能找到所有的警告。对 React DOM 的改动让它的文件里每一行都保持在原来的位置，所以渲染错误的堆栈给出的是 `node_modules` 里 React DOM 的原样行号。没有设置可以关掉这些改动：它们都不改变 HTML，只有服务器动作的键例外，而 Tifa 没有服务器动作。每处改动做什么，以及维护者怎样审查新版本，见 [SSR 包的改写](https://github.com/liustack/tifa/blob/v0.5.0/docs/internals/ssr-bundle-rewrites.md)。
+Tifa 插件会改写 SSR 包里的许多 npm 包，比如 React DOM、TanStack Router、i18next，以及给组件加样式和绘图的库，让它们在 beastjs 里渲染得更快。它按代码的形态或文本找到要改的代码，而不是按包的版本，所以 `pnpm update` 不会弄坏构建。当某个发布版本改变了那段代码时，构建会打印一条警告，带上包的版本和文件，并让那段代码保持原样。页面仍然能渲染，只是慢一些。如果 React DOM 的某个发布版本，其字符串渲染器插件没有完整读过，会收到一条这样说明的警告，页面渲染结果相同，只是更慢。每条这样的警告都以 `tifa rewrite not recognized: ` 开头，所以 `grep` 能找到所有的警告。对 React DOM 的改动让它的文件里每一行都保持在原来的位置，所以渲染错误的堆栈给出的是 `node_modules` 里 React DOM 的原样行号。没有设置可以关掉这些改动：它们都不改变 HTML，只有服务器动作的键例外，而 Tifa 没有服务器动作。每处改动做什么，以及维护者怎样审查新版本，见 [SSR 包的改写](https://github.com/liustack/tifa/blob/v0.5.1/docs/internals/ssr-bundle-rewrites.md)。
 
 包可能会导入 beastjs 没有的 Node 模块。插件给依赖对一个 Node 模块的每个静态导入一个它自己的替身模块。它导出 Node 给这个模块的那些名字（向运行构建的那个 Node 询问得到），以及导入方要求的每个其他名字，每一个都是一个函数，每次使用都会抛出一个错误，错误里点出这个导出、这个模块和这个包（见[导入 Node 模块的包](/docs/pages-and-data/server-render#packages-that-import-node-modules)）。这些替身没有副作用，所以没有代码用到的名字会离开包，构建会对仍然留着替身的模块给出警告。对 `node:async_hooks` 的导入会得到 host 的 `AsyncLocalStorage` 和 `AsyncResource`，而只要求这些的导入，没有替身，也没有警告。对 Node 模块的 `require` 或 `import()` 保持原样，构建会对它给出警告。页面代码导入 Node 模块会让构建失败。
 
@@ -396,7 +396,7 @@ Tifa 插件会改写 SSR 包里的许多 npm 包，比如 React DOM、TanStack R
 
 用 i18next 翻译一次，在 beastjs 里要花几十微秒，商店的一个店面页面每次渲染要做约 126 次，大多数是每次都相同的文本和相同的值。所以 Tifa 插件在 SSR 包里给 i18next 加了一个缓存。`getFixedT` 返回的 `t`（react-i18next 的 `useTranslation` 把它交出来）会保存它给出的每个字符串，之后用同样的键和选项调用，不用再翻译一次就能得到那个字符串。每个 VM 有它自己的缓存。它默认是开启的。在项目文件里设置 `build.i18next_cache: false` 可以关闭它，包就和没有这个缓存时一模一样，一个字节都不差。
 
-一次调用按实例、语言、命名空间、键和选项来查找，只有值都是普通值的调用才会被保存，其余的照旧翻译。应用通过 i18next 的 API 改变翻译时（添加资源、再次 `init`、加载命名空间或语言、`use` 等），缓存会清空，每个 VM 里它最多保存约 1 MB。调用很少被缓存答中的键，会不再使用缓存。完整的规则见 [i18next 缓存](https://github.com/liustack/tifa/blob/v0.5.0/docs/internals/ssr-bundle-rewrites.md#the-i18next-cache)。
+一次调用按实例、语言、命名空间、键和选项来查找，只有值都是普通值的调用才会被保存，其余的照旧翻译。应用通过 i18next 的 API 改变翻译时（添加资源、再次 `init`、加载命名空间或语言、`use` 等），缓存会清空，每个 VM 里它最多保存约 1 MB。调用很少被缓存答中的键，会不再使用缓存。完整的规则见 [i18next 缓存](https://github.com/liustack/tifa/blob/v0.5.1/docs/internals/ssr-bundle-rewrites.md#the-i18next-cache)。
 
 运行应用的格式化器（用 `services.formatter.add` 或 `addCached` 添加的），或后处理器（比如 i18next-sprintf-postprocessor）的调用，和其他的调用一样被保存，i18next 自己的格式化器的调用也一样。这样的代码对相同的语言、选项和值必须给出相同的文本，就像 React 组件对相同的 props 必须给出相同的输出一样：它不读时间，不读随机数，也不读任何随请求而变的东西。请求的值，比如用户的时区或当前时间，放进调用的选项里，选项是每个条目的一部分。当在 `add` 或 `addCached` 里就地写出的格式化器自己调用了 `Date.now()`、`Date()`、不带参数的 `new Date()`、`Math.random()`、`performance.now()`、`crypto.randomUUID()` 或 `crypto.getRandomValues()` 时，构建会失败，并点出文件和行。格式化器所调用的函数里的这类调用，它看不到。
 
@@ -408,7 +408,7 @@ Tifa 插件会改写 SSR 包里的许多 npm 包，比如 React DOM、TanStack R
 
 这样的应用的页面，可能会显示改动之前的文本，或另一个请求得到的文本，直到缓存因为别的原因清空。
 
-在商店上，它使用适配器的那一个实例，并在 `setup.ts` 里给它自己的钱和日期的格式化器，十个店面页面的渲染耗时是原来的 0.778，HTML 相同。用 i18next 的其他方式收益更小，而每个请求用 `cloneInstance` 做一个实例的应用没有收益。测量结果见 [i18next 缓存](https://github.com/liustack/tifa/blob/v0.5.0/docs/internals/ssr-bundle-rewrites.md#the-i18next-cache)。
+在商店上，它使用适配器的那一个实例，并在 `setup.ts` 里给它自己的钱和日期的格式化器，十个店面页面的渲染耗时是原来的 0.778，HTML 相同。用 i18next 的其他方式收益更小，而每个请求用 `cloneInstance` 做一个实例的应用没有收益。测量结果见 [i18next 缓存](https://github.com/liustack/tifa/blob/v0.5.1/docs/internals/ssr-bundle-rewrites.md#the-i18next-cache)。
 
 插件认识 i18next 25.5 到 27.0 的代码。对于其他版本，或某个版本改动了缓存所需要的代码时，构建会打印警告，包就是没有缓存的那个。用 `build.i18next_cache: false` 构建这样的应用，就没有这条警告。
 
