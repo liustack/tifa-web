@@ -8,7 +8,9 @@ order: 2
 ---
 
 
-For a complete example, see [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop). For the build, the generated files and how to set up go.mod, see [build.md](/docs/build-and-deploy/build).
+This page covers how a Tifa app is laid out: how folders under `app/` become URLs, which files Tifa reads, how static files are served, and what to write in place of habits from other frameworks.
+
+For a complete example, see [examples/shop](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop). For the build, the generated files and how to set up go.mod, see [build.md](/docs/build-and-deploy/build).
 
 ## Folders
 
@@ -39,7 +41,7 @@ myapp/
 ```
 
 - Code is grouped by domain, and a domain is a folder under `app/`: its types, storage and rules sit next to its pages, in the list folder when it has a list and a page per item. Pages import the domain packages they show. The root package holds only the hooks and the resources the whole app shares. There is no shared `models/` or `db/` package holding every table. See [structure.md](/docs/start/structure).
-- Components and styles shared across pages go in the `app/` root.
+- Components shared across pages sit next to the pages that use them, or in a folder beside `app/` such as `components/` when several areas use them. See [structure.md](/docs/start/structure).
 - Do not write a main. `tifa build` generates main and the route registration code in `.tifa/`, which `go vet ./...` and `go test ./...` do not scan.
 
 ## URLs come from folders
@@ -111,7 +113,7 @@ Vite says the same: prefer importing assets, and use `public/` for files never r
 
 ## Coming from another framework
 
-`tifa check`, `tifa build` and `tifa dev` recognize code written for Next.js, Remix, React Router, TanStack Start and SvelteKit, and for Go web frameworks. Each finding is one line: `<file>:<line>: <what it is>. In Tifa: <what to write>. See <doc>`. An error stops the command. A warning ends in `(warning)` and stops nothing: the code builds, and Tifa never uses it.
+`tifa check`, `tifa build` and `tifa dev` recognize code written for Next.js, Remix, React Router, TanStack Start, SvelteKit and Astro, and for Go web frameworks. Each finding is one line: `<file>:<line>: <what it is>. In Tifa: <what to write>. See <doc>`. An error stops the command. A warning ends in `(warning)` and stops nothing: the code builds, and Tifa never uses it.
 
 | You wrote | In Tifa | |
 | --- | --- | --- |
@@ -147,7 +149,7 @@ Tifa has no `loading.tsx`. A page is rendered whole on the server, so a first vi
 
 ## A site in several languages
 
-Put a `_locales` folder in a folder of `app/`, with one `<language>.json` file per language, and the pages and API routes in that folder and below it are offered in those languages. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop) is `app/store/` with `_locales/zh-CN.json` and `_locales/en-US.json`.
+Put a `_locales` folder in a folder of `app/`, with one `<language>.json` file per language, and the pages and API routes in that folder and below it are offered in those languages. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop) is `app/store/` with `_locales/zh-CN.json` and `_locales/en-US.json`.
 
 ```yaml
 # tifa.yaml

@@ -8,7 +8,9 @@ order: 2
 ---
 
 
-完整的例子见 [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop)。构建、生成的文件和怎么设置 go.mod，见 [build.md](/docs/build-and-deploy/build)。
+这一篇讲 Tifa 应用怎么组织：`app/` 下的文件夹怎样变成 URL，Tifa 读哪些文件，静态文件怎么提供，以及其他框架的习惯在 Tifa 里该怎么写。
+
+完整的例子见 [examples/shop](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop)。构建、生成的文件和怎么设置 go.mod，见 [build.md](/docs/build-and-deploy/build)。
 
 ## 文件夹 {#folders}
 
@@ -39,7 +41,7 @@ myapp/
 ```
 
 - 代码按域分组，一个域就是 `app/` 下的一个文件夹：它的类型、存储和规则和它的页面放在一起，有列表、并且每项一个页面时，就放在列表文件夹里。页面导入它们所显示的域的包。根包只放 hooks 和整个应用共享的资源。没有一个装着所有表的共享 `models/` 或 `db/` 包。见 [structure.md](/docs/start/structure)。
-- 跨页面共享的组件和样式放在 `app/` 根目录。
+- 跨页面共享的组件放在用到它们的页面旁边，几个区域都用时放在 `app/` 旁边的文件夹里，比如 `components/`。见 [structure.md](/docs/start/structure)。
 - 不要写 main。`tifa build` 会在 `.tifa/` 里生成 main 和路由注册代码，`go vet ./...` 和 `go test ./...` 不会扫描那里。
 
 ## URL 来自文件夹 {#urls-come-from-folders}
@@ -111,7 +113,7 @@ Vite 说的是同一件事：优先导入资源，`public/` 给源码里从不�
 
 ## 从别的框架过来 {#coming-from-another-framework}
 
-`tifa check`、`tifa build` 和 `tifa dev` 能识别为 Next.js、Remix、React Router、TanStack Start 和 SvelteKit 写的代码，也能识别 Go 的 Web 框架。每个发现占一行：`<file>:<line>: <what it is>. In Tifa: <what to write>. See <doc>`。错误会让命令停止。警告以 `(warning)` 结尾，不会让任何东西停下：代码能构建，只是 Tifa 永远不会用它。
+`tifa check`、`tifa build` 和 `tifa dev` 能识别为 Next.js、Remix、React Router、TanStack Start、SvelteKit 和 Astro 写的代码，也能识别 Go 的 Web 框架。每个发现占一行：`<file>:<line>: <what it is>. In Tifa: <what to write>. See <doc>`。错误会让命令停止。警告以 `(warning)` 结尾，不会让任何东西停下：代码能构建，只是 Tifa 永远不会用它。
 
 | 你写的 | 在 Tifa 里 | |
 | --- | --- | --- |
@@ -147,7 +149,7 @@ Tifa 没有 `loading.tsx`。页面在服务器上整个渲染，所以第一次�
 
 ## 多语言站点 {#a-site-in-several-languages}
 
-在 `app/` 的某个文件夹里放一个 `_locales` 文件夹，每种语言一个 `<language>.json` 文件，这个文件夹和它下面的页面与 API 路由就会以这些语言提供。[examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop) 的店面是 `app/store/`，带 `_locales/zh-CN.json` 和 `_locales/en-US.json`。
+在 `app/` 的某个文件夹里放一个 `_locales` 文件夹，每种语言一个 `<language>.json` 文件，这个文件夹和它下面的页面与 API 路由就会以这些语言提供。[examples/shop](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop) 的店面是 `app/store/`，带 `_locales/zh-CN.json` 和 `_locales/en-US.json`。
 
 ```yaml
 # tifa.yaml

@@ -201,7 +201,7 @@ function Field({ label, name, state }: { label: string; name: 'name' | 'text'; s
 
 ## 取舍 {#decisions}
 
-**用 React hooks 还是表单库。** 这三个 hooks（`useActionState`、`useFormStatus`、`useOptimistic`，见 [useActionState](https://react.dev/reference/react/useActionState) 和 [useFormStatus](https://react.dev/reference/react-dom/hooks/useFormStatus)）足够应付几个字段、没有客户端规则的表单。字段很多、规则要在访客输入时运行，或者有字段数组时，就用库。`examples/shop` 用 react-hook-form 加一个 Zod schema（`app/projects/project+/orders/order+/ship-form.tsx`），[app.md](/docs/pages-and-data/server-render#libraries-that-render-differently-on-the-server) 列出了为它在服务器上要做什么。Tifa 这一部分对任何库都一样：捕获 `TifaError`，把 `e.fields` 交给库设置错误的办法。对 react-hook-form 就是 `form.setError(name, { message })`。
+**用 React hooks 还是表单库。** 这三个 hooks（`useActionState`、`useFormStatus`、`useOptimistic`，见 [useActionState](https://react.dev/reference/react/useActionState) 和 [useFormStatus](https://react.dev/reference/react-dom/hooks/useFormStatus)）足够应付几个字段、没有客户端规则的表单。字段很多、规则要在访客输入时运行，或者有字段数组时，就用库。`examples/shop` 用 react-hook-form 加一个 Zod schema（`app/projects/project+/orders/order+/ship-form.tsx`），[服务端渲染](/docs/pages-and-data/server-render#libraries-that-render-differently-on-the-server) 列出了为它在服务器上要做什么。Tifa 这一部分对任何库都一样：捕获 `TifaError`，把 `e.fields` 交给库设置错误的办法。对 react-hook-form 就是 `form.setError(name, { message })`。
 
 **水合之前让按钮保持禁用。** 用函数作为 `action` 时，服务器会写出 `action="javascript:throw new Error('React form unexpectedly submitted.')"`。在脚本运行之前，表单什么也发不出去，在输入框里按 Enter 就会碰上这个。`useHydrated` 让按钮在那之前一直禁用，这也挡住了 Enter 键。
 

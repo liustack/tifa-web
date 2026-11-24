@@ -369,7 +369,7 @@ go tool tifa deploy remove
 
 它们通过 ssh 以 `tifa` 身份登录，找服务器的方式和 `tifa deploy` 一样。
 
-`logs` 打印 `tifa-<app>.service` 和 `tifa-<app>.socket` 的 journal：应用打印了什么，以及 systemd 说了它什么，比如一次启动、退出或失败。journald 把 journal 保存在磁盘上时（Ubuntu 和 Debian 的默认做法），这些行保存在用户 `tifa` 的 journal 文件里。journal 只保存在内存里的服务器，会让 `tifa` 看不到任何行。
+`logs` 打印 `tifa-<app>.service` 和 `tifa-<app>.socket` 的 journal：应用打印了什么，以及 systemd 说了它什么，比如一次启动、退出或失败。journald 把 journal 保存在磁盘上时（Ubuntu 和 Debian 的默认做法），这些行保存在用户 `tifa` 的 journal 文件里。journal 只保存在内存里的服务器，会让 `tifa` 看不到任何行。应用记什么日志、格式和级别怎么设、journald 把这些行保留多久，见[日志](/docs/guides/logs)。
 
 `status` 打印正在运行的发布和它的提交、保留的其他发布和它们各自有没有通过健康检查、服务从什么时候开始运行、`GET /healthz` 现在的回答，以及程序的内存：
 
@@ -518,7 +518,7 @@ WantedBy=sockets.target
 - **缓存。** 页面、导航数据和处理函数的响应默认是 `private, no-cache`，所以 CDN 不会保存它们。请保持这样。让 CDN 缓存这些：
   - `/assets/`：内容带哈希，`public, max-age=31536000, immutable`。
   - `public/` 里的文件：`no-cache` 加 ETag，所以 CDN 来问，得到 304。它们的名字是固定的，所以只有需要固定名字的文件才属于那里。其余的请导入，得到 `/assets/`（见[静态文件](/docs/start/app#static-files)）。
-  - 带 `Cache` 的页面：它们是匿名的，带 `Cache-Control: public, max-age=0, s-maxage=<seconds>, stale-if-error=86400`。遵循源站 `Cache-Control` 的 CDN，会把页面保存 `Cache` 的时间，不会更久。见[给 CDN 用的缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)。
+  - 带 `Cache` 的页面：它们是匿名的，带 `public` 的 `Cache-Control` 和一个 `s-maxage`（确切的值见 [响应的 Cache-Control](/docs/pages-and-data/ssr-and-cache#cache-control-of-an-answer)）。遵循源站 `Cache-Control` 的 CDN，会把页面保存 `Cache` 的时间，不会更久。见[给 CDN 用的缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)。
 - **不要让 CDN 忽略源站的缓存头。** 用遵循它们的缓存设置，绝不要用强制一个时间或缓存一切的设置。每个 CDN 的设置在 [CDN 设置](#cdn-settings)里。
 - **带 `Cache` 的页面的导航数据不共享。** 它是页面 URL 加 `?_tifa=...`，带着浏览器的会话，并且始终是 `private, no-cache`。缓存键必须包含查询字符串（至少 `_tifa`），否则 CDN 必须对带 `_tifa` 的请求跳过缓存。只对页面的 HTML 按路径丢弃 cookie，绝不对带 `_tifa` 的同一路径这样做。
 - **不要缓存 `/__tifa/session`。** 它按访客回答，是 `private, no-store`。
@@ -540,9 +540,9 @@ WantedBy=sockets.target
 
 **Cloudflare**
 
-`tifa deploy setup` 带 cf 时，会自己为它的域名添加这些规则（见[按方案设置](#set-up-with-a-plan)）。在 2026-11-20，通过 tunnel 访问示例 shop 时，它们的效果是：`/assets/` 文件从第二或第三个请求起 `HIT`，页面 `BYPASS`，`/__tifa/session` `DYNAMIC`。
+`tifa deploy setup` 带 cf 时，会自己为它的域名添加这些规则（见[按方案设置](#set-up-with-a-plan)）。
 
-- **缓存。** HTML 和 JSON 默认不缓存，因为 Cloudflare 按文件扩展名来决定（[默认缓存行为](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/)）。要缓存带 `Cache` 的页面，请为它们的路径添加一条 Cache Rule，选 "Eligible for cache"，并把 Edge TTL 设为 "Use cache-control header if present, bypass cache if not"。绝不要选 "Ignore cache-control header and use this TTL"（[缓存规则设置](https://developers.cloudflare.com/cache/how-to/cache-rules/settings/)）。在同一条规则里把 Browser TTL 设为 "Respect origin TTL"：否则 zone 的 Browser Cache TTL（默认 4 小时），会在浏览器拿到的内容里替换掉带 `Cache` 的页面的 `max-age=0` 和 public 文件的 `no-cache`，浏览器就会把它们保存那么久，任何清除都够不到那里（2026-11-20 见过：`max-age=14400`）。
+- **缓存。** HTML 和 JSON 默认不缓存，因为 Cloudflare 按文件扩展名来决定（[默认缓存行为](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/)）。要缓存带 `Cache` 的页面，请为它们的路径添加一条 Cache Rule，选 "Eligible for cache"，并把 Edge TTL 设为 "Use cache-control header if present, bypass cache if not"。绝不要选 "Ignore cache-control header and use this TTL"（[缓存规则设置](https://developers.cloudflare.com/cache/how-to/cache-rules/settings/)）。在同一条规则里把 Browser TTL 设为 "Respect origin TTL"：否则 zone 的 Browser Cache TTL（默认 4 小时），会在浏览器拿到的内容里替换掉带 `Cache` 的页面的 `max-age=0` 和 public 文件的 `no-cache`，浏览器就会把它们保存那么久，任何清除都够不到那里。
 - **`private` 和 `no-store`** 从不缓存。`s-maxage` 会被遵守。文档没有说明 `s-maxage=N` 和 `max-age=0`（带 `Cache` 的页面发的就是这个）放在一起时怎么工作，所以请检查这样的页面第二次请求是不是缓存命中（[Cache-Control 指令](https://developers.cloudflare.com/cache/concepts/cache-control/)）。`stale-if-error` 对 5xx 响应有效。
 - **缓存键。** 默认的键包含协议、主机和带查询字符串的 URI，所以导航数据（`?_tifa=...`）和页面是不同的条目（[缓存键](https://developers.cloudflare.com/cache/how-to/cache-keys/)）。
 - **Host。** 不要用 Origin Rule 的 "Override Host header" 来改写它（仅限 Enterprise 套餐）（[Origin Rules](https://developers.cloudflare.com/rules/origin-rules/)）。

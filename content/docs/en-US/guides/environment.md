@@ -8,7 +8,7 @@ order: 10
 ---
 
 
-In Tifa the environment and the secrets stay in the Go process. The program reads its settings when it starts: flags, environment variables, `.env` and `tifa.yaml` (see [Configuration](/docs/build-and-deploy/config)). The front-end build never sees them. Vite does not read `.env` (`envDir: false`), and the build of one app runs in every environment.
+In Tifa the environment and the secrets stay in the Go process. The program reads its settings when it starts: flags, environment variables, `.env` and the file of `-c`, and for the settings of Tifa itself `tifa.yaml` (see [Configuration](/docs/build-and-deploy/config)). The front-end build never sees them. Vite does not read `.env` (`envDir: false`), and the build of one app runs in every environment.
 
 To give a value to the browser, return it from `Load`, or from a `Layout` for every page below it. That line of Go is the only way a value reaches a page, so it is always written on purpose and easy to find.
 
@@ -21,7 +21,7 @@ Define the option with the app settings (see [Options of the app](/docs/build-an
 var PublicKey = tifa.String("stripe.public_key", "", "Public key the browser uses")
 ```
 
-Set it where the program runs: `STRIPE_PUBLIC_KEY=pk_live_... ./bin/app`, a line in `.env`, or `--stripe-public-key`. Return it from `Load`:
+Set it where the program runs: `STRIPE_PUBLIC_KEY=pk_live_... ./bin/app`, a line in `.env`, the file of `-c`, or `--stripe-public-key`. Return it from `Load`:
 
 ```go
 // app/checkout/route.go

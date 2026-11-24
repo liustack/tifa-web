@@ -113,7 +113,7 @@ func TestRedisStoreIsAValidStore(t *testing.T) {
 - `t` 可以是 `*testing.T` 或 `*testing.B`。它用 `t.Errorf` 报告每一项失败的检查，所以一次运行会列出所有问题。第一次 `Put` 失败时，它用 `t.Fatalf` 停下。
 - 它测试的是一个进程。两台服务器能不能看到相同的记录，或数据库挂了会怎样，要你自己测试。
 
-每条失败消息都会点出规则。上面那个文件存储，如果去掉每个方法开头的 `ctx.Err()` 检查，会这样失败：
+每条失败消息都会点出规则。如果存储的每个方法开头没有 `ctx.Err()` 检查（比如把记录放在文件里的存储），会这样失败：
 
 ```
 --- FAIL: TestFileStoreIsAValidStore (0.45s)
@@ -124,7 +124,7 @@ func TestRedisStoreIsAValidStore(t *testing.T) {
     Delete with a canceled context deleted the record
 ```
 
-基于接受 `ctx` 的数据库客户端的存储，会自己返回这些错误。测试应用在 `hooks_test.go` 里对它的文件存储运行了这个测试。
+基于接受 `ctx` 的数据库客户端的存储，会自己返回这些错误。测试应用 [test/apps/session](https://github.com/liustack/tifa/blob/v0.4.2/test/apps/session/hooks_test.go) 对一个把记录放在文件里的存储运行了这个测试。
 
 ## 在哪里调用什么 {#where-to-call-what}
 
@@ -138,7 +138,7 @@ func TestRedisStoreIsAValidStore(t *testing.T) {
 
 `Load` 为 GET 运行，而 GET 不能改变任何东西，所以登录应该放在方法处理函数或 `OnRequest` 里。
 
-在带 `Cache` 的页面上，GET 和 HEAD 请求是匿名的：不管是谁在请求，那里的 `Session` 都是 nil，`SetSession` 和 `ClearSession` 会返回错误。这个承诺针对的是 Tifa 交给你的代码的请求头。通过 `tifa.SetHTTPHandler` 加的 `net/http` 中间件放进 context 的值仍然会到达，所以要在 `OnRequest` 里识别访问者，不要在那个中间件里（见[给 CDN 的缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)）。
+在带 `Cache` 的页面上，GET 和 HEAD 请求是匿名的：不管是谁在请求，那里的 `Session` 都是 nil，`SetSession` 和 `ClearSession` 会返回错误。Tifa 在那里承诺什么，以及通过 `tifa.SetHTTPHandler` 加的 `net/http` 中间件放在哪里，见 [给 CDN 用的缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)。
 
 ## 登录库 {#sign-in-libraries}
 

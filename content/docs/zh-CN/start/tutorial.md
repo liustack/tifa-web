@@ -46,7 +46,7 @@ tifa dev: 19:48:20 ready in 2.147s, open http://127.0.0.1:9527
 1. 输入框为空时按 Add。输入框下面会出现消息 "Write what needs doing."。这条消息是 Go 发来的，见第 4 步。
 2. 添加 "Buy milk"。它马上出现在列表里。这个待办链接到它自己的页面 `/todos/1`，页面上有一个把它标为完成的按钮。
 3. 打开 http://127.0.0.1:9527/nope 和 http://127.0.0.1:9527/todos/99。两个都显示 404 页面，前者来自根布局，后者来自单个待办的页面。
-4. 把 `app/page.tsx` 里的标题从 `Todos` 改成 `My todos` 并保存。终端会显示 `tifa dev` 做了什么，刷新后能看到新标题。再改回去。
+4. 把 `app/page.tsx` 里的标题从 `Todos` 改成 `My todos` 并保存。终端会显示 `tifa dev` 做了什么，已打开的页面会原地更新。刷新后，服务器渲染出来的也是新标题。再改回去。
 
 ```text
 tifa dev: 19:57:43 app/page.tsx modified
@@ -505,6 +505,6 @@ built /path/to/tutorial-app/bin/tutorial-app (build 2e121916557701e0)
 - 设置、HTTPS、已渲染页面的缓存：[配置](/docs/build-and-deploy/config)。
 - 让用户登录：[会话](/docs/pages-and-data/sessions)。应用把会话存在 `app.db`（`sessions.go`）里，所以重启不会让任何人退出登录。
 - 样式和 shadcn/ui：[样式](/docs/pages-and-data/styles)。多语言站点：[编写应用](/docs/start/app#a-site-in-several-languages)。缓存页面：[渲染开关和缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)。
-- 一个可以读的更大的应用：[examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop)。
+- 一个可以读的更大的应用：[examples/shop](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop)。
 - `tifa dev` 如何对每次改动做出反应，以及如何读它的日志：[开发服务器](/docs/build-and-deploy/dev)。
 - 文件夹为什么是这个样子：[应用的结构](/docs/start/structure)和[设计理念](/docs/start/philosophy)。

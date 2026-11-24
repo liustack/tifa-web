@@ -96,4 +96,4 @@ Date 和 Intl 向下取整到毫秒，Temporal 保留纳秒。这个时钟覆盖
 
 模块的顶层代码在 VM 预热时运行，那是在请求之前，用的是实时时钟。在那里取到的时间值不会重新计算。在模块加载时保存下来的 Date.now 函数、Temporal.Now 方法或 Intl formatter，在渲染期间被调用时，读的是当前这次渲染的时钟。
 
-时钟不是缓存键，所以带时钟的请求会跳过渲染记忆 memo 和共享渲染，也没有 ETag：它总是用自己的时钟渲染。要显示的时间请从 `Load` 返回，这样 SSR、缓存和浏览器水合用的是同样的数据。`tifatest.NewCtx` 保留请求的 context，但自己不运行 SSR。要测试传递这个 context 的中间件，就用闭包作为 `next` 来调用 `OnRequest`，要检查完整的 HTML，就用服务器请求。
+时钟不是缓存键，所以带时钟的请求会跳过渲染记忆 memo 和共享渲染，也没有 ETag：它总是用自己的时钟渲染。要显示的时间请从 `Load` 返回，这样 SSR、缓存和浏览器水合用的是同样的数据。`tifatest.NewCtx` 保留请求的 context，但自己不运行 SSR。要测试传递这个 context 的中间件，就用闭包作为 `next` 来调用 `OnRequest`，要检查完整渲染出来的 HTML，就用 `tifatest.StartPages`。

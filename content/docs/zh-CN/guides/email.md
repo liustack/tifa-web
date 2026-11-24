@@ -240,7 +240,7 @@ func TestAddTodoQueuesAMailOnlyWhenAskedTo(t *testing.T) {
 }
 ```
 
-**2. 任务。** 替换 `SendMail` 并运行 worker，就像临时应用里的 `TestMailJobSendsWhatWasQueued` 做的那样。把这个替换放进数据库指南里的 `testdb` 包，这样每个测试都能用：
+**2. 任务。** 替换 `SendMail`，排入一封邮件并运行 worker，然后检查这封邮件有没有发出去。把这个替换放进数据库指南里的 `testdb` 包，这样每个测试都能用：
 
 ```go
 // testdb/testdb.go
@@ -341,4 +341,4 @@ func TestSendSMTPDeliversToTheServer(t *testing.T) {
 
 ## 试一试 {#try-it}
 
-把同一个假服务器做成一个小程序，跑在 2525 端口上，用 `SMTP_HOST=127.0.0.1 SMTP_PORT=2525 SMTP_TLS=none MAIL_NOTIFY=me@example.com` 启动构建好的应用，然后加一个待办。假服务器会打印出邮件，主题编码成 `=?UTF-8?q?...?=`，正文是 quoted-printable。停掉假服务器，再加一个待办，日志会说 `jobs: will retry ... connection refused`。停掉再启动应用，把假服务器重新开起来，邮件会在重试时间之后到达。
+做一个类似的假服务器小程序，跑在 2525 端口上，让它一直接收邮件，用 `SMTP_HOST=127.0.0.1 SMTP_PORT=2525 SMTP_TLS=none MAIL_NOTIFY=me@example.com` 启动构建好的应用，然后加一个待办。假服务器会打印出邮件，主题编码成 `=?UTF-8?q?...?=`，正文是 quoted-printable。停掉假服务器，再加一个待办，日志会说 `jobs: will retry ... connection refused`。停掉再启动应用，把假服务器重新开起来，邮件会在重试时间之后到达。

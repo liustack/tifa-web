@@ -10,7 +10,7 @@ order: 8
 
 你希望别人能在搜索结果里，以及在 ChatGPT、Claude 这类工具的回答里找到你的站点。做完之后，搜索引擎会拿到一份 sitemap，里面有每个公开页面、它的日期和它其他语言的版本，语言模型会拿到一份简短的站点索引，以及你的文章的 Markdown 文本。
 
-这一切来自一个设置和一个函数。下面的代码来自 [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.4.1/test/apps/i18n) 和 [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop/sitemap.go)。
+这一切来自一个设置和一个函数。下面的代码来自 [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.4.2/test/apps/i18n) 和 [examples/shop](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop/sitemap.go)。
 
 ## 打开它 {#turn-it-on}
 
@@ -271,7 +271,7 @@ sitemap、`llms` 文件和 Markdown 版本和其他请求一样：`OnRequest` �
 
 ## 测试它 {#test-it}
 
-`tifatest.Start` 运行整个应用，包括 `OnStart`，所以测试可以像搜索引擎那样读 sitemap（取自 [examples/shop](https://github.com/liustack/tifa/blob/v0.4.1/examples/shop/sitemap_test.go)）：
+`tifatest.Start` 运行整个应用，包括 `OnStart`，所以测试可以像搜索引擎那样读 sitemap（取自 [examples/shop](https://github.com/liustack/tifa/blob/v0.4.2/examples/shop/sitemap_test.go)）：
 
 ```go
 func TestSitemapListsTheStorefront(t *testing.T) {

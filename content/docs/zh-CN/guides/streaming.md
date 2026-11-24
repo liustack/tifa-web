@@ -225,7 +225,7 @@ function Ask() {
 }
 ```
 
-- 自己写响应的处理函数，它生成的 `POST` 函数不发送输入，所以问题要通过 `fetch` 发出，和上传的做法一样。
+- 自己写响应的处理函数，它生成的 `POST` 函数不发送输入，所以问题要通过 `fetch` 发出。
 - 对自己站点的 `fetch` 是同源的写请求，所以 [跨站检查](/docs/build-and-deploy/config#cross-site-writes) 会放行它。
 - 中途断掉的流会在 `reader.read()` 里抛出错误。页面保留已有的内容，并说明它被截断了。
 

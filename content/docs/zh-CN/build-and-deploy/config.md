@@ -97,7 +97,7 @@ Cloud Run、Heroku、Render、Railway 和 Fly 这样的托管平台，通过 `PO
 | `build.skip_tanstack_check` | `false` | 仅项目文件 | `true` 会构建 TanStack Router 不是 Tifa 测试过的版本的应用，这可能让页面在浏览器里变成空白。见 [build.md](/docs/build-and-deploy/build#the-apps-tsconfig-and-vite-config) |
 | `build.debug_info` | `false` | 仅项目文件 | `true` 把 DWARF 调试信息留在程序里，供 Delve 这样的调试器使用。不设时，`tifa build` 用 `-ldflags=-w` 去掉调试信息，这让示例 shop 的程序小约 20%。无论哪种，panic 仍然会给出每一帧的文件和行号。`tifa dev` 始终保留它。见 [build.md](/docs/build-and-deploy/build#debug-info) |
 | `build.i18next_cache` | `true` | 仅项目文件 | 服务端渲染会保留 i18next 翻译出来的字符串，同样的键和选项再来时直接给出，所以每次渲染都翻译同样文本的页面耗时更少：shop 的店面页面只要它的 0.778。`false` 会关掉它。应用的 formatter 和后处理器对同样的输入必须给出同样的文本。应用在第一次渲染之后不通过 i18next 的 API 改动 i18next 的资源或选项，或者给 i18next 传了读取请求内容的其他函数时，请关掉它，否则页面可能显示过期的翻译。见 [build.md](/docs/build-and-deploy/build#i18next-cache) |
-| `i18n.default` | 无 | 仅项目文件 | 带 `_locales/` 文件夹的应用的默认语言，是常见写法的 BCP 47 标签，比如 `zh-CN` 或 `en-US`。这种语言的 URL 没有前缀（除非 `i18n.prefix` 是 `always`），它在 `tifa.Languages()` 里排第一。只有一种语言的应用可以省略它。有多种语言时，没有它 `tifa build` 会失败，没有任何区域有它的文件时也会失败。每个区域都必须有默认语言。见[多语言网站](/docs/start/app#a-site-in-several-languages) |
+| `i18n.default` | 无 | 仅项目文件 | 带 `_locales/` 文件夹的应用的默认语言，是常见写法的 BCP 47 标签，比如 `zh-CN` 或 `en-US`。这种语言的 URL 没有前缀（除非 `i18n.prefix` 是 `always`），它在 `tifa.Languages()` 里排第一。只有一种语言的应用可以省略它。有多种语言时，没有它 `tifa build` 会失败，没有任何区域有它的文件时也会失败。每个区域都必须有默认语言。见[多语言站点](/docs/guides/i18n) |
 | `i18n.prefix` | `off` | 仅项目文件 | `always` 会把语言放进每个有语言的路由的 URL，默认语言也不例外：`/store` 会以 308 跳转到 `/zh-CN/store`。`off` 让默认语言没有前缀。不在任何区域里的路由，两种模式下都没有前缀 |
 | `site.url` | 无 | 仅项目文件 | 站点对外提供服务的协议和主机，比如 `https://shop.example.com`，不带路径。有多种语言的站点需要它，没有它 `tifa build` 会失败。它把站点标记为公开：每个页面得到一个 canonical 链接和一个 `og:url` meta，程序提供 `/sitemap.xml`、默认的 `/robots.txt`、`/llms.txt`、`/llms-full.txt` 和内容页面的 Markdown 版本。没有它就没有这些。见[搜索引擎与语言模型](/docs/guides/seo) |
 | `server.addr` | `127.0.0.1:9527` | `--server-addr`、`SERVER_ADDR` | 监听的地址。在容器里用 `0.0.0.0:9527`。开启 [HTTPS](#https) 时，它提供的是 HTTPS，必须设置，通常是 `:443` |
@@ -118,14 +118,14 @@ Cloud Run、Heroku、Render、Railway 和 Fly 这样的托管平台，通过 `PO
 | `server.csp_policy` | `script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'self'` | `--server-csp-policy`、`SERVER_CSP_POLICY` | `server.csp` 的策略：用分号分隔的指令。它只检查能让它保持为一个头的条件：可打印 ASCII，没有逗号，指令名由字母、数字和连字符组成 |
 | `server.trusted_origins` | 无 | `--server-trusted-origins`、`SERVER_TRUSTED_ORIGINS` | 允许它们的页面从另一个站点发送写入（POST、PUT、PATCH、DELETE）的 origin，用逗号分隔，比如 `https://admin.example.com,http://localhost:3000`。见[跨站写入](#cross-site-writes) |
 | `server.cross_site_paths` | 无 | `--server-cross-site-paths`、`SERVER_CROSS_SITE_PATHS` | 路径模式，对这些路径的写入不检查它来自哪个站点，用逗号分隔，比如 `POST /auth/apple/callback`。见[跨站写入](#cross-site-writes) |
-| `ssr.vms` | CPU 数（`GOMAXPROCS`），最多 4 | `--ssr-vms`、`SSR_VMS` | 预热好的 JavaScript VM，也就是同时能渲染多少个页面。在容器里它跟随 CPU 限制。在 1、2、4 和 8 个 CPU 上，默认值分别是 1、2、4 和 4 个 VM：每个 VM 占内存，而一个有内存限制、没有 CPU 限制的容器能看到它宿主机的每个 CPU。在 CPU 更多、内存也够的机器上，请自己设置，比如 `ssr.vms: 8` 或 `SSR_VMS=8`。你设置的值原样使用。什么时候该改它，见[给机器定规格](/docs/reference/performance#sizing-a-machine)。在每个 P 都在渲染（每个 P 一个 VM，1 个 CPU 上 `GOMAXPROCS=1`）的情况下实测，短请求要在渲染后面等大约 20 毫秒，原因在 Go 的调度器（它 10 毫秒的监控周期，两次，见 slowjs 的 [A long call and the Go scheduler](https://github.com/liustack/slowjs/blob/main/docs/internals/architecture.md#a-long-call-and-the-go-scheduler)）。在同一个 1 CPU 上设 `GOMAXPROCS=2` 时，它们的 P50 是 0.016 毫秒。要让它们保持快速，就让 `GOMAXPROCS` 大于 `ssr.vms`，不过多出来的 P 只有在还有 CPU 给它用时才有帮助。默认值在最多 4 个 CPU 时让两者相等，从 5 个起让 `GOMAXPROCS` 更大 |
+| `ssr.vms` | CPU 数（`GOMAXPROCS`），最多 4 | `--ssr-vms`、`SSR_VMS` | 预热好的 JavaScript VM，也就是同时能渲染多少个页面。在容器里它跟随 CPU 限制。在 1、2、4 和 8 个 CPU 上，默认值分别是 1、2、4 和 4 个 VM：每个 VM 占内存，而一个有内存限制、没有 CPU 限制的容器能看到它宿主机的每个 CPU。在 CPU 更多、内存也够的机器上，请自己设置，比如 `ssr.vms: 8` 或 `SSR_VMS=8`。你设置的值原样使用。什么时候该改它，见[给机器定规格](/docs/reference/performance#sizing-a-machine)。在每个 P 都在渲染（每个 P 一个 VM，1 个 CPU 上 `GOMAXPROCS=1`）的情况下实测，短请求要在渲染后面等大约 20 毫秒，原因在 Go 的调度器（它 10 毫秒的监控周期，两次，见 beastjs 的 [A long call and the Go scheduler](https://github.com/liustack/beastjs/blob/main/docs/internals/architecture.md#a-long-call-and-the-go-scheduler)）。在同一个 1 CPU 上设 `GOMAXPROCS=2` 时，它们的 P50 是 0.016 毫秒。要让它们保持快速，就让 `GOMAXPROCS` 大于 `ssr.vms`，不过多出来的 P 只有在还有 CPU 给它用时才有帮助。默认值在最多 4 个 CPU 时让两者相等，从 5 个起让 `GOMAXPROCS` 更大 |
 | `ssr.vm_memory` | `128MiB` | `--ssr-vm-memory`、`SSR_VM_MEMORY` | 每个 VM 的内存上限。内存用光的渲染会失败，VM 会被换成全新的。页面代码捕获不了它。引擎为复用而保留的 shape 也算在这里，最坏每个 VM 约 6 MiB（2048 个 shape，每个 32 个键，每个键约十个字符，键更长则更多），所以调低它时要给它们留出空间（见[内存](/docs/reference/performance#memory)）。一次回收后占用超过它一半的 VM 会在后台被换掉，所以 VM 稳定在那之上的应用需要更高的上限（见[内存](/docs/reference/performance#memory)） |
 | `ssr.vm_stack_depth` | `10000` | `--ssr-vm-stack-depth`、`SSR_VM_STACK_DEPTH` | 每个 VM 里 JavaScript 调用最多能嵌套多深，大约每次调用一层。更深的调用会抛出 `RangeError: Maximum call stack size exceeded`，深度和 Node 差不多。取值从 1 到 10000，见[栈深度](#stack-depth) |
 | `ssr.timeout` | `3s` | `--ssr-timeout`、`SSR_TIMEOUT` | 一次渲染的时间预算。运行更久的渲染会被停止，并作为意外错误处理，交给 `OnError`。页面代码捕获不了它 |
 | `ssr.queue_limit` | `32` | `--ssr-queue-limit`、`SSR_QUEUE_LIMIT` | 允许等待 VM 的渲染数，不含已经在运行的渲染。`0` 表示没有空闲 VM 时立刻拒绝。队列满了会以 503 回答，带 `Retry-After: 1` |
 | `ssr.wait_timeout` | `3s` | `--ssr-wait-timeout`、`SSR_WAIT_TIMEOUT` | 等待 VM 的最长时间。到期会以 503 回答，带 `Retry-After: 1`，不启动也不替换 VM。它和 `ssr.timeout` 是分开的，后者在拿到 VM 之后才开始计时 |
 | `ssr.memo_size` | `64MiB` | `--ssr-memo-size`、`SSR_MEMO_SIZE` | 渲染记忆 memo 的大小，按它保存的字节数算：每个页面一种形式，开了 `server.compress` 时是它的 gzip 形式，否则是它的 HTML（见[压缩](/docs/build-and-deploy/build#compression)）。满了之后最近最少使用的页面会被丢掉。`0` 会关掉它，不过同时没命中同一个页面的请求仍然共用一次渲染。memo 是什么、为什么安全：[渲染记忆 memo](/docs/reference/memo)。页面可以用 `Memo = false` 为自己关掉 memo（见 [SSR 与缓存](/docs/pages-and-data/ssr-and-cache#ssr-and-cache)） |
-| `cache.s_maxage` | `1m` | `--cache-s-maxage`、`CACHE_S_MAXAGE` | 写了 `const Cache = true` 的页面的 `s-maxage`：程序前面的共享缓存（比如 CDN）可以保存它多久。至少一秒。写了 `const Cache = 10 * time.Minute` 的页面用它自己的时间。见[给 CDN 用的缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns) |
+| `cache.s_maxage` | `1m` | `--cache-s-maxage`、`CACHE_S_MAXAGE` | 写了 `const Cache = true` 的页面的 `s-maxage`：程序前面的共享缓存（比如 CDN）可以保存它多久。见[给 CDN 用的缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns) |
 | `session.cookie` | `__Host-tifa_session` | `--session-cookie`、`SESSION_COOKIE` | 会话 cookie 的名字。在 `tifa dev` 下会去掉 `__Host-` 前缀，见[会话](/docs/pages-and-data/sessions) |
 | `session.max_age` | `720h` | `--session-max-age`、`SESSION_MAX_AGE` | 会话从 `tifa.SetSession` 创建它的那一刻起能持续多久，至少一秒。它不会续期 |
 | `session.memory_limit` | `64MiB` | `--session-memory-limit`、`SESSION_MEMORY_LIMIT` | 内存会话存储最多能保存的字节数，在 `OnStart` 没有用 `tifa.SetSessionStore` 设置存储时使用。存储满了会丢掉最先过期的会话 |
@@ -213,7 +213,7 @@ func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
 - 请求自己的截止时间早于 `ssr.wait_timeout` 时，失败的是那个截止时间，不是 `tifa.ErrSSRBusy`。客户端走掉会得到 `context.Canceled`。
 - 原样返回错误可以保留默认的响应：503、`Retry-After: 1` 和 `Cache-Control: no-store`。如果你改为返回自己的 `tifa.Error`，响应就用你的状态和消息，不会加默认的头。你要的头用 `c.SetHeader` 设置。
 
-测试应用 `testdata/overloadapp` 改了响应，并自己设置 `Retry-After`：
+要改变这个响应并自己设置 `Retry-After`：
 
 ```go
 func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
