@@ -44,6 +44,17 @@ pre.shiki code {
   @apply block w-max min-w-full border-0 bg-transparent p-0 text-[inherit];
 }
 
+/* The body of a doc sits in one wrapper element (<div data-tifa-html>) inside .prose. The
+   typography rule that takes the margin off the first and last child of .prose then meets the
+   wrapper, not the paragraph in it, and the paragraph keeps its top margin as a gap under the
+   header row. The same rule, one level down. */
+.prose > [data-tifa-html] > :first-child {
+  margin-top: 0;
+}
+.prose > [data-tifa-html] > :last-child {
+  margin-bottom: 0;
+}
+
 /* A wide table of a doc or a page of Markdown scrolls sideways inside its own box. */
 .prose table {
   display: block;
