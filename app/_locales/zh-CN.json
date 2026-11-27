@@ -85,8 +85,8 @@
   },
   "hero": {
     "tagline": "Go 全栈 Web 框架，页面用 React 写。",
-    "sub": "整个应用编译成一个可执行文件。1 核 1 GB 的 VPS 就能跑，不要 Node，不要 Redis，不要反向代理，用 `tifa deploy` 上线。",
-    "description": "整个应用编译成一个可执行文件。1 核 1 GB 的 VPS 就能跑，不要 Node，不要 Redis，不要反向代理，用 tifa deploy 上线。",
+    "sub": "整个应用编译成一个可执行文件。一台服务器就能跑，1 核 1 GB 也行，不要 Node，不要 Redis，不要反向代理，用 `tifa deploy` 上线。",
+    "description": "整个应用编译成一个可执行文件。一台服务器就能跑，1 核 1 GB 也行，不要 Node，不要 Redis，不要反向代理，用 tifa deploy 上线。",
     "start": "开始使用",
     "github": "GitHub",
     "status": "还在非常早期：接口会变",
