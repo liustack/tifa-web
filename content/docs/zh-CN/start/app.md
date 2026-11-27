@@ -10,7 +10,7 @@ order: 2
 
 这一篇讲 Tifa 应用怎么组织：`app/` 下的文件夹怎样变成 URL，Tifa 读哪些文件，静态文件怎么提供，以及其他框架的习惯在 Tifa 里该怎么写。
 
-完整的例子见 [examples/shop](https://github.com/liustack/tifa/blob/v0.7.3/examples/shop)。构建、生成的文件和怎么设置 go.mod，见[构建程序](/docs/build-and-deploy/build)和[生成的文件和应用的配置](/docs/reference/generated-files)。
+完整的例子见 [examples/shop](https://github.com/liustack/tifa/blob/v0.8.0/examples/shop)。构建、生成的文件和怎么设置 go.mod，见[构建程序](/docs/build-and-deploy/build)和[生成的文件和应用的配置](/docs/reference/generated-files)。
 
 ## 文件夹 {#folders}
 
@@ -123,7 +123,7 @@ Tifa 没有 `loading.tsx`。页面在服务器上整个渲染，所以第一次�
 
 ## 多语言站点 {#a-site-in-several-languages}
 
-在 `app/` 的某个文件夹里放一个 `_locales` 文件夹，每种语言一个 `<language>.json` 文件，这个文件夹和它下面的页面与 API 路由就会以这些语言提供。[examples/shop](https://github.com/liustack/tifa/blob/v0.7.3/examples/shop) 的店面是 `app/store/`，带 `_locales/zh-CN.json` 和 `_locales/en-US.json`。
+在 `app/` 的某个文件夹里放一个 `_locales` 文件夹，每种语言一个 `<language>.json` 文件，这个文件夹和它下面的页面与 API 路由就会以这些语言提供。[examples/shop](https://github.com/liustack/tifa/blob/v0.8.0/examples/shop) 的店面是 `app/store/`，带 `_locales/zh-CN.json` 和 `_locales/en-US.json`。
 
 ```yaml
 # tifa.yaml

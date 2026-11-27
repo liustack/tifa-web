@@ -10,7 +10,7 @@ order: 2
 
 This page covers how a Tifa app is laid out: how folders under `app/` become URLs, which files Tifa reads, how static files are served, and what to write in place of habits from other frameworks.
 
-For a complete example, see [examples/shop](https://github.com/liustack/tifa/blob/v0.7.3/examples/shop). For the build, the generated files and how to set up go.mod, see [Build the program](/docs/build-and-deploy/build) and [Generated files and app setup](/docs/reference/generated-files).
+For a complete example, see [examples/shop](https://github.com/liustack/tifa/blob/v0.8.0/examples/shop). For the build, the generated files and how to set up go.mod, see [Build the program](/docs/build-and-deploy/build) and [Generated files and app setup](/docs/reference/generated-files).
 
 ## Folders
 
@@ -123,7 +123,7 @@ Tifa has no `loading.tsx`. A page is rendered whole on the server, so a first vi
 
 ## A site in several languages
 
-Put a `_locales` folder in a folder of `app/`, with one `<language>.json` file per language, and the pages and API routes in that folder and below it are offered in those languages. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.7.3/examples/shop) is `app/store/` with `_locales/zh-CN.json` and `_locales/en-US.json`.
+Put a `_locales` folder in a folder of `app/`, with one `<language>.json` file per language, and the pages and API routes in that folder and below it are offered in those languages. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.8.0/examples/shop) is `app/store/` with `_locales/zh-CN.json` and `_locales/en-US.json`.
 
 ```yaml
 # tifa.yaml

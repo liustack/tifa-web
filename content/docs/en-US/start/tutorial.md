@@ -507,6 +507,6 @@ The program keeps its data in `app.db` in the folder it runs in, so run from the
 - Settings, HTTPS, the cache of rendered pages: [Configuration](/docs/build-and-deploy/config).
 - Sign users in: [Sessions](/docs/pages-and-data/sessions). The app keeps sessions in `app.db` (`sessions.go`), so a restart signs nobody out.
 - Styles and shadcn/ui: [Styles](/docs/pages-and-data/styles). A site in several languages: [Writing an app](/docs/start/app#a-site-in-several-languages). Caching a page: [Render switches and caches](/docs/pages-and-data/ssr-and-cache#cache-for-cdns).
-- A bigger app to read: [examples/shop](https://github.com/liustack/tifa/blob/v0.7.3/examples/shop).
+- A bigger app to read: [examples/shop](https://github.com/liustack/tifa/blob/v0.8.0/examples/shop).
 - How `tifa dev` reacts to each change: [What each change triggers](/docs/build-and-deploy/dev-reloads). How to read its log: [Log](/docs/build-and-deploy/dev-errors#log).
 - Why the folders look the way they do: [Structuring an app](/docs/start/structure) and [Philosophy](/docs/start/philosophy).

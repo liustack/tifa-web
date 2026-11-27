@@ -1,11 +1,11 @@
 # Notes for coding agents
 
 <!-- tifa:begin -->
-<!-- Written by Tifa v0.7.3 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
+<!-- Written by Tifa v0.8.0 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
 
-This is a [Tifa](https://github.com/liustack/tifa) app. Go routes requests, loads data and runs the hooks. React pages render to HTML inside the Go process (beastjs, no Node at run time), and TanStack Router takes over in the browser. The build bundles the front end with Vite, on Node, and makes one executable that needs no Node.
+This is a [Tifa](https://github.com/liustack/tifa) app. Go routes requests, loads data and runs the hooks. React pages render to HTML inside the Go process (beastjs, no Node at run time), and TanStack Router takes over in the browser. The build bundles the front end with Vite on Node into one executable that needs no Node.
 
-Before you change code, read the docs that apply. [Docs](#docs) at the end of this block names them, and `go tool tifa docs` says what each one covers. They are those of the Tifa version in `go.mod`. Do not read the docs on GitHub, which belong to the main branch.
+Before you change code, read the docs that apply. [Docs](#docs) at the end of this block names them, and `go tool tifa docs` says what each one covers. They are those of the Tifa version in `go.mod`. Not those on GitHub, which are for main.
 
 ## Commands
 
@@ -66,8 +66,9 @@ Never edit `.tifa/`. It is generated.
 ## Settings and data
 
 - `tifa.yaml` lists every setting at its default, and `options.go` holds the options of the app. See `docs/build-and-deploy/config.md`.
-- `db.go` opens SQLite with `_txlock=immediate`, so a transaction takes the write lock at `BEGIN` and never fails halfway with `database is locked`. Keep it, and start a transaction that only reads with `sql.TxOptions{ReadOnly: true}`. See `docs/guides/database.md`.
-- The option `db.backup` (`DB_BACKUP`), empty by default, copies every commit to S3 or R2 and restores a missing database at start. See "Back it up" in `docs/guides/database.md`.
+- `deploy.front` is `cloudflare` in `tifa.yaml` (needs a `site.url` domain). Others: `deploy.md`.
+- `db.go` opens SQLite with `_txlock=immediate`, so a transaction takes the write lock at `BEGIN` and never fails with `database is locked`. Keep it, and start a transaction that only reads with `sql.TxOptions{ReadOnly: true}`. See `docs/guides/database.md`.
+- The option `db.backup` (`DB_BACKUP`) copies every commit to S3 or R2 and restores a missing database at start. See "Back it up" in `docs/guides/database.md`.
 - Under `tifa dev`, a page that fails answers with the whole error: `curl -i` the page, or run `go tool tifa errors`.
 
 ## Docs
@@ -77,7 +78,7 @@ Never edit `.tifa/`. It is generated.
 - `docs/start/`: `tutorial.md`, `app.md`, `philosophy.md`, `structure.md`, `agents.md`
 - `docs/pages-and-data/`: `routing.md`, `layouts.md`, `loading-data.md`, `handlers.md`, `navigation.md`, `head.md`, `errors.md`, `styles.md`, `content.md`, `sessions.md`, `hooks.md`, `server-render.md`, `ssr-and-cache.md`, `testing-apps.md`, `testing-pages.md`
 - `docs/guides/`: `forms.md`, `database.md`, `sign-in.md`, `uploads.md`, `email.md`, `jobs.md`, `i18n.md`, `seo.md`, `streaming.md`, `environment.md`, `logs.md`, `security.md`, `sign-up.md`, `password-reset.md`, `oauth.md`, `flash-messages.md`, `cors.md`, `websocket.md`, `commands.md`
-- `docs/build-and-deploy/`: `create-app.md`, `dev.md`, `dev-reloads.md`, `dev-errors.md`, `dev-scripts.md`, `debugging.md`, `check.md`, `build.md`, `upgrade.md`, `deploy.md`, `deploy-setup.md`, `deploy-github-actions.md`, `deploy-cloudflare.md`, `deploy-proxy.md`, `deploy-operate.md`, `deploy-by-hand.md`, `config.md`, `tuning.md`, `https.md`, `headers-and-origins.md`, `kubernetes.md`, `deploy-harden.md`, `deploy-several-servers.md`
+- `docs/build-and-deploy/`: `create-app.md`, `dev.md`, `dev-reloads.md`, `dev-errors.md`, `dev-scripts.md`, `debugging.md`, `check.md`, `build.md`, `upgrade.md`, `deploy.md`, `deploy-setup.md`, `deploy-github-actions.md`, `deploy-cloudflare.md`, `deploy-proxy.md`, `deploy-operate.md`, `deploy-by-hand.md`, `config.md`, `tuning.md`, `https.md`, `headers-and-origins.md`, `kubernetes.md`, `deploy-harden.md`, `deploy-several-servers.md`, `containers.md`
 - `docs/reference/`: `conventions.md`, `memo.md`, `performance.md`, `compatibility.md`, `ctx.md`, `json.md`, `settings.md`, `generated-files.md`, `build-output.md`, `route-modules.md`, `route-tree.md`, `data-protocol.md`, `page-requests.md`, `server-program.md`, `i18next.md`
 
 <!-- tifa:end -->
