@@ -19,7 +19,7 @@ Four steps put an entry on a page:
 3. Read them in a `Load` with the methods of the collection.
 4. Show the body with `<HTML>`.
 
-The code in this page is from [test/apps/content](https://github.com/liustack/tifa/blob/v0.7.3/test/apps/content), an app with a blog and docs in two languages.
+The code in this page is from [test/apps/content](https://github.com/liustack/tifa/blob/v0.8.0/test/apps/content), an app with a blog and docs in two languages.
 
 ## Declaring a collection
 

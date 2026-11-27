@@ -22,7 +22,7 @@ go tool tifa upgrade [version] [--dir app-root]
 2. 命令把剩下的事交给新的 Tifa，即 `go tool tifa upgrade --after <old version>`。旧的二进制不做这些，因为只有新的 Tifa 才知道它固定了哪些版本，以及它的 skill 写了什么。
 3. `tifa new` 用精确版本写出的那些包（`react`、`react-dom`、`@tanstack/react-router`、`vite`，以及它的 `package.json` 里的其他包），当应用把它们列成更旧的精确版本时，会被设成新 Tifa 的版本。其他每个包、其他每个键和文件的排版都保持原样。比固定版本更新的包会保留，并带一行类似 `react 19.4.0 is newer than the 19.3.0 Tifa is tested with, left as it is` 的提示。写成 `^19.2.0`、`~19.2.0`、范围、标签或 `workspace:` 的版本从不去猜：它会保留，并带一行说明。例外是 `@tanstack/react-router`，`tifa build` 只接受它恰好是固定的那个版本（见[应用的 tsconfig 和 Vite 配置](/docs/reference/generated-files#the-apps-tsconfig-and-vite-config)）：它的精确版本，不管更旧还是更新，都会被设成固定的版本，写成范围的则保留，并带一行要你手动设置的提示。然后运行安装命令，`pnpm install` 或你的锁文件对应的那个命令。
 4. skill 和 `AGENTS.md` 里由 Tifa 管理的部分会重新写出，和 [`tifa agents`](#tifa-agents) 做的一样。
-5. 它会打印你旧版本之后、直到新版本为止的每个 [CHANGELOG.md](https://github.com/liustack/tifa/blob/v0.7.3/CHANGELOG.md) 条目里的每条 `Upgrading:` 说明，每条都带着它的版本。这些是需要你动手做的步骤：这个命令从不修改你的 Go 或 TypeScript 代码。
+5. 它会打印你旧版本之后、直到新版本为止的每个 [CHANGELOG.md](https://github.com/liustack/tifa/blob/v0.8.0/CHANGELOG.md) 条目里的每条 `Upgrading:` 说明，每条都带着它的版本。这些是需要你动手做的步骤：这个命令从不修改你的 Go 或 TypeScript 代码。
 6. 运行 `tifa check`，它的结果就是 `tifa upgrade` 的结果。
 
 Tifa 在各个发布版本之间保持稳定的是什么，以及哪些在任何版本里都可能改变，见[兼容性](/docs/reference/compatibility)。
@@ -48,7 +48,7 @@ check passed
 - 它会拒绝比 `go.mod` 里更旧的版本，是同一个版本时则说明应用已经在那个版本了。它会拒绝 `go.mod` 里替换了 Tifa 的应用，因为这时 `go.mod` 里的版本并不是应用构建所用的版本。拒绝时什么都不会改。当正在使用 `go.work` 文件时（设置了 `GOWORK`，或应用里或它上层有一个），它也会拒绝，因为 `go get` 会写到工作区里，而 `go tool` 会遵循它：请改运行 `GOWORK=off go tool tifa upgrade`。
 - 它从不转交给应用自己的 Tifa，所以在 Tifa 太旧、还没有这个命令的应用里也能用：用你安装的 Tifa 运行它（见[全局安装命令](/docs/build-and-deploy/create-app#installing-the-command-globally)），或者运行 `go run github.com/liustack/tifa/cmd/tifa@latest upgrade`。
 - 版本按语义化版本比较，并且只比较精确版本。React 和 React DOM 可以比固定版本更新（`tifa build` 只需要 19.3.0 或更高），所以更新的版本由你自己保留。
-- `Upgrading:` 说明是这个词之后的文字，直到它在更新日志里所在的列表项结束，所以条目要把它写在最后（见 [commit.md](https://github.com/liustack/tifa/blob/v0.7.3/docs/internals/commit.md#changelog)）。
+- `Upgrading:` 说明是这个词之后的文字，直到它在更新日志里所在的列表项结束，所以条目要把它写在最后（见 [commit.md](https://github.com/liustack/tifa/blob/v0.8.0/docs/internals/commit.md#changelog)）。
 - 它不问任何问题，也没有试运行。它可能改动的文件有 `go.mod`、`go.sum`、`package.json`、锁文件、`AGENTS.md` 和 `.claude/skills/tifa/`，所以 `git diff` 就是试运行。
 
 当 `go get` 之后的某一步失败时（`pnpm install` 失败，或 `tifa check` 失败），命令会以那个失败的状态退出，并以一行结束：Go 已经在新版本了，后面的步骤没有完成。请修好原因，然后运行它打印的那一行 `cd <app> && go tool tifa upgrade --after <old version>`，它会把 `go mod tidy` 之后的步骤再做一遍。`--after` 接受应用原来的版本，写成 `v0.0.17` 这样。
@@ -63,7 +63,7 @@ tifa agents [--dir app-root] [--check] [--skills-dir .claude/skills/tifa]
 
 根据应用所用的 Tifa 版本，写出编码 agent 在应用里要读的东西（`go tool tifa` 是用 `go.mod` 里的模块构建的，所以它里面的文件就是那个版本的）：
 
-- Tifa skill，在 `.claude/skills/tifa/` 里：`SKILL.md` 和它的 `references/`。它们是 Tifa 仓库里 [`skills/tifa`](https://github.com/liustack/tifa/tree/v0.7.3/skills/tifa) 的文件，命令把它们带在自己里面，并多加了一行，说明是哪个 Tifa 写的这个文件，以及升级之后要再运行 `go tool tifa agents`。它里面的链接指向已安装版本的文档（`docs/testing-apps.md#testing`，在 `go tool tifa docs` 打印的文件夹里），而不是 GitHub。
+- Tifa skill，在 `.claude/skills/tifa/` 里：`SKILL.md` 和它的 `references/`。它们是 Tifa 仓库里 [`skills/tifa`](https://github.com/liustack/tifa/tree/v0.8.0/skills/tifa) 的文件，命令把它们带在自己里面，并多加了一行，说明是哪个 Tifa 写的这个文件，以及升级之后要再运行 `go tool tifa agents`。它里面的链接指向已安装版本的文档（`docs/testing-apps.md#testing`，在 `go tool tifa docs` 打印的文件夹里），而不是 GitHub。
 - `AGENTS.md` 里标记行之间的部分（见 [AGENTS.md 里由 Tifa 管理的部分](#the-managed-block-of-agentsmd)）。
 - `.github/workflows/ci.yml`，即 `tifa new` 写出的工作流，但只在应用没有 `.github/workflows/ci.yml` 也没有其他工作流文件时才写。它只写一次，从不替换，`--check` 也不要求它。用 yarn 或 bun 的应用会得到一条提示，因为这个工作流只有 pnpm 和 npm 的步骤。
 

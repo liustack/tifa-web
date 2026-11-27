@@ -90,7 +90,7 @@ export default function StatsPage() {
 - Nothing the `.client.tsx` file imports reaches the SSR bundle. In the browser it is a chunk of its own, fetched the first time the component renders, also when the page itself is part of the entry script (the root Layout is).
 - The component shows a moment after the rest of the page, since its code is fetched after hydration. If the fetch fails, the component throws and the nearest `ErrorBoundary` shows.
 
-Keeping a browser-only library out of the SSR bundle this way made the bundle of the example shop a third smaller and its stats page render 21% faster. [Optimizations](https://github.com/liustack/tifa/blob/v0.7.3/docs/studies/optimizations.md#build) has the full numbers.
+Keeping a browser-only library out of the SSR bundle this way made the bundle of the example shop a third smaller and its stats page render 21% faster. [Optimizations](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/optimizations.md#build) has the full numbers.
 
 ## Intl in server rendering
 

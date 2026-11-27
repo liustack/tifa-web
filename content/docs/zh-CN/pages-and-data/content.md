@@ -19,7 +19,7 @@ order: 9
 3. 在 `Load` 里用集合的方法读取它们。
 4. 用 `<HTML>` 显示正文。
 
-本页的代码来自 [test/apps/content](https://github.com/liustack/tifa/blob/v0.7.3/test/apps/content)，一个有两种语言的博客和文档的应用。
+本页的代码来自 [test/apps/content](https://github.com/liustack/tifa/blob/v0.8.0/test/apps/content)，一个有两种语言的博客和文档的应用。
 
 ## 声明集合 {#declaring-a-collection}
 
