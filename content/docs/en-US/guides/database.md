@@ -1,6 +1,6 @@
 ---
 title: Keeping data in SQLite
-description: How to keep data in a Tifa app with SQLite
+description: Keep data with SQLite
 source: docs/guides/database.md
 group: Guides
 groupOrder: 3
@@ -8,7 +8,7 @@ order: 2
 ---
 
 
-Tifa has no database layer. Your app opens a database in `OnStart` and uses it with `database/sql`, like any Go program. This guide takes the SQLite setup that [`tifa new`](/docs/build-and-deploy/build#tifa-new) writes and adds what a real app needs next: a setting for the file, migrations, a transaction, a backup and tests.
+Tifa has no database layer. Your app opens a database in `OnStart` and uses it with `database/sql`, like any Go program. This guide takes the SQLite setup that [`tifa new`](/docs/build-and-deploy/create-app#tifa-new) writes and adds what a real app needs next: a setting for the file, migrations, a transaction, a backup and tests.
 
 The code is from a scratch app made with `tifa new`, module `example.com/notes`. Where the files go is in [Structuring an app](/docs/start/structure#2-shared-resources-and-other-dependencies).
 
@@ -35,7 +35,7 @@ package notes
 import (
 	"context"
 	"database/sql"
-	"net/url"
+	"embed"
 
 	_ "github.com/liustack/sqlite"
 )
@@ -43,32 +43,32 @@ import (
 // DB is the database of the app. OnStart opens it and OnShutdown closes it.
 var DB *sql.DB
 
-func OpenDB(ctx context.Context, path string) (*sql.DB, error) {
-	// The pragmas run on every connection of the pool. WAL lets reads go on during a write, and
-	// SQLite checks foreign keys only when asked to. A write waits up to 5s for another one by
-	// default (change it with _pragma=busy_timeout(ms)). A transaction that reads first and then
-	// writes can fail with SQLITE_BUSY even with a timeout, so _txlock=immediate makes every
-	// transaction take the write lock as it starts.
-	q := url.Values{
-		"_pragma": {"journal_mode(WAL)", "synchronous(NORMAL)", "foreign_keys(1)"},
-		"_txlock": {"immediate"},
-	}
-	db, err := sql.Open("sqlite", "file:"+path+"?"+q.Encode())
-	if err != nil {
+//go:embed migrations/*.sql
+var migrationFiles embed.FS
+
+// OpenDB opens the database at path, after it runs the files of migrations/ that it has not run
+// yet (see "Change the tables" below).
+func OpenDB(path string) (*sql.DB, error) {
+	if err := migrate(context.Background(), path, migrationFiles); err != nil {
 		return nil, err
 	}
-	if err := migrate(ctx, db); err != nil {
-		db.Close()
-		return nil, err
-	}
-	return db, nil
+	return open(path)
+}
+
+// open opens the database at path. The pragmas run on every connection of the pool. WAL lets
+// reads go on during a write, and SQLite checks foreign keys only when asked to. A write waits up
+// to 5s for another one by default (change it with _pragma=busy_timeout(ms)). A transaction that
+// reads first and then writes can fail with SQLITE_BUSY even with a timeout, so _txlock=immediate
+// makes every transaction take the write lock as it starts.
+func open(path string) (*sql.DB, error) {
+	return sql.Open("sqlite", "file:"+path+"?_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=foreign_keys(1)&_txlock=immediate")
 }
 ```
 
 ```go
 // hooks.go
 func OnStart(ctx context.Context) error {
-	db, err := OpenDB(ctx, DBPath)
+	db, err := OpenDB(DBPath)
 	if err != nil {
 		return err
 	}
@@ -91,114 +91,218 @@ var DBPath = tifa.String("db.path", "app.db", "SQLite database file")
 ```
 
 - A relative path is resolved against the folder the program runs in. That is the app root under `tifa dev`, and the folder you start the program from on a server.
-- On a server, put the file in a folder meant for data and name it with the environment: `DB_PATH=/var/lib/notes/app.db`. [Deploying](/docs/build-and-deploy/deploy#run-it) says to back that folder up or mount it in a container.
+- On a server, put the file in a folder meant for data and name it with the environment: `DB_PATH=/var/lib/notes/app.db`. [Deploying](/docs/build-and-deploy/deploy-by-hand#run-it) says to back that folder up or mount it in a container.
 - SQLite in WAL mode keeps two more files next to it, `app.db-wal` and `app.db-shm`. Do not copy the three by hand while the app runs, see the backup below. Keep all three out of git (the `.gitignore` of `tifa new` does).
 - One program owns the file. Two copies of the app on the same file work for a short overlap during a deploy, but a second server needs [Postgres](#when-to-use-postgres).
 
-## Change the tables with migrations
+## Change the tables
 
-`tifa new` creates its tables with `CREATE TABLE IF NOT EXISTS` at every start. That cannot change a table that already holds data. For that, keep the tables as a list of numbered SQL files and apply the new ones at start.
+The tables of an app from `tifa new` are a list of numbered SQL files in `migrations/`, one per change. At every start, before the app listens, `OpenDB` runs the files the database has not run yet, in order, with [goose](https://github.com/pressly/goose), a Go library for migrations. goose records each file it ran in the table `goose_db_version`.
 
 ```text
 migrations/
-  001_todos.sql
+  001_init.sql                the tables tifa new made
   002_todo_created_at.sql
   003_jobs.sql
+db.go                         OpenDB, which runs them
+migrate_test.go               TestSchema, which writes schema.sql, and TestDropsSayWhy
+schema.sql                    the tables as the files leave them, for reading
 ```
+
+### Add a migration
+
+Write the change as the next file. It starts with `-- +goose Up`:
 
 ```sql
 -- migrations/002_todo_created_at.sql
+-- +goose Up
 ALTER TABLE todos ADD COLUMN created_at TEXT NOT NULL DEFAULT '';
 UPDATE todos SET created_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now');
 ```
 
-The runner is about fifty lines. It remembers the last file it applied in `PRAGMA user_version`, a number SQLite stores in the database file, so there is no extra table:
+goose cuts a file into statements at each semicolon that ends a line, so a trigger, whose body holds semicolons, goes between `-- +goose StatementBegin` and `-- +goose StatementEnd` ([goose's annotations](https://pressly.github.io/goose/documentation/annotations/)). Leave out `-- +goose Down`: the database never goes back, see [Keep a rollback working](#keep-a-rollback-working).
+
+Then write `schema.sql` again and commit both:
+
+```sh
+go test -run TestSchema -update
+```
+
+`schema.sql` is the one file that shows every table as it is now. Never edit it: `TestSchema` writes it from the migrations and fails, in `go test` and `go tool tifa check`, when it does not match them. A table changed in `schema.sql` by hand would never reach a database that exists.
+
+A file is SQL only. Data work that needs Go, such as calling a service for every row, goes in the Go code of the app: a [command of the app](/docs/guides/commands) that you run once, or a [background job](/docs/guides/jobs).
+
+### What happens at start
+
+`db.go` holds the code. It is short, and yours to change:
 
 ```go
-// migrate.go
-package notes
-
-import (
-	"context"
-	"database/sql"
-	"embed"
-	"fmt"
-	"io/fs"
-	"path"
-	"sort"
-	"strconv"
-	"strings"
-)
-
-//go:embed migrations/*.sql
-var migrationFiles embed.FS
-
-// migrate applies the files of migrations/ that the database has not seen yet, in the order of
-// their numbers. The file 003_x.sql is version 3.
-func migrate(ctx context.Context, db *sql.DB) error {
-	names, err := fs.Glob(migrationFiles, "migrations/*.sql")
+// migrate runs the files of the migrations/ folder of files that the database at path has not run
+// yet, with goose, each in a transaction of its own. Without db.backup, it first copies the
+// database to path.before-migrations.
+func migrate(ctx context.Context, path string, files fs.FS) error {
+	dir, err := fs.Sub(files, "migrations")
 	if err != nil {
 		return err
 	}
-	sort.Strings(names)
-	for i, name := range names {
-		version, err := strconv.Atoi(strings.SplitN(path.Base(name), "_", 2)[0])
-		if err != nil || version != i+1 {
-			return fmt.Errorf("migrations: %s must be numbered %03d", name, i+1)
-		}
-	}
-	// One connection for the whole run, so the lock and the version belong together.
-	conn, err := db.Conn(ctx)
+	// goose gets a pool of one connection, which Close drops: a file with
+	// -- +goose NO TRANSACTION, such as a table rebuild, turns foreign keys off on it.
+	db, err := open(path)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
-	// BEGIN IMMEDIATE takes the write lock now, so a second copy of the app that starts at the
-	// same time waits here and then finds the work done.
-	if _, err := conn.ExecContext(ctx, "BEGIN IMMEDIATE"); err != nil {
+	defer db.Close()
+	db.SetMaxOpenConns(1)
+	p, err := goose.NewProvider(goose.DialectSQLite3, db, dir)
+	if err != nil {
 		return err
 	}
-	committed := false
-	defer func() {
-		if !committed {
-			conn.ExecContext(context.WithoutCancel(ctx), "ROLLBACK")
-		}
-	}()
-	var current int
-	if err := conn.QueryRowContext(ctx, "PRAGMA user_version").Scan(&current); err != nil {
+	current, newest, err := p.GetVersions(ctx)
+	if err != nil {
 		return err
 	}
-	if current > len(names) {
-		return fmt.Errorf("migrations: the database is at version %d, this program knows %d. A newer version of the app wrote it", current, len(names))
+	if current > newest {
+		// A newer release ran more files and was rolled back. goose skips them, and this release
+		// runs on those tables.
+		slog.Warn("migrations: the database ran files this release does not have", "database_version", current, "newest_file", newest)
 	}
-	for i := current; i < len(names); i++ {
-		text, err := migrationFiles.ReadFile(names[i])
-		if err != nil {
+	if DBBackup == "" && current > 0 && current < newest {
+		// VACUUM INTO writes a consistent copy, and fails when the file exists.
+		if err := os.Remove(path + ".before-migrations"); err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
-		if _, err := conn.ExecContext(ctx, string(text)); err != nil {
-			return fmt.Errorf("migrations: %s: %w", names[i], err)
-		}
-		// PRAGMA takes no bound value. i+1 is a number we made.
-		if _, err := conn.ExecContext(ctx, fmt.Sprintf("PRAGMA user_version = %d", i+1)); err != nil {
+		if _, err := db.ExecContext(ctx, "VACUUM INTO ?", path+".before-migrations"); err != nil {
 			return err
 		}
 	}
-	_, err = conn.ExecContext(ctx, "COMMIT")
-	committed = err == nil
+	ran, err := p.Up(ctx)
+	if err != nil {
+		return fmt.Errorf("migrations: %w", err)
+	}
+	for _, r := range ran {
+		slog.Info("migrations: ran", "file", r.Source.Path)
+	}
+	return nil
+}
+```
+
+- **Each file in its own transaction.** goose runs a file and records it in one transaction. A file that fails, or a program stopped halfway through it, leaves nothing of that file, and `OnStart` returns the error, such as `migrations: partial migration error (type:sql,version:4): sqlite: no such table: nope`, so the app does not start. The files before it stay: of three new files where the third fails, the first two are in the database, and the next start goes on from the third. The release a failed deploy goes back to then runs on tables with those two files, which [Keep a rollback working](#keep-a-rollback-working) already asks of every release.
+- **Before the first request.** `OnStart` finishes before the app listens, so no request sees a half-changed table.
+- **It runs on newer tables.** When the database ran files the program does not have, because a newer release ran them and was rolled back, goose skips them without a word. `OpenDB` then logs one warning, `migrations: the database ran files this release does not have database_version=5 newest_file=4`, and starts.
+- **goose has a connection of its own.** It runs on a pool of one connection, which `OpenDB` closes before it opens the pool of the app. goose runs every statement of a file on that connection, so a file that turns foreign keys off, as the [table rebuild](#change-a-column-type-or-a-constraint) does, never leaves them off for the app.
+- **It copies the database first, without a backup.** When the option `db.backup` is empty and new files are about to run on a database that ran some before, it first writes a copy next to it, `app.db.before-migrations`, in place of the copy of the start before. With `db.backup` set, the backup already holds every earlier state, see [Undo a bad deploy](#undo-a-bad-deploy).
+- **The build does not run migrations.** `tifa build` only reads your code ([Philosophy](/docs/start/philosophy#do-things-the-go-way)), so it needs no database.
+
+A file that ran only on your machine may still change, such as the newest one before you deploy it: move your local `app.db` aside, and the next start makes it again from all the files.
+
+### Move over from schema.sql or an earlier runner
+
+An app made before `tifa new` wrote `migrations/` runs `schema.sql` at every start. Put its statements into `migrations/001_init.sql` as they are, with `IF NOT EXISTS`, after a first line `-- +goose Up`. Take `migrate` and `open` of `db.go` and `migrate_test.go` from a new app, and run `go get github.com/pressly/goose/v3`. On a database that exists, `001_init.sql` then changes nothing, and goose records it as run.
+
+An app that took the runner of an earlier version of this guide counts its files in `PRAGMA user_version`. Add `-- +goose Up` at the top of each file, and before its first start with goose, give the database goose's records of the files it ran. These statements do that, and change nothing on a database that has the records. Run them in `migrate`, before `goose.NewProvider`, for as long as a database may still need them:
+
+```go
+// The files the runner before goose ran, counted in PRAGMA user_version.
+if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS goose_db_version (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  version_id INTEGER NOT NULL,
+  is_applied INTEGER NOT NULL,
+  tstamp     TIMESTAMP DEFAULT (datetime('now'))
+);
+INSERT INTO goose_db_version (version_id, is_applied)
+  WITH RECURSIVE v(n) AS (SELECT 0 UNION ALL SELECT n + 1 FROM v WHERE n < (SELECT user_version FROM pragma_user_version))
+  SELECT n, 1 FROM v WHERE NOT EXISTS (SELECT 1 FROM goose_db_version);`); err != nil {
 	return err
 }
 ```
 
-How it behaves:
+### Keep a rollback working
 
-- **All or nothing.** SQLite can roll back table changes, so the files of one start and the new version number are one transaction. A file that fails leaves the database as it was, and `OnStart` returns the error, so the app does not start.
-- **Before the first request.** `OnStart` finishes before the app listens, so no request sees a half-changed table. A slow change delays the start by as long as it takes.
-- **Never edit a file that has run.** Add the next number instead. The runner cannot tell that an old file changed.
-- **No down files.** To go back, restore the backup taken before the deploy. A program that finds a database from a newer version refuses to start instead of guessing.
-- **The build does not run migrations.** `tifa build` only reads your code ([Philosophy](/docs/start/philosophy#do-things-the-go-way)), so it needs no database.
+[`tifa deploy rollback`](/docs/build-and-deploy/deploy#roll-back), and a deploy that fails its check, start an older release on the same database. The database does not go back: it would lose what visitors wrote since. So an older release must work on the tables of every newer one:
 
-Why not a library? [goose](https://github.com/pressly/goose) is a Go library that applies embedded SQL files through `database/sql`, with SQLite and Postgres. Take it when you want down files or expect to move to Postgres. For one SQLite file, the runner above is less to learn and fits on a page. Both need the same habit: one numbered file per change.
+- **Never edit a file that ran anywhere but on your machine.** Write the next file. goose does not look at a file again once it ran, so an edit never reaches the databases that ran it, while new databases get it, and the two drift apart.
+- **Each release must run on the tables of the next.** These are safe: add a table, add a column that may be `NULL` or has a default, add an index. These add something and still break older code: a `UNIQUE` index or a `CHECK` that the writes of the older code fail, and an `UPDATE` that changes what values mean, such as `'done'` becoming `'completed'`.
+- **Name the columns in every `SELECT` and `INSERT`.** With `SELECT *`, a column added later makes `Scan` fail with `sql: expected 4 destination arguments in Scan, not 3`. `INSERT INTO todos VALUES (...)` fails on the column count.
+- **Rename or drop over three releases.** First add the new column and write to both. Then read the new one. Drop the old one in a later release, once no release you could roll back to uses it: rollback reaches the last 5 releases that passed their check, which `go tool tifa deploy status` lists. A file that drops or renames a table or a column has a comment that says why it is safe as its first line after the `-- +goose` lines, and `TestDropsSayWhy` in `migrate_test.go` fails without one.
+
+### Change a column type or a constraint
+
+SQLite's `ALTER TABLE` adds, renames and drops a column, and renames a table. Anything else, such as a column type, `NOT NULL`, a default, a `CHECK` or a foreign key, means building the table again ([SQLite's steps](https://www.sqlite.org/lang_altertable.html#otheralter)). Its `DROP TABLE` deletes the rows of other tables that point at the table with `ON DELETE CASCADE`, unless foreign keys are off. `PRAGMA foreign_keys` does nothing inside a transaction, and goose runs a file in one, so the file turns that off with `-- +goose NO TRANSACTION` and holds its own transaction ([the driver explains it](https://pkg.go.dev/github.com/liustack/sqlite#hdr-Foreign_keys_in_a_migration)). `migrations/004_todo_done_check.sql`:
+
+```sql
+-- Builds todos again to add CHECK (done IN (0, 1)), with every column it had.
+-- +goose Up
+-- +goose NO TRANSACTION
+PRAGMA foreign_keys = OFF;
+BEGIN IMMEDIATE;
+CREATE TABLE new_todos (
+  id    INTEGER PRIMARY KEY,
+  title TEXT    NOT NULL,
+  done  INTEGER NOT NULL DEFAULT 0 CHECK (done IN (0, 1))
+);
+INSERT INTO new_todos (id, title, done) SELECT id, title, done FROM todos;
+DROP TABLE todos;
+ALTER TABLE new_todos RENAME TO todos;
+-- DROP TABLE removed the indexes and triggers of todos: make them again here.
+-- Fails when a row points at a row that is not there, so COMMIT does not run.
+CREATE TEMP TABLE foreign_keys_ok (rows_pointing_nowhere INTEGER CHECK (rows_pointing_nowhere = 0));
+INSERT INTO foreign_keys_ok SELECT count(*) FROM pragma_foreign_key_check;
+DROP TABLE foreign_keys_ok;
+COMMIT;
+PRAGMA foreign_keys = ON;
+```
+
+- Keep the order: foreign keys off before `BEGIN`, the check before `COMMIT`. `PRAGMA foreign_key_check` only lists the rows that point nowhere, and the `CHECK` of the temporary table turns any such row into an error. When a statement fails, goose stops there, and `OpenDB` closes goose's connection, which undoes the open transaction: the table is as it was, and the file counts as not run.
+- Name the columns in the `INSERT ... SELECT`, so a column cannot land in another one.
+- The new table keeps every column, so older releases still work on it, unless the new constraint fails their writes.
+- The first line says what the rebuild keeps. `TestDropsSayWhy` asks for it, since the file holds a `DROP TABLE`.
+
+### At start or before the switch
+
+A deploy can run the migrations at one of two moments. Both run the same `migrate` of `db.go`.
+
+- **At start, the default.** `OnStart` of the new release runs them through `OpenDB`. `tifa deploy` has stopped the old program by then, so the site pauses while they run: requests wait on the socket and get their answer once the new release listens, none is lost. A short migration adds little to the pause of the restart itself.
+- **Before the switch, with `deploy.release_command: migrate` in `tifa.yaml`.** The deploy runs the command `migrate`, which `tifa new` writes into `hooks.go`, with the new release once, before it starts it, while the old release keeps serving (see [The release command](/docs/build-and-deploy/deploy#the-release-command)). When it fails, nothing is switched. `OnStart` of the new release then finds nothing to run, so the pause is only the restart. On SQLite this keeps reads going during a long migration, but not writes: a migration holds the write lock until its file commits, so the writes of the old release wait `busy_timeout` (5 seconds) and then fail with `database is locked`. Split a long migration into short files, or run it at a quiet time.
+
+The rules are the same for both:
+
+- **Each release runs on the tables of the next.** Before the switch, the old release serves on the new tables while the command runs. At start, a rollback starts an older release on them. Either way, follow [Keep a rollback working](#keep-a-rollback-working).
+- **Neither rolls the database back.** A failed deploy or a rollback leaves the files that ran.
+
+Tifa promises a short pause per deploy and no lost request. No pause at all would need the old and the new program to serve at the same time, which `tifa deploy` does not do.
+
+### How long a migration may take
+
+When the migrations run at start, `tifa deploy` waits for a new release to answer its health check for `deploy.start_timeout`, 30 seconds unless you set it, and visitors wait while it starts (see [A slow start](/docs/build-and-deploy/deploy#a-slow-start)). The migrations, the copy of the database when `db.backup` is empty, and the rest of `OnStart` must fit in that time. When they do not, the deploy counts the release as failed and starts the one before: the file that was running is undone, the files before it stay, and the next deploy of the same release goes on from there.
+
+Adding a column takes no time, whatever the size of the table. Building an index on a large table, or rebuilding one, can take longer. Raise `deploy.start_timeout` for it, run it before the switch as above, or make it smaller: write such a file so that it can run twice, such as `CREATE INDEX IF NOT EXISTS todos_by_done ON todos (done);`, run that statement by hand on the server at a quiet time, then deploy, and the file finds the index and is done at once. Keep `db.backup` on for a large database, since the copy writes the whole file.
+
+### Postgres
+
+The same `migrate` runs a Postgres app: open the database with pgx (see [When to use Postgres](#when-to-use-postgres)) and pass `goose.DialectPostgres` to `goose.NewProvider`. Leave out the `VACUUM INTO` copy, which is SQLite's, and delete `TestSchema` and `schema.sql`, which read SQLite's tables. The files hold Postgres SQL and follow the same rules. Postgres changes a column type or a constraint with `ALTER TABLE`, in goose's transaction, so it needs no rebuild.
+
+With several copies of the app on one database, such as behind a load balancer, in containers or on Kubernetes, each copy runs `OnStart`. Give goose Postgres's lock, so one copy migrates and the others wait for it ([goose's locking](https://pkg.go.dev/github.com/pressly/goose/v3/lock)):
+
+```go
+// import "github.com/pressly/goose/v3/lock"
+// A copy waits up to 5 minutes for the lock by default. Here it waits up to 30 (every 5 seconds,
+// 360 times), for migrations that may take that long.
+locker, err := lock.NewPostgresSessionLocker(lock.WithLockTimeout(5, 360))
+if err != nil {
+	return err
+}
+p, err := goose.NewProvider(goose.DialectPostgres, db, dir, goose.WithSessionLocker(locker))
+```
+
+Before the switch fits several copies better: run `migrate` once, before the copies roll out, as a Kubernetes Job, a Helm `pre-upgrade` hook, the `release_command` of Fly or the release phase of Heroku. A rolling deploy runs old and new copies at the same time, so the rule that each release runs on the tables of the next holds on every deploy, not only after a rollback.
+
+### Another migration library
+
+Any library works if it does three things `tifa deploy` counts on:
+
+- **It runs in `OnStart`**, before the app listens, and finishes within the start wait above, or in a command that `deploy.release_command` runs.
+- **It starts on a database that ran files it does not have.** After a rollback, the older release finds the versions of the newer one. goose skips them. golang-migrate does not: its `Up` stops with `no migration found for version 5` when the database is at a version it has no file for, and with `Dirty database version 5. Fix and force version.` after a file failed halfway. The release a rollback goes back to then does not start, and the site stays down until someone fixes the database by hand.
+- **A failed run leaves tables the running release can use**: each file in a transaction, or all of them in one, as on SQLite and Postgres.
 
 ## Use it in Load and handlers
 
@@ -227,7 +331,7 @@ func Load(c *tifa.Ctx) (todos.Todo, error) {
 }
 ```
 
-- A missing row becomes `tifa.ErrNotFound`, which answers 404 ([route.go](/docs/pages-and-data/routes#routego)).
+- A missing row becomes `tifa.ErrNotFound`, which answers 404 ([route.go](/docs/pages-and-data/loading-data#routego)).
 - `Load` only reads. A `Load` can run more than once for one visit (navigation, the page cache), so writes belong in `POST`, `PUT`, `PATCH` and `DELETE` handlers.
 - Use `?` placeholders for every value that comes from a request. Never build SQL with string concatenation.
 - `QueryRowContext` with `RETURNING` does an insert and reads the new row in one call, as `AddTodo` in the `tifa new` app does.
@@ -314,7 +418,7 @@ An app from `tifa new` copies every commit of its database to Cloudflare R2, AWS
 
 1. In the Cloudflare dashboard, open **R2 object storage** and select **Create bucket**. Name it, such as `notes-backup`.
 2. On the **Overview** page of R2, select **Manage** next to **API Tokens**, then **Create Account API token**. Give it **Object Read & Write**, limited to that bucket. Copy the **Access Key ID** and the **Secret Access Key**: the secret is shown once. The page also shows the S3 endpoint of your account, `https://<account>.r2.cloudflarestorage.com` ([R2 API tokens](https://developers.cloudflare.com/r2/api/tokens/)).
-3. On the server, set the two keys first, then the URL of the bucket. Each command asks for the value and restarts the app (see [Settings and secrets on the server](/docs/build-and-deploy/deploy#settings-and-secrets-on-the-server)). The app refuses to start with `DB_BACKUP` and no keys, so the order matters:
+3. On the server, set the two keys first, then the URL of the bucket. Each command asks for the value and restarts the app (see [Settings and secrets on the server](/docs/build-and-deploy/deploy-operate#settings-and-secrets-on-the-server)). The app refuses to start with `DB_BACKUP` and no keys, so the order matters:
 
    ```sh
    go tool tifa deploy env set AWS_ACCESS_KEY_ID
@@ -528,7 +632,6 @@ Tests replace the variable ([Structuring an app](/docs/start/structure#2-shared-
 package testdb
 
 import (
-	"context"
 	"path/filepath"
 	"testing"
 
@@ -539,7 +642,7 @@ import (
 // tests that use it must not run in parallel, since notes.DB is shared.
 func Use(t *testing.T) {
 	t.Helper()
-	db, err := notes.OpenDB(context.Background(), filepath.Join(t.TempDir(), "test.db"))
+	db, err := notes.OpenDB(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -561,24 +664,7 @@ func TestGetAndSetDone(t *testing.T) {
 }
 ```
 
-The test database runs the real migrations, so a broken migration fails the whole suite. Test the runner itself on a file kept between two opens:
-
-```go
-func TestOpenDBMigratesOnce(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "app.db")
-	for range 2 {
-		db, err := OpenDB(context.Background(), path)
-		if err != nil {
-			t.Fatal(err)
-		}
-		var version int
-		if err := db.QueryRow("PRAGMA user_version").Scan(&version); err != nil || version != 3 {
-			t.Fatalf("user_version: %d, %v, want 3", version, err)
-		}
-		db.Close()
-	}
-}
-```
+The test database runs the real migrations, so a broken migration fails the whole suite. `migrate_test.go` from `tifa new` has two more tests: `TestSchema` checks `schema.sql`, and `TestDropsSayWhy` checks the first line of the files that drop or rename.
 
 The root package cannot import `testdb` in its own tests (the import would loop back), so its tests keep a three-line helper of their own. Route code is tested with `tifatest.NewCtx`, see [Testing](/docs/pages-and-data/testing-apps).
 
@@ -589,12 +675,12 @@ Stay on SQLite while the app runs as one program on one machine. Move to Postgre
 ```go
 import _ "github.com/jackc/pgx/v5/stdlib"
 
-func OpenDB(ctx context.Context, url string) (*sql.DB, error) {
+func OpenDB(url string) (*sql.DB, error) {
 	db, err := sql.Open("pgx", url)
 	if err != nil {
 		return nil, err
 	}
-	if err := db.PingContext(ctx); err != nil {
+	if err := db.Ping(); err != nil {
 		db.Close()
 		return nil, err
 	}
@@ -602,6 +688,6 @@ func OpenDB(ctx context.Context, url string) (*sql.DB, error) {
 }
 ```
 
-Everything else in this guide keeps its shape: a `DB` variable opened in `OnStart`, an option for the address (`db.url`, now a `tifa.Secret` since it holds the password, see [Sending email](/docs/guides/email#settings)), queries through `database/sql`. What changes: placeholders are `$1`, `$2`, the pragmas go away, and the migration runner above is SQLite's, so use a library such as goose. Tests then need a real Postgres, so give them one through a setting and skip when it is not set.
+Everything else in this guide keeps its shape: a `DB` variable opened in `OnStart`, an option for the address (`db.url`, now a `tifa.Secret` since it holds the password, see [Sending email](/docs/guides/email#settings)), queries through `database/sql`. What changes: placeholders are `$1`, `$2`, the pragmas go away, and `migrate` passes goose the Postgres dialect ([Postgres](#postgres)). Tests then need a real Postgres, so give them one through a setting and skip when it is not set.
 
 Sessions can live in the same database: [Sessions](/docs/pages-and-data/sessions#where-to-store-sessions).

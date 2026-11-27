@@ -19,7 +19,7 @@ export default defineConfig({
               fallbackLanguage: 'text',
               // Without langs Shiki loads all of its languages before the first block, about 2 s
               // of every build. TestCodeLanguagesAreLoaded fails when a doc uses one missing here.
-              langs: ['go', 'sh', 'tsx', 'ts', 'yaml', 'json', 'ini', 'diff', 'markdown', 'md', 'sql', 'css', 'xml'],
+              langs: ['go', 'sh', 'tsx', 'ts', 'yaml', 'json', 'ini', 'diff', 'markdown', 'md', 'sql', 'css', 'xml', 'nginx', 'powershell', 'dockerfile', 'js'],
             },
           ],
         ],

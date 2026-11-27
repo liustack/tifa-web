@@ -1,10 +1,10 @@
 ---
 title: Content
-description: How an app keeps its writing as Markdown under content/
+description: Keep writing as Markdown under content/
 source: docs/pages-and-data/content.md
 group: Pages and data
 groupOrder: 2
-order: 4
+order: 9
 ---
 
 
@@ -19,7 +19,7 @@ Four steps put an entry on a page:
 3. Read them in a `Load` with the methods of the collection.
 4. Show the body with `<HTML>`.
 
-The code in this page is from [test/apps/content](https://github.com/liustack/tifa/blob/v0.5.2/test/apps/content), an app with a blog and docs in two languages.
+The code in this page is from [test/apps/content](https://github.com/liustack/tifa/blob/v0.7.3/test/apps/content), an app with a blog and docs in two languages.
 
 ## Declaring a collection
 
@@ -139,11 +139,11 @@ tags: [search]
 ---
 ```
 
-Its keys are the `json` names of the fields of the schema struct, and the build checks them with the same JSON rules as `Load` results and handler inputs ([JSON rules](/docs/pages-and-data/routes#json-rules)).
+Its keys are the `json` names of the fields of the schema struct, and the build checks them with the same JSON rules as `Load` results and handler inputs ([JSON rules](/docs/reference/json)).
 
 - A field may be a string, number, bool, `time.Time`, pointer, slice, map with string keys or nested struct. `time.Time` takes `2006-01-02` (midnight UTC) and RFC 3339, quoted or not. Types that read their own JSON, `[]byte`, `time.Duration`, interfaces and the json options other than `omitempty` and `omitzero` (such as `,string`) fail the build.
 - A field is required unless it is a pointer, slice or map, or has `omitempty` or `omitzero`. This is the same rule as for optional fields in the TypeScript types of the page.
-- A key that is not a field fails the build, with the nearest field name when one is close.
+- A key that is not a field is a warning, with the nearest field name when one is close, and the entry is read without it. So a page moved from Hugo or Jekyll, with `weight` or `categories` in its front matter, builds. A key that was meant for a field shows in the warning too.
 - A `yaml` tag on a field fails the build: the keys are the json names.
 - Tifa reads four keys itself. They are not fields of the schema, and writing them is not an error:
 
@@ -277,7 +277,7 @@ export default function PostPage() {
 }
 ```
 
-- `Body() tifa.HTML` reads the HTML of the entry from the program each time it is called (`tifa dev` reads it from `.tifa/dist`) and keeps no copy. A page shows it with `<HTML>`, see [Showing HTML the app trusts](/docs/pages-and-data/pages#showing-html-the-app-trusts). Links inside the body go through the router.
+- `Body() tifa.HTML` reads the HTML of the entry from the program each time it is called (`tifa dev` reads it from `.tifa/dist`) and keeps no copy. A page shows it with `<HTML>`, see [Showing HTML the app trusts](/docs/pages-and-data/loading-data#showing-html-the-app-trusts). Links inside the body go through the router.
 - `Headings() []content.Heading` lists the `h1` to `h6` of the body in order, each as `{Depth, ID, Text}`: its level, the `id` it has in the HTML and its text.
 
 ## Markdown to HTML
@@ -402,7 +402,7 @@ One request that reads a collection several times may see both sides of that mom
 
 ## `tifa dev`
 
-`tifa dev` reads the content from `.tifa/dist`, so a change under `content/` needs no go build and no restart (see [What each change triggers](/docs/build-and-deploy/dev#what-each-change-triggers)):
+`tifa dev` reads the content from `.tifa/dist`, so a change under `content/` needs no go build and no restart (see [What each change triggers](/docs/build-and-deploy/dev-reloads)):
 
 - A Markdown file changed, added or removed, its body or its front matter: `tifa dev` scans `content/` again, converts that entry, writes `.tifa/dist/content/` and `content.json`, and the running app loads them. The app runs `Validate` on every entry and takes the new data, and a page you load after that shows it. `OnStart` does not run again, and open pages reload.
 - Another file under `content/`, such as an image: the entries in its folder are converted again, and the translations that fall back to that folder.
@@ -506,7 +506,6 @@ content/blog/notes.md: the collection blog has languages, so its files go in a l
 content/blog/zh-CN/202610/demo/index.mdx: MDX is not supported: a body becomes HTML at build time and cannot hold React components. Rename it to index.md and put the components in the page
 content/blog/zh-CN/a/index.md:1:1: no front matter: an entry starts with --- and the keys of contenttest.Post
 content/blog/zh-CN/202608/free-search/index.md:5:8: draft: want true or false, got "yes"
-content/blog/zh-CN/202608/free-search/index.md:9:1: "tag" is not a field of contenttest.Post. Did you mean "tags"? Fields: title, description, updated, tags, cover
 content/blog/en/202608/free-search/index.md:1:1: front matter has no "title", which contenttest.Post.Title needs. Make the field a pointer or add omitempty to make it optional
 content/blog/en/202608/free-search/index.md:2:7: slug: "free/search" is not one URL segment: it holds /
 content/docs/en/guide/index.md: the ID guide is also the ID of content/docs/en/guide.md

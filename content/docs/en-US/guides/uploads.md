@@ -1,6 +1,6 @@
 ---
 title: Uploads
-description: How to let visitors upload a file in a Tifa app
+description: Let visitors upload a file
 source: docs/guides/uploads.md
 group: Guides
 groupOrder: 3
@@ -10,7 +10,7 @@ order: 4
 
 A page where visitors upload pictures with a title, and see them listed. The handler checks the title, the size and the kind of file, keeps the file in a folder and serves it back.
 
-The code was run as written: it is the app `test/apps/upload` of the Tifa repository, which its end-to-end tests build and drive in a browser. The reference docs for the calls used here: [files in the input](/docs/pages-and-data/routes#files-in-the-input), [body limit and read time of a route](/docs/pages-and-data/routes#body-limit-and-read-time-of-a-route), [options of the app](/docs/build-and-deploy/config#options-of-the-app).
+The code was run as written: it is the app `test/apps/upload` of the Tifa repository, which its end-to-end tests build and drive in a browser. The reference docs for the calls used here: [files in the input](/docs/pages-and-data/handlers#files-in-the-input), [body limit and read time of a route](/docs/pages-and-data/handlers#body-limit-and-read-time-of-a-route), [options of the app](/docs/build-and-deploy/config#options-of-the-app).
 
 ## How a file gets to the handler
 
@@ -387,7 +387,7 @@ export default function Photos() {
 - A file input left empty still gives `FormData` a `File`, with an empty name. The page sends `null` then, and `Validate` asks for a picture.
 - A refusal throws a `TifaError`. `e.fields` holds the messages of `tifa.Fields`, by the `json` names of the input. A 413 has no fields, so the page gives its own message.
 - The browser's own `accept` filter is a hint for the file picker and not a check. The Go side decides.
-- A call to your own site is a same-origin write, so the [cross-site check](/docs/build-and-deploy/config#cross-site-writes) lets it through. A form on another site is answered with 403.
+- A call to your own site is a same-origin write, so the [cross-site check](/docs/build-and-deploy/headers-and-origins#cross-site-writes) lets it through. A form on another site is answered with 403.
 - A call does not reload the page data, so the page calls `router.invalidate({ sync: true })` after a good answer.
 
 ## Testing the handler
@@ -441,7 +441,13 @@ The test calls the handler directly: `Validate`, the body limit and the read tim
 
 **How long.** The read time is how long the slowest visitor you serve may take to send the largest file you accept. 4 MiB over a line of 1 Mbit/s takes about 34 seconds, so 5 minutes leaves room. A long time lets a slow client hold a connection that long, so do not give it to routes that do not need it.
 
-**What is accepted.** A list of kinds, decided by the bytes. For documents, do the same with their own types and serve them with `Content-Disposition: attachment` so the browser saves them and does not open them.
+**What is accepted.** A list of kinds, decided by the bytes. For documents, do the same with their own types and serve them with `Content-Disposition: attachment` so the browser saves them and does not open them. When the header carries a file name, let `mime.FormatMediaType` write it. Joining the name into a string with `fmt.Sprintf` lets a quote or a line break in it end the value and add parameters. A name you choose, such as the id of the record, is safer than the one the visitor gave.
+
+```go
+name := "report-" + id + ".pdf" // not the name the visitor sent
+disposition := mime.FormatMediaType("attachment", map[string]string{"filename": name})
+c.Writer().Header().Set("Content-Disposition", disposition)
+```
 
 ## Check it
 

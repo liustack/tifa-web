@@ -1,4 +1,4 @@
-<!-- Written by Tifa v0.5.2 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.7.3 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 # Structuring an app
 
 Contents: where code goes, which way packages may import, shared resources.
@@ -12,9 +12,10 @@ Group code by business area, not by kind. A domain's types, queries and rules si
 ```text
 myapp/
   go.mod
-  hooks.go                  OnStart, OnShutdown, OnRequest, OnError
+  hooks.go                  OnStart, OnShutdown, OnRequest, OnError, OnCommand
   db.go                     var DB, opened in OnStart and closed in OnShutdown
-  schema.sql                the tables of every domain
+  migrations/               the tables of every domain, one numbered goose SQL file per change, run by db.go
+  schema.sql                the tables as the migrations leave them, written by a test
   app/
     route.go  layout.tsx
     projects/

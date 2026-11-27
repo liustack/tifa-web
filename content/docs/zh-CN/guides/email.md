@@ -1,6 +1,6 @@
 ---
 title: 发送邮件
-description: 怎样在 Tifa 应用里用纯 Go 的库通过 SMTP 发邮件
+description: 怎样在 Tifa 应用里通过 SMTP 发邮件
 source: docs/guides/email.zh-CN.md
 group: 做法
 groupOrder: 3

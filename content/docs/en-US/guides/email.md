@@ -1,6 +1,6 @@
 ---
 title: Sending email
-description: How to send email from a Tifa app over SMTP with a pure Go library
+description: Send email from a Tifa app over SMTP
 source: docs/guides/email.md
 group: Guides
 groupOrder: 3

@@ -1,6 +1,6 @@
 ---
 title: Writing an app
-description: How to start a Tifa app
+description: 'Start a Tifa app: route.go, page.tsx, layout.tsx, URLs, public/, Next.js or Remix code'
 source: docs/start/app.md
 group: Start
 groupOrder: 1
@@ -10,7 +10,7 @@ order: 2
 
 This page covers how a Tifa app is laid out: how folders under `app/` become URLs, which files Tifa reads, how static files are served, and what to write in place of habits from other frameworks.
 
-For a complete example, see [examples/shop](https://github.com/liustack/tifa/blob/v0.5.2/examples/shop). For the build, the generated files and how to set up go.mod, see [build.md](/docs/build-and-deploy/build).
+For a complete example, see [examples/shop](https://github.com/liustack/tifa/blob/v0.7.3/examples/shop). For the build, the generated files and how to set up go.mod, see [Build the program](/docs/build-and-deploy/build) and [Generated files and app setup](/docs/reference/generated-files).
 
 ## Folders
 
@@ -46,44 +46,18 @@ myapp/
 
 ## URLs come from folders
 
-Every folder below `app/` is one segment of the URL. `app/` itself is `/`.
-
-| Folder name | URL segment |
-| --- | --- |
-| `orders` | the literal `orders` |
-| `order+` | the parameter `{order}`, read with `c.Param("order")` |
-| `path++` | the rest of the path `{path...}`, only as the last folder. It may be empty: `files/path++` also answers `/files`. `c.Param("path")` reads it in Go, and its key in TypeScript `Params` is `_splat` |
-
-- A literal folder name holds only ASCII letters, digits and `- . _ ~`. A parameter name starts with a letter or `_`, followed by letters, digits or `_`, and appears once per URL.
-- The go command takes the package name from the `package` line, not from the folder. Name the package after the parameter: `project+` holds `package project`, and other packages import it as `project`.
-- The go command skips folders that start with `.` or `_`, and folders named `testdata`. A `route.go`, `page.tsx`, `layout.tsx` or `layout_.tsx` inside one fails the build. Other files there, such as a `_components` folder, are fine.
-- A folder name must also be valid in a Go import path, so names such as `con` or `x~1` (Windows reserved and short names) fail the build.
-- A folder holds at most one parameter folder. `items/id+` next to `items/key+` or `items/path++` fails the build, because both would read the same URL segment.
-- Two routes (pages or API routes) whose URLs overlap without one being more specific fail the build, as in Go's `http.ServeMux`, such as `a/b+` next to `a+/b`. A literal is more specific than a parameter, so `items/new` next to `items/id+` is fine.
-- The URL of a folder with a Layout but no page shows a 404 inside that Layout (see [404](/docs/pages-and-data/pages#404)), unless a `name++` folder right below it has a page, which answers that URL with an empty rest. No other page may match that URL unless it is more specific than the Layout's path: `settings/layout.tsx` without a `settings/page.tsx`, next to `user+/page.tsx`, fails the build, because `/settings` would also match `/{user}`, but `items/new` next to a Layout in `items/id+` is fine.
-- Declaring `const Path` fails the build. The folder is the URL.
+Every folder below `app/` is one segment of the URL: `orders` is the literal `orders`, `order+` is a parameter and `path++` is the rest of the path. [Routing](/docs/pages-and-data/routing) has the rules for folder names and for routes that overlap, and the spelling of a parameter in Go and in TypeScript.
 
 ## The files of a folder
 
-A folder has at most three convention files:
-
-| File | What it holds |
-| --- | --- |
-| `route.go` | Every Go name of the folder: `Layout`, `Load`, `SSR`, `Memo`, `Cache` and the method handlers |
-| `page.tsx` | The page component. A folder with `page.tsx` is a page |
-| `layout.tsx` | The Layout component |
-| `layout_.tsx` | The Layout component in place of `layout.tsx`, shown without the Layouts above it (see [A Layout without the Layouts above](/docs/pages-and-data/pages#a-layout-without-the-layouts-above)) |
-
-- The names of `route.go` are read from that file only. Declaring one of them in another file of the package, `layout.go` included, fails the build. Helpers and types may go in any file.
-- A folder with only `route.go` is an API route when it declares a method handler, and gives the pages below it their Layout data when it declares `Layout`. It can do both. `Load` is only allowed next to a `page.tsx`.
-- `tifa build` also writes a `route.gen.ts` module for each folder with a page, a Layout or a method handler, which `page.tsx`, `layout.tsx` and `layout_.tsx` import (see [page.tsx](/docs/pages-and-data/pages#pagetsx)).
+A folder has at most three convention files: `route.go`, `page.tsx`, and `layout.tsx` or `layout_.tsx`. [Routing](/docs/pages-and-data/routing#the-files-of-a-folder) says what each holds and when a folder with only `route.go` is an API route.
 
 ## Static files
 
 A file is in one of two classes, and one question decides which: does the URL change when the content changes?
 
 - **Import it. The file is in the bundle under `/assets/`.** Vite gives it a name with a content hash, and Tifa serves it with `Cache-Control: public, max-age=31536000, immutable`. The browser keeps it for good, and a new version has a new URL, so it is never stale. Images, fonts and icons that your pages use belong here.
-- **Put it in `public/`.** The file keeps its name, and Tifa serves it with `Cache-Control: no-cache` and an ETag, so each use asks the server and gets a 304 when nothing changed. With a fixed name, any cache time N means up to N of old content, so it is checked every time.
+- **Put it in `public/`.** The file keeps its name, and Tifa serves it with `Cache-Control: no-cache` and an ETag, so each use asks the server and gets a 304 when nothing changed. With a fixed name, any cache time N means up to N of old content, so it is checked every time. Files and folders whose names start with a dot, such as `.DS_Store` and `.env`, are not copied into the program, except `.well-known`. To copy one, such as `.nojekyll`, list it in `build.public_dotfiles` ([Settings](/docs/reference/settings)). `tifa build` says which ones it left out, apart from `.DS_Store`.
 
 Import what a page uses:
 
@@ -117,21 +91,21 @@ Vite says the same: prefer importing assets, and use `public/` for files never r
 
 | You wrote | In Tifa | |
 | --- | --- | --- |
-| An import of `next` or `next/*`, `react-router`, `react-router-dom`, `@remix-run/*`, `@tanstack/react-start`, `@tanstack/start`, `$app/*`, `@sveltejs/kit` or `astro:*` | `Link` and `useNavigate` come from `@tanstack/react-router`. Data comes from `Load` in `route.go`, read with `page.useLoaderData()`. A redirect is `return tifa.Redirect(url, status)` in Go. `next/head` is the `head` export, `next/dynamic` is `clientOnly`, `next/headers` is `c.Cookie` and `c.Header`, `next/server` is a method handler or `OnRequest` | error |
+| An import of `next` or `next/*`, `react-router`, `react-router-dom`, `@remix-run/react`, `@remix-run/node` and the other packages of the Remix framework and its adapters (not standalone ones such as `@remix-run/headers`), `@tanstack/react-start`, `@tanstack/start`, the modules of SvelteKit (`$app/navigation`, `$app/stores` and so on), `@sveltejs/kit` or `astro:*` | `Link` and `useNavigate` come from `@tanstack/react-router`. Data comes from `Load` in `route.go`, read with `page.useLoaderData()`. A redirect is `return tifa.Redirect(url, status)` in Go. `next/head` is the `head` export, `next/dynamic` is `clientOnly`, `next/headers` is `c.Cookie` and `c.Header`, `next/server` is a method handler or `OnRequest` | error |
 | `'use client'` | Nothing: every component renders on the server and hydrates in the browser. Put a component that needs the browser in a `*.client.tsx` file and load it with `clientOnly` | warning |
 | `'use server'` | There are no server actions, and the function would run in the browser. Write a method handler in `route.go` and call its function from `./route.gen` | error |
 | `export const getServerSideProps`, `getStaticProps`, `loader`, `clientLoader` | `Load` in `route.go` | warning |
 | `export const getStaticPaths`, `generateStaticParams` | Nothing: a folder `name+` matches any value, and `Load` returns `tifa.ErrNotFound` for one that does not exist | warning |
 | `export const generateMetadata`, `metadata` | The `head` export, and `documentHead` in the root `layout.tsx` | warning |
-| `<title>` or `<meta>` written as JSX in a component (outside an `<svg>`) | The `head` export (see [Title and meta tags](/docs/pages-and-data/pages#title-and-meta-tags)). In a component the tag lands in `<body>`, where crawlers do not read it | warning |
+| `<title>` or `<meta>` written as JSX in a component (outside an `<svg>`) | The `head` export (see [Title and meta tags](/docs/pages-and-data/head)). In a component the tag lands in `<body>`, where crawlers do not read it | warning |
 | `export const action`, `clientAction` | A method handler in `route.go`, such as `func POST(c *tifa.Ctx, in AddInput) (Todo, error)` | warning |
 | `export const revalidate`, `dynamic` | `const Cache` in `route.go` lets a CDN keep a page. Every page already loads and renders on each request | warning |
 | `createFileRoute`, `createRootRoute`, `createServerFn` called in a page or Layout | The folder is the route, `./route.gen` exports it as `page`, and a server function is a method handler | warning |
 | A folder named `[id]`, `[...slug]`, `$id`, `:id`, `(group)` or `@slot` | `id+` and `slug++` (see [URLs come from folders](#urls-come-from-folders)). There are no route groups and no parallel routes | error |
-| `+page.svelte`, `+page.server.ts`, `_index.tsx` | `page.tsx`, `layout.tsx` and `route.go` (see [The files of a folder](#the-files-of-a-folder)) | error |
+| `+page.svelte`, `+page.server.ts`, `_index.tsx` (only in a folder with no `page.tsx`) | `page.tsx`, `layout.tsx` and `route.go` (see [The files of a folder](#the-files-of-a-folder)) | error |
 | `page.js`, `layout.jsx`, `route.ts` without `page.tsx`, `layout.tsx` or `route.go` beside them, `$id.tsx` | The same | warning |
-| `middleware.ts`, and `loading`, `error` or `not-found` files in a route folder | `OnRequest` in `hooks.go`, and the `ErrorBoundary` export (see [404](/docs/pages-and-data/pages#404)) | warning |
-| In `route.go`, a function `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `Load` or `Layout` that takes `http.ResponseWriter`, `*http.Request`, `*gin.Context`, `echo.Context` or `*fiber.Ctx` | `func POST(c *tifa.Ctx, in AddInput) (Todo, error)`, or `func POST(c *tifa.Ctx) error` with `c.Writer()` and `c.Request()` (see [Method handlers with input and result](/docs/pages-and-data/routes#method-handlers-with-input-and-result)) | error |
+| `middleware.ts`, and `loading`, `error` or `not-found` files in a route folder | `OnRequest` in `hooks.go`, and the `ErrorBoundary` export (see [404](/docs/pages-and-data/errors#404)) | warning |
+| In `route.go`, a function `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `Load` or `Layout` that takes `http.ResponseWriter`, `*http.Request`, `*gin.Context`, `echo.Context` or `*fiber.Ctx` | `func POST(c *tifa.Ctx, in AddInput) (Todo, error)`, or `func POST(c *tifa.Ctx) error` with `c.Writer()` and `c.Request()` (see [Method handlers with input and result](/docs/pages-and-data/handlers#method-handlers-with-input-and-result)) | error |
 
 What Tifa allows is not reported. `@tanstack/react-router` and `@tanstack/react-query` are fine. A page may export `action`, `loader`, `metadata`, `revalidate` or `dynamic` for its own use when the value is not what the other framework writes (a function for `loader` and `action`, an object for `metadata`, a number or `false` for `revalidate`, one of `auto`, `force-dynamic`, `error` and `force-static` for `dynamic`). The exports and calls are read in `page.tsx`, `layout.tsx` and `layout_.tsx` only. Imports and directives are read in every TypeScript file of `app/` and in `setup.ts`, except tests.
 
@@ -149,7 +123,7 @@ Tifa has no `loading.tsx`. A page is rendered whole on the server, so a first vi
 
 ## A site in several languages
 
-Put a `_locales` folder in a folder of `app/`, with one `<language>.json` file per language, and the pages and API routes in that folder and below it are offered in those languages. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.5.2/examples/shop) is `app/store/` with `_locales/zh-CN.json` and `_locales/en-US.json`.
+Put a `_locales` folder in a folder of `app/`, with one `<language>.json` file per language, and the pages and API routes in that folder and below it are offered in those languages. The storefront of [examples/shop](https://github.com/liustack/tifa/blob/v0.7.3/examples/shop) is `app/store/` with `_locales/zh-CN.json` and `_locales/en-US.json`.
 
 ```yaml
 # tifa.yaml
@@ -172,11 +146,18 @@ The [guide](/docs/guides/i18n) goes through all of it: translating, the language
 
 ## Where to read next
 
-- [Routes and Ctx](/docs/pages-and-data/routes): `route.go`, method handlers, errors, `Ctx`, the rules for `Load` and the JSON rules.
-- [Pages and Layouts](/docs/pages-and-data/pages): `page.tsx`, `route.gen`, Layouts, head, 404 and `ErrorBoundary`, calling handlers from the browser.
+- [Routing](/docs/pages-and-data/routing): how folders become URLs, and the files of a folder.
+- [Layouts](/docs/pages-and-data/layouts): `layout.tsx` and `Layout`, `layout_.tsx`, and what to write instead of route groups.
+- [Loading data](/docs/pages-and-data/loading-data): `Load` in `route.go`, `page.tsx`, `route.gen`, and how `Load` may use `Ctx`.
+- [Method handlers](/docs/pages-and-data/handlers): `POST` and the other methods, typed input, files, and calling them from the browser.
+- [Links and navigation](/docs/pages-and-data/navigation): `Link`, `navigate`, `useSearch` and the types of query parameters.
+- [Title and meta tags](/docs/pages-and-data/head): the head of a page.
+- [Errors and 404](/docs/pages-and-data/errors): what Go returns, `ErrorBoundary` and which one shows.
+- [Ctx](/docs/reference/ctx) and [JSON rules](/docs/reference/json): the methods of `*tifa.Ctx`, and which Go types `Load` and handlers may take and return.
 - [Render switches and caches](/docs/pages-and-data/ssr-and-cache): `SSR`, `Memo`, `Cache`, and query parameters in the server render.
 - [The server render](/docs/pages-and-data/server-render): what the server has, components to load only in the browser, Intl and Temporal.
 - [Styles](/docs/pages-and-data/styles): CSS, Tailwind CSS and shadcn/ui.
 - [Hooks](/docs/pages-and-data/hooks): `hooks.go` and `setup.ts`.
 - [Testing](/docs/pages-and-data/testing-apps): tests with `go test` and `tifatest`.
-- [Deploying](/docs/build-and-deploy/deploy): what pages open in a browser do when you deploy a new version.
+- [Testing pages](/docs/pages-and-data/testing-pages): page components with Vitest, and pages in a browser with Playwright.
+- [Deploy by hand](/docs/build-and-deploy/deploy-by-hand#pages-open-while-you-deploy): what pages open in a browser do when you deploy a new version.

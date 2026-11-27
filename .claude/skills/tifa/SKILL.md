@@ -2,7 +2,7 @@
 name: tifa
 description: Build, change, test and deploy apps with Tifa, a full-stack Go framework where Go routes requests and loads data, React pages are rendered to HTML inside the Go process by a pure Go JavaScript engine, beastjs, and the whole app ships as one executable with no Node at run time. Use this whenever the project imports github.com/liustack/tifa, has an app/ folder with route.go, page.tsx or layout.tsx files, a .tifa/ folder or a tifa.yaml, or the user mentions Tifa, `go tool tifa`, `tifa dev`, `tifa build`, `tifa check`, route.gen, or asks for a Go plus React SSR app that deploys as a single binary on a small VPS or container. Read it before writing routes, pages, Layouts, hooks.go, API handlers, tests or deploy config, even for small edits, because the build rejects many ordinary-looking patterns and server rendering has rules that browser-only React does not.
 ---
-<!-- Written by Tifa v0.5.2 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.7.3 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 
 # Tifa
 
@@ -27,8 +27,9 @@ Run them in the app root (the folder with `go.mod` and `app/`). They need Go 1.2
 | `go tool tifa errors` | While `tifa dev` runs, print the errors since the last build: a failed build, unexpected request errors with their stack in your sources, browser errors of open pages (hydration mismatches, uncaught errors) and pages that render differently each time. Run it after you change code and after you open or reload the pages you changed. Exit status 1 means errors, 2 no `tifa dev`. `--json` prints JSON |
 | `go tool tifa build` | Analyze, generate `.tifa/`, bundle with Vite, build `bin/<app>` with the front end embedded |
 | `go tool tifa check` | The one command to run before you finish. It runs the Tifa analysis, generates `.tifa/`, then `go vet ./...`, `go test ./...` and the TypeScript check. It stops at the first step that fails |
-| `go tool tifa routes` | List the routes. `--json` prints the full manifest with Go types |
+| `go tool tifa routes` | List the routes, and in the BUILT IN table the addresses Tifa answers that are not a folder (`/sitemap.xml`, `/robots.txt`, `/__tifa/session`, `/assets/`, files of `public/`) with the condition of each. `--json` prints the full manifest with Go types |
 | `go tool tifa docs` | Print where the docs of this Tifa version are, with one line on each doc for writing an app (`--when`, `--all`) |
+| `go tool tifa version`, `go tool tifa info` | `version` prints the Tifa version of `go.mod`. `info` prints the versions of Tifa, Go, Node and pnpm, the system and whether `tifa.yaml` is there (`--json`, `not found` for a missing program), which is what a bug report needs |
 | `go tool tifa agents` | Write this skill and the managed block of `AGENTS.md` from the installed Tifa. `--check` changes nothing and exits 1 when they are out of date |
 | `go tool tifa upgrade [version]` | Move the app to a newer Tifa, the latest without a version: `go get -tool`, `go mod tidy`, the versions of the pinned packages in `package.json`, the install, this skill and `AGENTS.md` again, and `tifa check`. It prints the `Upgrading:` notes of the changelog for the versions in between, which are what you change by hand. It never edits app code |
 
@@ -56,12 +57,12 @@ myapp/
 
 | File | Holds |
 | --- | --- |
-| `route.go` | All Go names of the folder: `Layout`, `Load`, `SSR`, `Memo`, `Cache` and the method handlers `GET`, `POST`, `PUT`, `PATCH`, `DELETE`. They are read from this file only |
+| `route.go` | All Go names of the folder: `Layout`, `Load`, `SSR`, `Memo`, `Cache` and the method handlers `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, and `HEAD`, `OPTIONS`, `TRACE` (Ctx alone). CONNECT goes to `tifa.SetHTTPHandler`, not here. They are read from this file only |
 | `page.tsx` | The page component (default export), and optional `head` and `ErrorBoundary` exports |
 | `layout.tsx` | The Layout component. It renders `<Outlet />` where the child page goes |
 | `layout_.tsx` | Like `layout.tsx`, but drops every Layout above it, the root one too |
-| `route.gen` | Generated typed module you import, never create it: `import { page, POST, type PageData } from './route.gen'` |
-| `hooks.go` | Root only. Optional `OnStart`, `OnShutdown`, `OnRequest`, `OnError` |
+| `route.gen` | Generated typed module you import, never create it: `import { page, POST, type PageData } from './route.gen'`. It is written from `route.go`, `page.tsx` and `layout.tsx`: after a batch of Go changes (a return or input type, or a page or Layout added or removed), run `go tool tifa gen` once before writing the TypeScript that uses the types. `tifa dev` does it while it runs |
+| `hooks.go` | Root only. Optional `OnStart`, `OnShutdown`, `OnRequest`, `OnError`, and `OnCommand` for commands of the program |
 | `*.client.tsx` | A component loaded only in the browser, through `clientOnly` from `tifa/client` |
 
 Folder names are URL segments. `order+` is the parameter `{order}`: the folder name is the parameter name, so `booking+` under `staff/` is `/staff/{booking}`, and `/staff/booking/{id}` needs a literal folder `booking` holding `id+`. `go tool tifa routes` prints the URLs that result. `path++` is the rest of the path (last folder only). Name the Go package after the parameter: `order+` holds `package order`. Code is grouped by domain in folders under `app/`, not in shared `models/` or `handlers/` packages. Dependencies are package-level variables set up in `OnStart`, not injected.
@@ -79,11 +80,11 @@ Rendering on the server:
 Go side:
 
 6. Putting `Load`, `Layout`, `Memo`, a handler and so on in a file other than `route.go` of the folder. The build fails. A `Load` needs a `page.tsx` beside it, and a folder with `page.tsx` cannot declare `GET`.
-7. Calling `c.Request()`, `c.Writer()`, `c.Bind` or `c.BindQuery` in `Load`, in `Layout`, or in helpers they call. Use `c.Param("x")`, `c.Query("x")`, `c.QueryValues("x")`, `c.Header`, `c.Cookie`, `c.Context()`. Pass them constant strings, never store or convert `c` (see `references/routing-and-data.md`).
+7. Calling `c.Query`, `c.Bind`, `c.BindQuery`, `c.JSON`, `c.Text` or `c.NoContent` in `Load`, in `Layout`, or in helpers they call. Take query parameters as the second parameter, `func Load(c *tifa.Ctx, q Filter) (T, error)`, and return the data or an error. There `c.Request()` is a copy with only the declared query parameters and no body: what needs the whole request goes in `OnRequest`. Do not keep `c` after the function returns (see `references/routing-and-data.md`).
 8. Doing permission checks only in a `Layout`: a cached Layout does not run again on navigation. Check in `OnRequest`, or make each page's `Load` call `tifa.Use(c, theCheckingLayout)`.
 9. Returning types that cannot become JSON and TypeScript: interfaces, funcs, channels, a `MarshalJSON` method. Go slices and maps arrive as `[]` and `{}`, never `null`, and `time.Duration` is not accepted. Integers a browser would round (above 9007199254740991, such as snowflake IDs or `UnixNano`) are refused when a page reads them (`Load`, `Layout`, session data, a handler called with `X-Tifa-Call` by the generated function of a page). `tifatest.Start` refuses it in `Load` and `Layout` too. A plain HTTP client gets the raw number from a handler, and so does a test with `tifatest.Start` unless the request sets `X-Tifa-Call: 1`. Tag the field `json:",string"`, or send milliseconds.
-10. Changing state in a `GET`. The cross-site write check covers POST, PUT, PATCH and DELETE only.
-11. Writing a `main`, editing anything in `.tifa/`, or setting things up in `init()`. Use `OnStart` and `OnShutdown` for resources.
+10. Changing state in a `GET`. The cross-site write check skips GET, HEAD and OPTIONS.
+11. Writing a `main`, editing anything in `.tifa/`, or setting things up in `init()`. Use `OnStart` and `OnShutdown` for resources. One-off work, such as seeding data or making a user an admin, is a command the app adds with `OnCommand` in `hooks.go`, run on the server with `go tool tifa deploy run` (see `references/routing-and-data.md`).
 12. Letting the root package import anything under `app/`. Domains import the root package for `DB` and friends, so that import would close a cycle.
 13. Reading options with `os.Getenv` or your own flags. Define them in `options.go` at the root with `tifa.String`, `tifa.Int`, `tifa.Bool` and the like: `./bin/app config` lists them and a bad value stops startup.
 
@@ -94,7 +95,7 @@ Sessions (see `references/routing-and-data.md`):
 
 Write Tifa, not another framework: `next/link`, `'use client'`, `loader`, `getServerSideProps`, `createServerFn` and `[id]` folders are reported by `tifa check` with the Tifa way (`docs/start/app.md#coming-from-another-framework`).
 
-Names the build rejects: exporting `NotFound`, `Document` or `Error` (rename it to `ErrorBoundary`), declaring `const Path`, a `form` struct tag (also in a struct passed to `c.Bind` or `c.BindQuery`), `layout.tsx` and `layout_.tsx` in one folder. A 404 is shown by the `ErrorBoundary` export, with a check `error instanceof TifaError && error.status === 404`.
+Names the build rejects: a `form` struct tag whose name is not the `json` name (also in a struct passed to `c.Bind` or `c.BindQuery`), `layout.tsx` and `layout_.tsx` in one folder. A 404 is shown by the `ErrorBoundary` export, with a check `error instanceof TifaError && error.status === 404`.
 
 Build and deploy:
 
@@ -102,7 +103,7 @@ Build and deploy:
 15. Cross-compiling with `GOOS=linux go tool tifa build`. That also applies to building the Tifa command. Use `GOOS=linux GOARCH=amd64 $(go tool -n tifa) build`, or `go tool tifa deploy`, which builds for the server itself.
 16. Changing the React or TanStack Router versions by hand. Tifa needs React 19.3 or later and the TanStack Router version it was tested with, and the build says which when they are wrong.
 17. Setting `Cache-Control: public` on pages or navigation data, or telling a CDN to ignore the origin's cache headers. Answers are `private, no-cache` by default, since a CDN that caches a page of one visitor shows it to another. A page that is the same for everyone opts in with `const Cache = true` (time: `cache.s_maxage`, 1m by default) or `const Cache = 10 * time.Minute` in its `route.go`, and Tifa sends the public headers itself. Navigation data is never public. `Memo = false` only turns the render memo off for a page that shows the time or a random value. See `references/build-and-deploy.md`.
-18. Editing `schema.sql` of a `tifa new` app and expecting `tifa dev` to pick it up. It does not watch that file, so restart it.
+18. Changing a table by editing `schema.sql` or a file of `migrations/` that already ran. `schema.sql` is written by `go test -run TestSchema -update`, and goose never runs a file again where it ran, so the edit reaches no existing database. Add the next numbered file, see the AGENTS.md of the app and `docs/guides/database.md#change-the-tables`. A table rebuild in goose's default transaction deletes the rows that point at the table with `ON DELETE CASCADE`: copy the `-- +goose NO TRANSACTION` file of `docs/guides/database.md#change-a-column-type-or-a-constraint`.
 
 ## References
 
@@ -110,12 +111,14 @@ Read the one that matches the task.
 
 | File | Read when |
 | --- | --- |
-| [references/routing-and-data.md](references/routing-and-data.md) | Adding a page, a Layout or an API route. Writing `Load`, `Layout`, `tifa.Use`, method handlers with input and result, calling them from the browser, JSON rules, `hooks.go`, auth and sessions with `OnRequest`, or the build complains about `Ctx` usage |
+| [references/routing-and-data.md](references/routing-and-data.md) | Adding a page, a Layout or an API route. Writing `Load`, `Layout`, `tifa.Use`, method handlers with input and result, calling them from the browser, JSON rules, `hooks.go`, commands of the app with `OnCommand`, auth and sessions with `OnRequest`, or the build complains about `Ctx` usage |
 | [references/rendering.md](references/rendering.md) | A page fails to render on the server or does not hydrate. Using a library, date, number, chart or browser API in a page. `head` tags, `SSR` and `Memo` switches, Tailwind or shadcn/ui |
 | [references/errors-and-404.md](references/errors-and-404.md) | Showing a 404, a 403 or a failed `Load`. Redirects. Choosing between `tifa.ErrNotFound`, `tifa.Error`, `tifa.Fields` and `OnError` |
 | [references/i18n.md](references/i18n.md) | A site in several languages: `_locales` folders, language prefixes in URLs, `c.Language()`, translations with i18next, `hreflang` links |
 | [references/testing.md](references/testing.md) | Writing or running tests for `Load`, `Layout`, handlers, `OnRequest` or code that needs a signed-in user, and checking the real HTML |
 | [references/structure.md](references/structure.md) | Deciding where a type, a query or a shared resource goes, or the go command reports an import cycle |
 | [references/build-and-deploy.md](references/build-and-deploy.md) | `tifa dev` or `tifa build` problems, deploying with `tifa deploy`, settings in `tifa.yaml`, `options.go`, `.env` and environment variables, a sitemap, `robots.txt` or `llms.txt` with `tifa.SetSitemap`, building for Linux, HTTPS, running behind a CDN, container or systemd, sizing CPU and memory |
+
+[docs/reference/conventions.md](docs/reference/conventions.md) lists every file, folder and name Tifa reads on one page, with a link to the doc for each.
 
 The docs show code from an example shop, a workbench with a two-language storefront. Its files are not in your module: read the snippets in the docs, and run `go tool tifa docs --all` to list every doc.

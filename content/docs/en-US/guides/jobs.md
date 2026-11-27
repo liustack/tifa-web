@@ -1,6 +1,6 @@
 ---
 title: Background work
-description: How to do work outside a request in a Tifa app
+description: Do work outside a request in a Tifa app
 source: docs/guides/jobs.md
 group: Guides
 groupOrder: 3
@@ -48,7 +48,7 @@ var (
 )
 
 func OnStart(ctx context.Context) error {
-	db, err := OpenDB(ctx, DBPath)
+	db, err := OpenDB(DBPath)
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ If the function needs code of a domain under `app/`, the root cannot import that
 
 ## What Tifa does when it stops
 
-On SIGINT or SIGTERM (a deploy, Ctrl-C), in this order ([`server.shutdown_timeout`](/docs/build-and-deploy/config#settings) is 10 seconds by default):
+On SIGINT or SIGTERM (a deploy, Ctrl-C), in this order ([`server.shutdown_timeout`](/docs/reference/settings) is 10 seconds by default):
 
 1. It closes the channel of `tifa.ShuttingDown`, which streams watch to end at once ([Streaming](/docs/guides/streaming#when-the-program-stops)), stops accepting connections and waits up to `shutdown_timeout` for the requests in flight.
 2. If some are still running, it cancels their contexts and waits up to `shutdown_timeout` again.
@@ -115,7 +115,7 @@ Tifa knows nothing of the goroutines you start. Two things follow:
 ```go
 // hooks.go
 func OnStart(ctx context.Context) error {
-	db, err := OpenDB(ctx, DBPath)
+	db, err := OpenDB(DBPath)
 	if err != nil {
 		return err
 	}

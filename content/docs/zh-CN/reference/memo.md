@@ -4,7 +4,7 @@ description: 渲染记忆是什么，以及它和 Cache 有什么不同
 source: docs/reference/memo.zh-CN.md
 group: 参考
 groupOrder: 5
-order: 1
+order: 2
 ---
 
 
@@ -43,11 +43,14 @@ memo 为一个输入保存输出。下一个请求来了，它比较输入。输
 
 ## 查询参数 {#query-parameters}
 
-页面能看到的查询参数，是它的 `Load` 和上面的布局函数用 `c.Query` 或 `c.QueryValues` 读取的那些。`tifa build` 会找出它们。服务端渲染只拿到路径和这些参数，按名字排序，同名参数的多个值保持请求里的顺序，键里放的也是同样的内容。其他每个参数在渲染之前就被丢掉，也不在键里。地址栏里每个参数都保持访客写的样子（`a%20b` 还是 `a%20b`），不管是一种语言还是几种。`OnRequest`、`Load` 和方法处理函数看到的是原样的请求。
+页面能看到的查询参数，是它的 `Load` 和上面的布局函数作为第二个参数接收的那些（见[查询参数](/docs/pages-and-data/loading-data#query-parameters)）。`tifa build` 从结构体里读出它们的名字。服务端渲染只拿到路径和这些参数，按名字排序，同名参数的多个值保持请求里的顺序，键里放的也是同样的内容。其他每个参数在渲染之前就被丢掉，也不在键里。地址栏保留访客写的每个参数，不管是一种语言还是几种。在接管页面之前，浏览器会去掉数字或 bool 的空值，把数字写成最短的写法（`007` 写成 `7`），并把参数按名字排序，路由写每个地址时都用这个顺序。只有这几件事改变了地址时，浏览器才重写地址，重写时用路由的写法（`a%20b` 变成 `a+b`）：已经排好顺序的地址保持原来的写法。`OnRequest`、`Load` 和方法处理函数看到的是原样的请求。
 
+- **空的数字或 bool 不在渲染里，数字按最短写法。** `?page=`，或者表单留空发出的 `?min=&max=`，和不带它们的页面得到同一个键：对数字、bool 或它们的列表字段来说，空就是没传。`?page=007` 和 `?page=7` 也是同一个键，因为渲染看到的是 `?page=7`。服务端返回 200，不重定向，页面加载之后地址栏会去掉空的，把其他写法改写，也不请求数据。
 - **跟踪参数不会增加键，也不会触发服务端渲染。** 页面上的 `?utm_source=mail`、`?fbclid=...` 或 `?x=random` 和不带它们的页面得到同一个键，memo 直接回答。`Load` 仍然在每个请求上运行。参数顺序不同，键也相同。
-- **要按某个参数来渲染，就在 `Load` 里读它。** 没有任何 `Load` 读的参数改变不了数据，所以渲染不需要它。在组件里按名字读，比如用 `route.gen` 里该路由的 `useSearch` 写 `page.useSearch().q`。这个 `useSearch` 带有 `Load` 读取的那些参数的类型，同时放行其他任何参数，所以它不会让别的参数变得安全。见 [Link 和 navigate 里的查询参数](/docs/pages-and-data/pages#query-parameters-in-link-and-navigate)。
-- **读取其他参数的组件，水合时结果会不同。** 服务器渲染时没有这个参数，浏览器里有，所以 React 会报水合错误，并在浏览器里把这部分重新渲染。`tifa build` 会发出警告，带上文件和行号，指出这些渲染时的读取：服务器渲染那段代码时没有的参数，按名字通过 `useLocation`、`useRouterState`、`useSearch({ strict: false })` 或路由的 `useSearch` 读取，以及读取位置的整个 `search`、`searchStr` 或 `href`。它拿 `page.tsx` 和 `layout.tsx` 对照它们自己的参数检查，对其他模块里的每一处这样的读取都警告，因为那些模块可能在任何页面下渲染。在 `useEffect` 或 `useLayoutEffect` 里读取只在浏览器里运行，可以通过。这项检查一次只看一个模块，所以它调用的辅助函数里的读取看不到。这样的参数要在 `Load` 里读，或者只有浏览器需要时在 effect 里读。
+- **要按某个参数来渲染，就在 `Load` 里读它。** 没有任何 `Load` 读的参数改变不了数据，所以渲染不需要它。在组件里按名字读，比如用 `route.gen` 里该路由的 `useSearch` 写 `page.useSearch().q`。这个 `useSearch` 带有 `Load` 读取的那些参数的类型，同时放行其他任何参数，所以它不会让别的参数变得安全。见 [Link 和 navigate 里的查询参数](/docs/pages-and-data/navigation#query-parameters-in-link-and-navigate)。
+- **读取其他参数的组件，水合时结果会不同。** 服务器渲染时没有这个参数，浏览器里有，所以 React 会报水合错误，并在浏览器里把这部分重新渲染。`tifa build` 会发出警告，带上文件和行号，指出这些渲染时的读取：服务器渲染那段代码时没有的参数，按名字通过 `useLocation`、`useRouterState`、`useSearch({ strict: false })` 或路由的 `useSearch` 读取，以及读取位置的整个 `search`、`searchStr` 或 `href`。它拿 `page.tsx` 和 `layout.tsx` 对照它们自己的参数检查，对其他模块里的每一处这样的读取都警告，因为那些模块可能在任何页面下渲染。在 `useEffect` 或 `useLayoutEffect` 里读取只在浏览器里运行，可以通过。写在它们的依赖数组里也可以通过，依赖数组只决定 React 什么时候再运行 effect。这项检查一次只看一个模块，所以它调用的辅助函数里的读取看不到。这样的参数要在 `Load` 里读，或者只有浏览器需要时在 effect 里读。
+
+  用页面的查询参数构建的链接，在渲染时读了整个查询：`search={(prev) => ({ ...prev, page: 2 })}` 和 `search` 会保留地址里的每个参数。参数的顺序没有影响，因为路由和服务器一样，按名字的顺序写参数。没有 `Load` 读的参数有影响：在 `?q=tolkien&utm_source=mail` 上，浏览器构建的链接带 `utm_source`，服务器渲染的链接不带。React 水合时不会重新渲染属性。生产构建里它保留服务器写的 `href`，什么也不报，直到这个链接的 `href` 变化为止。在 `tifa dev` 下它会在控制台警告属性不一致。点击链接时走路由，去的是 React 构建的 `href`，包括 `utm_source`，而在新标签页里打开链接，用的是页面里的那个。`tifa build` 不会对这种读取发出警告。要让两边的链接一样，就写出链接要保留的键，不要展开 `prev`，比如 `search={(prev) => ({ q: prev.q, page: 2 })}`。链接必须保留的参数，比如当前打开的标签页，要在 `Load` 的结构体里声明。
 - **重定向保留 URL。** 路由把一个 URL 的另一种写法（如 `/%61`）重定向到它自己的写法时，重定向会把渲染没有看到的参数补回去。
 - **没有 SSR 的页面**（`SSR = false`）不在服务器上渲染，它的文档带着原样的 URL。
 - **canonical 链接就是这个 URL。** 在设置了 `site.url` 的站点上，页面的 `<link rel="canonical">` 是 `site.url` 加上服务器渲染它时用的 URL，水合之后在浏览器里也是，所以 `?page=2` 会保留，`?utm_source=mail` 会去掉（见 [搜索引擎和语言模型](/docs/guides/seo)）。没有 SSR 的页面从浏览器得到同样的链接。
@@ -72,19 +75,28 @@ memo 为一个输入保存输出。下一个请求来了，它比较输入。输
 
 只有一种泄漏的办法。如果你在一个取决于自己的 cookie 或 `Authorization` 的响应上，设置了可共享的 `Cache-Control`，比如 `public` 或 `max-age=60`，CDN 或共享代理就可能把它存下来，并给到下一个访客。Tifa 没办法知道你的 cookie 是私有的，所以它不会拦你。不要这样做。用 Tifa 会话（在那里这样的头是错误），或者不要动 `Cache-Control`。
 
-在 CDN 后面，保持默认值，让它跟着源站的头走。见 [在 CDN 或代理后面](/docs/build-and-deploy/deploy#behind-a-cdn-or-proxy)。
+在 CDN 后面，保持默认值，让它跟着源站的头走。见 [在 CDN 或代理后面](/docs/build-and-deploy/deploy-proxy#behind-a-cdn-or-proxy)。
 
 ## 同时没命中的请求 {#requests-that-miss-together}
 
 多个请求同时没命中 memo，而且构建版本、URL 和数据都一样时（比如部署后一下子涌进来一批访客），它们共用一次渲染。每个请求仍然运行自己的中间件和 `Load`，保留它们设置的头（如 `Set-Cookie` 和 `Vary`），并拿到自己接受的编码。`ssr.memo_size` 为 0、页面太大放不进 memo、以及 `tifa dev` 下，这一点同样成立。数据不同或会话不同的请求各自渲染，`Memo = false` 的页面对每个请求都渲染。
 
-共享的那次渲染失败时，所有等它的请求都会得到同一个错误，并进入 `OnError`，panic 也一样。什么都不会保存，所以下一个请求会重新渲染。例外是组件抛了错，或渲染用光了 `ssr.vm_memory`：构建好的应用会把这次失败记住 5 秒（见 [页面上的错误](/docs/pages-and-data/pages#errors-on-a-page)）。客户端走掉的请求会立刻停止等待，连接被切断，不发送任何响应：`OnRequest` 里的 `next(c)` 返回一个匹配 `context.Canceled` 的错误，但不会调用 `OnError`，也不记日志。渲染继续为其他请求进行。自己的截止时间在等待中到期的请求，和其他错误一样失败。没有任何请求在等之后，还在等 VM 的渲染会被丢弃，已经在运行的会跑完并存入 memo。如果这时它失败了，没有请求会把错误报给 `OnError`，所以会写日志。
+共享的那次渲染失败时，所有等它的请求都会得到同一个错误，并进入 `OnError`，panic 也一样。什么都不会保存，所以下一个请求会重新渲染。例外是组件抛了错，或渲染用光了 `ssr.vm_memory`：构建好的应用会把这次失败记住 5 秒（见 [页面上的错误](/docs/pages-and-data/errors#errors-on-a-page)）。客户端走掉的请求会立刻停止等待，连接被切断，不发送任何响应：`OnRequest` 里的 `next(c)` 返回一个匹配 `context.Canceled` 的错误，但不会调用 `OnError`，也不记日志。渲染继续为其他请求进行。自己的截止时间在等待中到期的请求，和其他错误一样失败。没有任何请求在等之后，还在等 VM 的渲染会被丢弃，已经在运行的会跑完并存入 memo。如果这时它失败了，没有请求会把错误报给 `OnError`，所以会写日志。
+
+## 给搜索引擎和语言模型的文件 {#site-files}
+
+`/sitemap.xml` 和它的各个部分、`/llms.txt`、`/llms-full.txt` 和页面的 `.md` 版本也在 memo 里，规则和页面一样。`tifa.SetSitemap` 的函数和 `OnRequest` 在每个请求上都会运行，memo 按函数返回的内容来查。列表相同，就发送保存的答案：相同的正文、`Content-Type` 和 `Link`，开了 `server.compress` 时是 gzip，浏览器或爬虫已经有它时带 `ETag` 并返回 304。列表不同，比如有了新文章、新标题或新的 `Modified`，这次请求就重新生成文件。不会保存一段时间，所以文章一发布就在 sitemap 里。见[搜索引擎和语言模型](/docs/guides/seo)。
+
+- **一份列表的页面只检查一次。** 列表有哪些页面，对它的每个文件都一样，所以每种语言最新一份列表检查过的页面保存在 memo 旁边，每篇文章的 `.md` 不会再把整张列表检查一遍。它们不计入 `ssr.memo_size`，列表变了，下一个请求会重新检查。`ssr.memo_size` 为 0 时什么都不保存。
+- **不保存：** 没有对应页面的 `.md`、不存在的 sitemap 部分和函数返回的错误。编造的 URL 填不满 memo。它们没有 `ETag`。
+- **同时请求同一个文件、同一份列表的请求共用一次生成**，`ssr.memo_size` 为 0 时也一样，只是那时每个请求都生成自己的文件。
+- **和页面一起统计。** 它们共用 `ssr.memo_size` 和丢弃的规则，`Entries`、`Hits`、`Misses` 和 `Shared` 也算上它们：一次未命中就是生成一次文件。它们没有 `X-Tifa-Render` 头。`/robots.txt` 不会变，所以不在 memo 里。
 
 ## 限制 {#limits}
 
 - **读取时间或随机数的组件**（`Date.now()`、`Math.random()`）会把一个不在输入里、因此也不在键里的值放进 HTML，memo 会把它给之后的访客。水合也要求这样。在 `tifa dev` 下，每个页面都会再渲染一次，时钟拨快 36 小时，两次结果不同时，终端和开发浮层会告诉你，指出第一处不同的位置，并列出你代码里读取时间或随机数的地方。在修好之前，这个页面不会被 memo 记住。构建好的应用不做这项检查。如果页面确实要显示这样的值，比如服务器的时间，就在它的 `route.go` 里写 `const Memo = false`：它对每个请求都渲染，并且没有 `ETag`。
 - **带渲染时钟**（`tifa.WithRenderClock`）的请求既不读也不存页面，因为它的 HTML 取决于键里没有的时间，也没有 `ETag`。
-- **`ssr.memo_size`** 是渲染 memo 的内存，默认 64 MiB。满了之后，最近最少使用的页面会被丢掉。`0` 会把它关掉，同时没命中同一个页面的请求仍然共用一次渲染。见 [配置](/docs/build-and-deploy/config)。
+- **`ssr.memo_size`** 是渲染 memo 的内存，默认 64 MiB。满了之后，只被命中过一次的页面先丢，最久没用的先走，所以只来一次的一批地址挤不掉被反复访问的页面。`0` 会把它关掉，同时没命中同一个页面的请求仍然共用一次渲染。见[设置](/docs/reference/settings)。
 
 ## 每个页面一个键 {#one-key-per-page}
 
@@ -94,12 +106,12 @@ memo 为一个输入保存输出。下一个请求来了，它比较输入。输
 
 代价是：改变某个布局数据的写入，比如项目页头里的一个计数，会让这个布局下的每个页面在下一个请求时重新渲染。不动布局数据的写入，只会让 `Load` 数据被它改动的那些页面重新渲染。
 
-memo 对每个页面只保存一种 gzip 形式，并以每个访客接受的编码发出。压缩一个页面的开销是它渲染时间的 1% 到 2%。见 [压缩](/docs/build-and-deploy/build#compression) 和 [性能](/docs/reference/performance#compression)。
+memo 对每个页面只保存一种 gzip 形式，并以每个访客接受的编码发出。压缩一个页面的开销是它渲染时间的 1% 到 2%。见 [压缩](/docs/reference/server-program#compression) 和 [性能](/docs/reference/performance#compression)。
 
 ## 看它怎么工作 {#seeing-it-work}
 
 - 页面上的 `X-Tifa-Render`：`vm` 是为这个请求做的一次渲染，`memo` 是一次命中，`shared` 是另一个请求同时发起的一次渲染，`none` 是 304 或没有经过 VM 的响应。
 - 带 `If-None-Match` 的请求，在键没变时得到 304，这发生在询问 memo 之前。
-- `tifa.Stats().Memo` 有 `Entries`、`Hits`、`Misses`、`Shared` 和 `Evictions`（为给别的页面腾地方而丢掉的页面，最近最少使用的先丢），`MemoBytes` 对照 `MemoSize` 能看出 memo 有多满。要看把它们写给 Prometheus 的路由，见 [部署](/docs/build-and-deploy/deploy)。
+- `tifa.Stats().Memo` 有 `Entries`、`Hits`、`Misses`、`Shared` 和 `Evictions`（为给别的页面腾地方而丢掉的页面，只命中过一次的先丢），`MemoBytes` 对照 `MemoSize` 能看出 memo 有多满。要看把它们写给 Prometheus 的路由，见[健康检查和指标](/docs/build-and-deploy/deploy-by-hand#health-checks-and-metrics)。
 
 数字请见 [性能](/docs/reference/performance)。

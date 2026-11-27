@@ -12,7 +12,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version: '1.27.x'
+          check-latest: true
       - uses: pnpm/action-setup@v6
         with:
           version: 10
@@ -28,3 +29,4 @@ jobs:
       # content/docs/en-US is committed: it must be what go generate writes for the Tifa version in go.mod.
       - run: git add -N content/docs && git diff --exit-code -- content/docs/en-US
       - run: go tool tifa check
+      - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

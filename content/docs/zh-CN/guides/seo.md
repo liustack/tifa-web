@@ -1,6 +1,6 @@
 ---
 title: 搜索引擎和语言模型
-description: Tifa 站点怎样被搜索引擎找到、被语言模型读到
+description: 搜索引擎和语言模型怎样找到 Tifa 站点
 source: docs/guides/seo.zh-CN.md
 group: 做法
 groupOrder: 3
@@ -10,7 +10,7 @@ order: 8
 
 你希望别人能在搜索结果里，以及在 ChatGPT、Claude 这类工具的回答里找到你的站点。做完之后，搜索引擎会拿到一份 sitemap，里面有每个公开页面、它的日期和它其他语言的版本，语言模型会拿到一份简短的站点索引，以及你的文章的 Markdown 文本。
 
-这一切来自一个设置和一个函数。下面的代码来自 [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.5.2/test/apps/i18n) 和 [examples/shop](https://github.com/liustack/tifa/blob/v0.5.2/examples/shop/sitemap.go)。
+这一切来自一个设置和一个函数。下面的代码来自 [test/apps/i18n](https://github.com/liustack/tifa/blob/v0.7.3/test/apps/i18n) 和 [examples/shop](https://github.com/liustack/tifa/blob/v0.7.3/examples/shop/sitemap.go)。
 
 ## 打开它 {#turn-it-on}
 
@@ -32,6 +32,8 @@ site:
 | `/llms-full.txt` | 每个显示内容条目的页面的 Markdown，一个接一个 |
 | `<path>.md` | 显示内容条目的页面的 Markdown 版本，比如 `/blog/hello.md` |
 
+`tifa routes` 会列出这些地址，并写明每个地址需要什么条件，这样你能看到应用有其中哪几个（见 [Tifa routes](/docs/build-and-deploy/check#tifa-routes)）。
+
 每个页面还会得到带完整 URL 的 `<link rel="canonical">`：路径加上它的 `Load` 和布局读取的查询参数，也就是服务器渲染它时用的 URL（见 [查询参数](/docs/reference/memo#query-parameters)）。其他参数会略去。所以当 `/store/products?page=2&utm_source=news` 的 `Load` 读取 `page` 时，它的 canonical URL 是 `/store/products?page=2`：列表的第 2 页是一个独立的页面，而带跟踪参数的链接不是副本。你在自己的 `head` 里写的 canonical 优先。404 页面和错误页面没有 canonical。
 
 带 canonical URL 的页面还会得到 `<meta property="og:url">`，URL 相同，这样被分享的链接指向的是去掉了跟踪参数的页面。路由的 `head` 或根布局的 `documentHead` 里的 `og:url` 优先，页面上只留那一个。页面自己写了 canonical 时，`og:url` 重复那个 URL。
@@ -42,7 +44,7 @@ site:
 
 ## 分享卡片 {#share-cards}
 
-把你的页面链接发到聊天或社交动态里，会显示一张卡片：标题、一行文字和一张图。卡片读取 `og:` meta 标签，缺了的会被猜一个，或者留空。把它们写在页面的 `head` 里（见[标题和 meta 标签](/docs/pages-and-data/pages#title-and-meta-tags)），数据来自它的 `Load`。`og:url` 由 Tifa 自己写。
+把你的页面链接发到聊天或社交动态里，会显示一张卡片：标题、一行文字和一张图。卡片读取 `og:` meta 标签，缺了的会被猜一个，或者留空。把它们写在页面的 `head` 里（见[标题和 meta 标签](/docs/pages-and-data/head)），数据来自它的 `Load`。`og:url` 由 Tifa 自己写。
 
 ```go
 // app/products/product+/route.go
@@ -125,7 +127,7 @@ func sitemap(c *tifa.Ctx) (tifa.Sitemap, error) {
 }
 ```
 
-这个函数在每个对 `/sitemap.xml`、`/llms.txt`、`/llms-full.txt` 和 `.md` 路径的请求上运行，所以到了日期才发布的文章，从那一刻起就在 sitemap 里了。要保持它很快：读内存里已有的东西，比如内容集合，或者只跑一次查询。`SetSitemap` 和 `SetHTTPHandler` 一样，服务器开始监听之后调用会 panic。
+这个函数在每个对 `/sitemap.xml`、`/llms.txt`、`/llms-full.txt` 和 `.md` 路径的请求上运行，所以到了日期才发布的文章，从那一刻起就在 sitemap 里了。只要列表和上一次一样，这些文件就不会重新生成：Tifa 按函数返回的内容，把每个文件保存在[渲染记忆](/docs/reference/memo#site-files)里，发送时带 `ETag`，客户端已有该文件时得到 304。所以 `llms-full.txt` 不会每次都把每个条目的 Markdown 重新读一遍，一个抓取所有 `.md` 的爬虫也不用每页都付一次整张列表的代价。列表变了，比如有了新文章或新标题，下一次请求就能看到。函数每次仍然会运行，所以要保持它很快：读内存里已有的东西，比如内容集合，或者只跑一次查询。`SetSitemap` 和 `SetHTTPHandler` 一样，服务器开始监听之后调用会 panic。
 
 这个函数放在根包里，在 `hooks.go` 旁边。它可以直接读 `content.go` 里的集合。要读 `app/` 下的某个域，根包必须能导入它：见 [导入的方向](/docs/start/structure#which-way-imports-go)。
 
@@ -236,6 +238,8 @@ shop 的 `/sitemap.xml`，一篇文章：
 
 `/llms-full.txt` 把每个 Markdown 版本放进一个文件，每个都带它的标题和一行 `Source:`，写着页面的 URL。
 
+Markdown 版本和 `/llms-full.txt` 都不运行页面的 `Load`。写在 `Load` 里的检查管不到它们，所以要把检查写在 `OnRequest` 里，或者别把这个条目放进 `Content`。
+
 ## `robots.txt` {#robotstxt}
 
 没有 `public/robots.txt` 时，程序响应：
@@ -253,7 +257,7 @@ Sitemap: https://shop.example.com/sitemap.xml
 
 sitemap、`llms` 文件和 Markdown 版本和其他请求一样：`OnRequest` 会为它们运行，`c.Pattern()` 是 `/sitemap.xml`、`/llms.txt`、`/llms-full.txt`，或者页面带 `.md` 的路由，比如 `/blog/{slug}.md`（`/` 对应 `/index.md`）。`c.Language()` 对 `.md` 路径是页面的语言，对其他文件是默认语言。在 `OnRequest` 里把未登录的访客送到登录页面的守卫，也会守住这些文件，所以在不该拦的时候要放行。
 
-函数返回的内容里有错误，绝不会让请求失败。出错的页面或 `Exclude` 模式会被略去，文件用其余的内容响应，每个请求为每一种错误记一行 `ERROR` 日志，指出页面（按路径和语言）或模式：
+函数返回的内容里有错误，绝不会让请求失败。出错的页面或 `Exclude` 模式会被略去，文件用其余的内容响应，每一种错误记一行 `ERROR` 日志，指出页面（按路径和语言）或模式。这一行在检查一份列表时写出，函数每返回一份新列表写一次（每种语言各一次），不是每个请求或每个文件都写：
 
 | 错误 | 会怎样 |
 | --- | --- |
@@ -271,7 +275,7 @@ sitemap、`llms` 文件和 Markdown 版本和其他请求一样：`OnRequest` �
 
 ## 测试它 {#test-it}
 
-`tifatest.Start` 运行整个应用，包括 `OnStart`，所以测试可以像搜索引擎那样读 sitemap（取自 [examples/shop](https://github.com/liustack/tifa/blob/v0.5.2/examples/shop/sitemap_test.go)）：
+`tifatest.Start` 运行整个应用，包括 `OnStart`，所以测试可以像搜索引擎那样读 sitemap（取自 [examples/shop](https://github.com/liustack/tifa/blob/v0.7.3/examples/shop/sitemap_test.go)）：
 
 ```go
 func TestSitemapListsTheStorefront(t *testing.T) {

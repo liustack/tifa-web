@@ -23,7 +23,9 @@ pnpm install
 
 在一台从没构建过 Tifa 应用的机器上，`go mod tidy`、`pnpm install` 以及第一次 `go tool tifa dev` 或 `go tool tifa build` 都要下载 Go 和 npm 包并编译 Tifa，可能要几分钟。之后的运行会用上缓存，只要几秒。
 
-`tifa new` 只写文件，并打印接下来的步骤。请保留名字 `tutorial-app`，因为下面的代码会 import `tutorial-app/app/todos`。文件夹名就是模块路径，根包叫 `tutorialapp`。像 `todos` 这样的名字会被拒绝，因为应用会 import 同名的包。见 [`tifa new`](/docs/build-and-deploy/build#tifa-new)。
+`pnpm install` 也会运行 `go tool tifa gen`（`package.json` 里的 `prepare` 脚本），它写出 `.tifa/` 里的类型，编辑器要读它们。请在这之后再打开编辑器：之前，对 `./route.gen` 的 import 会报错。
+
+`tifa new` 只写文件，并打印接下来的步骤。请保留名字 `tutorial-app`，因为下面的代码会 import `tutorial-app/app/todos`。文件夹名就是模块路径，根包叫 `tutorialapp`。像 `todos` 这样的名字会被拒绝，因为应用会 import 同名的包。见 [`tifa new`](/docs/build-and-deploy/create-app#tifa-new)。
 
 ## 2. 运行并四处看看 {#2-run-it-and-look-around}
 
@@ -76,7 +78,7 @@ tifa dev: 19:57:44 ready in 804ms
       await router.invalidate({ sync: true })
 ```
 
-这是要记住的规则：Tifa 在写入之后从不自己重新加载页面数据，所以页面得自己去要。没有这一行，待办虽然保存了，但列表会一直是旧的，直到你刷新。`router.invalidate` 会在一次请求里重新加载页面和它的布局，`sync: true` 会等到页面显示出新数据为止。`/todos/1` 上把待办标为完成的按钮也是这么做的。你以后加的每个写入，都需要同样的一行。见[在浏览器里调用方法处理函数](/docs/pages-and-data/pages#calling-method-handlers-from-the-browser)。
+这是要记住的规则：Tifa 在写入之后从不自己重新加载页面数据，所以页面得自己去要。没有这一行，待办虽然保存了，但列表会一直是旧的，直到你刷新。`router.invalidate` 会在一次请求里重新加载页面和它的布局，`sync: true` 会等到页面显示出新数据为止。`/todos/1` 上把待办标为完成的按钮也是这么做的。你以后加的每个写入，都需要同样的一行。见[在浏览器里调用方法处理函数](/docs/pages-and-data/handlers#calling-method-handlers-from-the-browser)。
 
 ## 3. 添加页面 {#3-add-a-page}
 
@@ -163,7 +165,7 @@ export const head = () => ({
 
 先保存 `page.tsx`，或者和 `route.go` 一起保存。只有 `Load` 而没有 `page.tsx` 的 `route.go` 会让构建失败，报 `Load is not allowed without page.tsx`，在页面出现之前，`tifa dev` 会一直打印这一行。
 
-打开 `/todos/1`，把待办标为完成，然后点导航栏里的 Done。这个待办就在那里。`page.useLoaderData()` 的类型来自 `Load` 返回的内容。第 7 步会展示 Go 类型改变时会发生什么。见 [route.go](/docs/pages-and-data/routes#routego) 和 [page.tsx](/docs/pages-and-data/pages#pagetsx)。
+打开 `/todos/1`，把待办标为完成，然后点导航栏里的 Done。这个待办就在那里。`page.useLoaderData()` 的类型来自 `Load` 返回的内容。第 7 步会展示 Go 类型改变时会发生什么。见 [route.go](/docs/pages-and-data/loading-data#routego) 和 [page.tsx](/docs/pages-and-data/loading-data#pagetsx)。
 
 ## 4. 带字段错误的表单 {#4-a-form-with-field-errors}
 
@@ -285,7 +287,7 @@ function RenameForm() {
 
 在 `/todos/1` 上，清空输入框并按 Save：下面会显示 "Write what needs doing."。输入 "Buy oat milk" 再按 Save：标题会变。浏览器的控制台里会显示那个 422，这是响应按设计在工作。
 
-`tifa.Fields` 到达浏览器时是一个 `TifaError`，它的 `fields` 里是各条消息。`Validate` 返回的其他任何错误，都是 400，文字放在 `message` 里。见[带输入和结果的方法处理函数](/docs/pages-and-data/routes#method-handlers-with-input-and-result)。
+`tifa.Fields` 到达浏览器时是一个 `TifaError`，它的 `fields` 里是各条消息。`Validate` 返回的其他任何错误，和处理函数返回的一样算应用自己出的错：答 500，文字只进日志。见[带输入和结果的方法处理函数](/docs/pages-and-data/handlers#method-handlers-with-input-and-result)。
 
 ## 5. 布局里的数据 {#5-data-in-the-layout}
 
@@ -340,7 +342,7 @@ func Layout(c *tifa.Ctx) (todos.Counts, error) {
 
 添加一个待办，看导航栏：`Todos (1)`。把它标为完成：`Todos (0)` 和 `Done (1)`。数字会变，是因为第 2 步里的 `router.invalidate` 调用，它们也会重新加载布局。
 
-如果在你保存 `layout.tsx` 之后，`tifa dev` 马上打印出一长段 "Hydration failed" 消息，那是改动期间开着的那个标签页引起的。刷新页面就没了。见[布局](/docs/pages-and-data/pages#layout)和[日志](/docs/build-and-deploy/dev#log)。
+如果在你保存 `layout.tsx` 之后，`tifa dev` 马上打印出一长段 "Hydration failed" 消息，那是改动期间开着的那个标签页引起的。刷新页面就没了。见[布局](/docs/pages-and-data/layouts#the-layout-of-a-folder)和[日志](/docs/build-and-deploy/dev-errors#log)。
 
 ## 6. 测试 {#6-tests}
 
@@ -501,10 +503,10 @@ built /path/to/tutorial-app/bin/tutorial-app (build 2e121916557701e0)
 
 ## 接下来去哪 {#where-to-go-next}
 
-- 放到服务器上：[部署](/docs/build-and-deploy/deploy)讲了为 Linux 构建、运行程序、容器、端口和 HTTPS，以及放在代理或 CDN 后面时要设置什么。
+- 放到服务器上：[用 tifa deploy 部署](/docs/build-and-deploy/deploy)，或者[手动部署](/docs/build-and-deploy/deploy-by-hand)，后者讲了为 Linux 构建、运行程序、容器、端口和 HTTPS。放在代理或 CDN 后面时要设置什么：[在前面放 nginx 或 CDN](/docs/build-and-deploy/deploy-proxy)。
 - 设置、HTTPS、已渲染页面的缓存：[配置](/docs/build-and-deploy/config)。
 - 让用户登录：[会话](/docs/pages-and-data/sessions)。应用把会话存在 `app.db`（`sessions.go`）里，所以重启不会让任何人退出登录。
 - 样式和 shadcn/ui：[样式](/docs/pages-and-data/styles)。多语言站点：[编写应用](/docs/start/app#a-site-in-several-languages)。缓存页面：[渲染开关和缓存](/docs/pages-and-data/ssr-and-cache#cache-for-cdns)。
-- 一个可以读的更大的应用：[examples/shop](https://github.com/liustack/tifa/blob/v0.5.2/examples/shop)。
-- `tifa dev` 如何对每次改动做出反应，以及如何读它的日志：[开发服务器](/docs/build-and-deploy/dev)。
+- 一个可以读的更大的应用：[examples/shop](https://github.com/liustack/tifa/blob/v0.7.3/examples/shop)。
+- `tifa dev` 如何对每次改动做出反应：[每种改动触发什么](/docs/build-and-deploy/dev-reloads)。如何读它的日志：[日志](/docs/build-and-deploy/dev-errors#log)。
 - 文件夹为什么是这个样子：[应用的结构](/docs/start/structure)和[设计理念](/docs/start/philosophy)。

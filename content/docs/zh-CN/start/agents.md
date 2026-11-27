@@ -1,6 +1,6 @@
 ---
 title: 和编程 agent 一起用 Tifa
-description: 怎样和编程 agent 一起开发 Tifa 应用
+description: 和编程 agent 一起开发 Tifa 应用
 source: docs/start/agents.zh-CN.md
 group: 开始
 groupOrder: 1
@@ -39,13 +39,13 @@ mkdir -p .agents/skills && cp -R .claude/skills/tifa .agents/skills/
 
 ## 保持最新 {#keep-them-current}
 
-`go tool tifa upgrade` 把应用升到新版 Tifa 时，会重新写 `AGENTS.md` 和 skill。`go tool tifa agents` 不升级也能做同样的事，应用里还没有这两样时也可以用。`go tool tifa agents --check` 什么都不改，两样不是最新时报错。见 [`tifa agents`](/docs/build-and-deploy/build#tifa-agents)。
+`go tool tifa upgrade` 把应用升到新版 Tifa 时，会重新写 `AGENTS.md` 和 skill。`go tool tifa agents` 不升级也能做同样的事，应用里还没有这两样时也可以用。`go tool tifa agents --check` 什么都不改，两样不是最新时报错。见 [`tifa agents`](/docs/build-and-deploy/upgrade#tifa-agents)。
 
 ## agent 用的命令 {#commands-an-agent-uses}
 
 - `go tool tifa docs` 列出应用所用 Tifa 版本的文档，每篇一行。读这些，不要读 GitHub 上的文档，那可能是别的版本。
-- `go tool tifa dev --background` 启动开发服务器，等它能响应了再返回。`go tool tifa dev status`、`logs` 和 `stop` 用来查看和停止它。见 [智能体与脚本](/docs/build-and-deploy/dev#agents-and-scripts)。
-- `go tool tifa errors` 列出上次构建以来的错误，包括浏览器里的错误。见 [Tifa 错误](/docs/build-and-deploy/dev#tifa-errors)。
+- `go tool tifa dev --background` 启动开发服务器，等它能响应了再返回。`go tool tifa dev status`、`logs` 和 `stop` 用来查看和停止它。见 [智能体与脚本](/docs/build-and-deploy/dev-scripts#agents-and-scripts)。
+- `go tool tifa errors` 列出上次构建以来的错误，包括浏览器里的错误。见 [Tifa 错误](/docs/build-and-deploy/dev-scripts#tifa-errors)。
 - `go tool tifa check` 在 agent 收尾前跑完所有检查。
 
 [tifago.com](https://tifago.com) 上的文档也有 Markdown 版本：在页面地址后加 `.md`，或者请求时带上 `Accept: text/markdown`。[/llms.txt](https://tifago.com/llms.txt) 列出了它们。

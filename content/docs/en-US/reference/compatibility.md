@@ -4,7 +4,7 @@ description: What Tifa v0.1 keeps stable for apps and what may change
 source: docs/reference/compatibility.md
 group: Reference
 groupOrder: 5
-order: 3
+order: 4
 ---
 
 
@@ -12,7 +12,7 @@ From v0.1, a change that breaks anything on the stable list below ships in a min
 
 ## Stable
 
-**Go packages.** The exported names of `github.com/liustack/tifa`, `github.com/liustack/tifa/content` and `github.com/liustack/tifa/tifatest`. That includes the names of the hooks in `hooks.go`, the signatures of `Load`, `Layout` and the method handlers in `route.go`, the constants `route.go` reads (`SSR`, `Memo`, `Cache`), the `Validate` and `Exposed` methods, the fields of `tifa.Stats()`, and the JSON rules in [routes.md](/docs/pages-and-data/routes).
+**Go packages.** The exported names of `github.com/liustack/tifa`, `github.com/liustack/tifa/content` and `github.com/liustack/tifa/tifatest`. That includes the names of the hooks in `hooks.go`, the signatures of `Load`, `Layout` and the method handlers in `route.go`, the constants `route.go` reads (`SSR`, `Memo`, `Cache`), the `Validate` and `Exposed` methods, the fields of `tifa.Stats()`, and the JSON rules in [JSON rules](/docs/reference/json).
 
 **File conventions.** The root files (`go.mod`, `tifa.yaml`, `hooks.go`, `setup.ts`, `options.go`, `content.go`, `content/`, `public/`, `app/`), the meaning of folder names in `app/` (`name`, `name+`, `name++`), the convention files in a folder (`route.go`, `page.tsx`, `layout.tsx`, `layout_.tsx`), what `page.tsx` and `layout.tsx` export, `_locales/<language>.json`, and `*.client.tsx`.
 
@@ -20,7 +20,7 @@ From v0.1, a change that breaks anything on the stable list below ships in a min
 
 **Commands and flags.** The commands of `go tool tifa` (`new`, `build`, `dev`, `gen`, `check`, `routes`, `errors`, `docs`, `agents`, `upgrade`) with their flags. The built program's `serve`, `config` and `version`, `-c/--config`, and one flag for every setting.
 
-**`tifa.yaml` keys.** Every key in [config.md](/docs/build-and-deploy/config), with its flag and environment variable, its type and its default. A key Tifa drops goes in a minor version, and the changelog says what to write instead.
+**`tifa.yaml` keys.** Every key in [Settings](/docs/reference/settings), with its flag and environment variable, its type and its default. A key Tifa drops goes in a minor version, and the changelog says what to write instead.
 
 **HTTP names that apps and CDNs touch.**
 
