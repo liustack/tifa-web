@@ -1,7 +1,7 @@
-<!-- Written by Tifa v0.5.2 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.7.3 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 # Testing a Tifa app
 
-Contents: the check command, testing domain code, testing route code with `tifatest`, middleware, signed-in requests, the render clock, checking the real HTML.
+Contents: the check command, testing domain code, testing route code with `tifatest`, middleware, signed-in requests, commands, the render clock, checking the real HTML, testing page components and pages in a browser.
 
 Full docs (in the folder `go tool tifa docs` prints): `docs/pages-and-data/testing-apps.md#testing`. The `docs/internals/testing.md` of the Tifa repository is about developing Tifa itself, not about testing an app.
 
@@ -109,6 +109,10 @@ func TestLayoutShowsTheUser(t *testing.T) {
 }
 ```
 
+## Commands
+
+`tifatest.Command(t, tifaapp.App, "promote", "ann@example.com")` runs a command the app adds in `OnCommand` as the program does, without `OnStart`, and returns what it wrote to `cmd.OutOrStdout()` and `cmd.ErrOrStderr()` and its error. Put the test in a `_test` package that imports `<module>/.tifa/tifaapp`. Set `DBPath` and the other options in the test first: a flag of an option fails the test. See `docs/guides/commands.md#test-it`.
+
 ## Render clock
 
 Only for tests and apps that need a fixed time in server renders. Set a clock on the request context in `OnRequest` (or in a test):
@@ -125,10 +129,12 @@ It covers `Date`, `Temporal.Now` and Intl formatting without a date for the whol
 `tifatest` cannot render. To see the HTTP answer, hydration and navigation:
 
 1. `go tool tifa build`, then run `./bin/<app> --server-addr 127.0.0.1:9600` in the background and note its PID. Or use `go tool tifa dev --background` and `go tool tifa dev stop` when done. Only stop what you started.
-2. `curl -si http://127.0.0.1:9600/path` shows the status, headers (`ETag`, `X-Tifa-Render`, and `Cache-Control` with `s-maxage` on a page with `Cache`) and the HTML a crawler sees. For the navigation data a page fetches, add the query parameter `_tifa=<build ID>.<digits>` to the page URL, with a digit for each `Load` on the chain of the page from the root Layout down (`1` asks for it, `011` skips the root Layout). The build ID is in `.tifa/dist/build.json`. The answer is `{"routes": {route ID: result}}`, with a `session` next to `routes` in an app that has sessions (see the data protocol in `docs/build-and-deploy/build.md#data-protocol`).
+2. `curl -si http://127.0.0.1:9600/path` shows the status, headers (`ETag`, `X-Tifa-Render`, and `Cache-Control` with `s-maxage` on a page with `Cache`) and the HTML a crawler sees. For the navigation data a page fetches, add the query parameter `_tifa=<build ID>.<digits>` to the page URL, with a digit for each `Load` on the chain of the page from the root Layout down (`1` asks for it, `011` skips the root Layout). The build ID is in `.tifa/dist/build.json`. The answer is `{"routes": {route ID: result}}`, with a `session` next to `routes` in an app that has sessions (see the data protocol in `docs/reference/data-protocol.md`).
 3. For hydration and clicks, open the page in a browser tool and watch the console. A hydration mismatch is reported there.
 4. A POST from `curl` has no `Sec-Fetch-Site` or `Origin`, so it passes the cross-site check. A POST from a page on another origin gets 403.
 
-On a page with `Cache`, the server hands `OnRequest` and `Load` an anonymous request, which `tifatest.NewCtx` does not do: it gives your function the request as you built it. The build already fails when such a `Load` or Layout reads a cookie, header or session. Check the page with two `curl -si` requests, the second with a `Cookie` header, which must give the same body.
+To test a page component or a page in a browser as part of the test suite, see `docs/pages-and-data/testing-pages.md` (Vitest and Testing Library, with `./route.gen` mocked, and Playwright against the address of `tifatest.StartPages`, started from a Go test).
+
+On a page with `Cache`, the server hands `OnRequest` and `Load` an anonymous request, which `tifatest.NewCtx` does not do: it gives your function the request as you built it. The build already fails when such a `Load`, or a Layout whose pages all have `Cache`, reads a cookie, header or session. Check the page with two `curl -si` requests, the second with a `Cookie` header, which must give the same body.
 
 Test cases worth writing for a new route: the not found path, the validation failure (422 with `fields`), the unauthorized path, and a second visit with `If-None-Match` for a page that should answer 304.

@@ -102,7 +102,7 @@ func CheckHash(password, hash string) (bool, error) {
 }
 ```
 
-它生成的文本形如 `$argon2id$v=19$m=19456,t=2,p=1$<salt>$<key>`，这是书写 argon2 哈希的通用方式。参数跟着哈希一起保存，所以以后你可以调高参数，而旧的哈希仍然能校验。有人注册或修改密码时运行 `HashPassword`，把结果保存在你的用户表里。本指南没有注册页面。
+它生成的文本形如 `$argon2id$v=19$m=19456,t=2,p=1$<salt>$<key>`，这是书写 argon2 哈希的通用方式。参数跟着哈希一起保存，所以以后你可以调高参数，而旧的哈希仍然能校验。有人注册或修改密码时运行 `HashPassword`，把结果保存在你的用户表里。[注册并确认邮箱地址](/docs/guides/sign-up) 展示了注册页，[重置密码](/docs/guides/password-reset) 展示了重置。
 
 ## 检查登录 {#checking-the-sign-in}
 
@@ -297,7 +297,9 @@ func SignInRedirect(next string) error {
 
 `c.Path()` 是访问者在地址栏里看到的页面路径：里面有语言前缀，没有查询。页面整体加载时和点击链接请求它的数据时，它都一样，对处理函数来说，它是处理函数的路径。这里不该用 `c.Request()`：`Load` 不能调用它，而点击链接时，请求是数据请求，不是页面本身。`RequireUser` 可以在 `OnRequest`、`Load` 和它们调用的函数里工作。
 
-`RequireUser` 生成的 `next` 里不带查询。把状态放在查询参数里的页面，要在自己的 `Load` 里把它们补回去，比如 `signin.SignInRedirect(c.Path()+"?tab="+url.QueryEscape(c.Query("tab")))`。被许多页面共用的守卫没办法为所有页面都这样做，因为 `Load` 只能读取它点名的查询参数（见 [Load 如何使用 Ctx](/docs/pages-and-data/routes#how-load-may-use-ctx)）。`OnRequest` 不一样：hook 可以读取请求，所以下面的守卫保留了整个查询。服务器会在 `OnRequest` 运行之前，把数据请求的参数 `_tifa` 从 URL 里去掉，所以 `c.Request().URL.RawQuery` 对页面加载和点击链接都是访问者写下的那个查询。
+`RequireUser` 生成的 `next` 里不带查询。把状态放在查询参数里的页面，要在自己的 `Load` 里把它们补回去，比如 `signin.SignInRedirect(c.Path()+"?tab="+url.QueryEscape(q.Tab))`。被许多页面共用的守卫没办法为所有页面都这样做，因为 `Load` 只有它自己的结构体点名的查询参数（见[查询参数](/docs/pages-and-data/loading-data#query-parameters)）。`OnRequest` 不一样：hook 可以读取请求，所以下面的守卫保留了整个查询。服务器会在 `OnRequest` 运行之前，把数据请求的参数 `_tifa` 从 URL 里去掉，所以 `c.Request().URL.RawQuery` 对页面加载和点击链接都是访问者写下的那个查询。
+
+根 Layout 的 `Layout` 函数对每个 URL 都会运行，包括 404 页和登录页，而在 `OnRequest` 里按路径写的守卫管不到它们。别让它返回没登录的访客不该看的数据，或者先在里面读会话。见[决定谁能做什么](/docs/guides/security#decide-who-may-do-what)。
 
 ## hook {#the-hooks}
 
@@ -333,7 +335,8 @@ func OnStart(context.Context) error {
 // page, which sends them back afterwards. It runs for page loads and for the data requests of
 // link clicks alike.
 func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
-	if path := c.Path(); (path == "/account" || strings.HasPrefix(path, "/account/")) && tifa.Session[Session](c) == nil {
+	if route := c.Pattern(); (route == "/account" || strings.HasPrefix(route, "/account/")) && tifa.Session[Session](c) == nil {
+		path := c.Path()
 		if query := c.Request().URL.RawQuery; query != "" {
 			path += "?" + query
 		}
@@ -342,6 +345,8 @@ func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
 	return next(c)
 }
 ```
+
+守卫用 `c.Pattern()` 问的是匹配到了哪条路由，比如 `/account` 或 `/account/orders/{order}`。不要拿 URL 的文字（`c.Path()` 或 `c.Request().URL.Path`）来决定谁能进。同一条路由有很多种写法：`/%61ccount` 就是 `/account`，有多种语言的页面在 `/en-US/account` 也会应答。比文字的守卫会放过这些写法，而路由照样运行。`c.Path()` 只用来写 `next` 地址。
 
 没有人登录时，`tifa.Session[Session](c)` 是 nil。服务器在 `OnRequest` 之前就读取了会话，所以每个 hook、`Load` 和处理函数都可以去问。
 
@@ -367,8 +372,13 @@ type View struct {
 	Next string `json:"next"`
 }
 
-func Load(c *tifa.Ctx) (View, error) {
-	return View{Next: safeNext(c.Query("next"))}, nil
+// Query is the query string of the page.
+type Query struct {
+	Next string `json:"next"`
+}
+
+func Load(c *tifa.Ctx, q Query) (View, error) {
+	return View{Next: safeNext(q.Next)}, nil
 }
 
 // Credentials is the form.
@@ -796,9 +806,9 @@ func TestSignInAndOut(t *testing.T) {
 
 **会话持续多久。** 从登录起 30 天，由 `session.max_age` 设置。它不会续期。对涉及钱或私人数据的应用，请把它缩短。
 
-**OAuth、魔法链接、两步验证码。** 它们替换的是密码检查，不是其余部分。检查成功后，像上面那样调用 `tifa.SetSession`。这些流程的临时状态放在库自己的一个短期 cookie 里（见[登录库](/docs/pages-and-data/sessions#sign-in-libraries)）。
+**OAuth、魔法链接、两步验证码。** 它们替换的是密码检查，不是其余部分。检查成功后，像上面那样调用 `tifa.SetSession`。这些流程的临时状态放在库自己的一个短期 cookie 里（见[登录库](/docs/pages-and-data/sessions#sign-in-libraries)）。[用 Google 或 GitHub 登录](/docs/guides/oauth) 展示了 OAuth 流程。
 
-**注册和重置密码。** 这里没有展示。两者最后都落在 `HashPassword` 和对你的用户表的一次写入上。
+**注册、邮箱确认和重置密码。** 见 [注册并确认邮箱地址](/docs/guides/sign-up) 和 [重置密码](/docs/guides/password-reset)。两者最后都落在 `HashPassword` 和对你的用户表的一次写入上。
 
 ## 检查一下 {#check-it}
 

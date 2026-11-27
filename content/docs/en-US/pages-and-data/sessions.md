@@ -4,7 +4,7 @@ description: How sessions work in a Tifa app
 source: docs/pages-and-data/sessions.md
 group: Pages and data
 groupOrder: 2
-order: 5
+order: 10
 ---
 
 
@@ -43,7 +43,7 @@ err := tifa.ClearSession(c)
 
 ## The cookie
 
-The cookie is `__Host-tifa_session` with `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, and no `Domain`. A session lasts 30 days from `SetSession`. It does not renew, so a request never writes to the store. Change the name and the lifetime with `session.cookie` and `session.max_age` (see [Configuration](/docs/build-and-deploy/config#settings)). Under `tifa dev` the cookie is `tifa_session` without `Secure`, since dev serves plain HTTP on localhost. Browsers drop a `Secure` cookie that comes over plain HTTP from anything but localhost, so a sign-in at `http://<IP>:9527` seems to work and the user is signed out on the next request. The first `SetSession` that answers such a request logs one warning, once per process. It counts a request as HTTPS when it came over TLS or carries `X-Forwarded-Proto: https` or `Forwarded: proto=https`, and as local when its host is `localhost`, a `.localhost` name or a loopback address. Test over HTTPS, through a proxy that sets the header, or at `http://localhost`. A cookie that is not 43 characters of `A-Z a-z 0-9 - _` is dropped without asking the store. A cookie whose record the store no longer has, because it expired or the process restarted with the memory store, is dropped too, and the request is signed out.
+The cookie is `__Host-tifa_session` with `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, and no `Domain`. A session lasts 30 days from `SetSession`. It does not renew, so a request never writes to the store. Change the name and the lifetime with `session.cookie` and `session.max_age` (see [Configuration](/docs/reference/settings)). Under `tifa dev` the cookie is `tifa_session` without `Secure`, since dev serves plain HTTP on localhost. Browsers drop a `Secure` cookie that comes over plain HTTP from anything but localhost, so a sign-in at `http://<IP>:9527` seems to work and the user is signed out on the next request. The first `SetSession` that answers such a request logs one warning, once per process. It counts a request as HTTPS when it came over TLS or carries `X-Forwarded-Proto: https` or `Forwarded: proto=https`, and as local when its host is `localhost`, a `.localhost` name or a loopback address. Test over HTTPS, through a proxy that sets the header, or at `http://localhost`. A cookie that is not 43 characters of `A-Z a-z 0-9 - _` is dropped without asking the store. A cookie whose record the store no longer has, because it expired or the process restarted with the memory store, is dropped too, and the request is signed out.
 
 An answer that sets or drops the cookie goes out as `Cache-Control: no-store` without `ETag` or `Last-Modified`, whatever the app set, and it keeps its status: it is never turned into a 304.
 
@@ -79,7 +79,7 @@ type SessionStore interface {
 
 ### The memory store
 
-The store Tifa uses when `OnStart` sets none keeps records in the memory of the process, up to `session.memory_limit` bytes (see [Configuration](/docs/build-and-deploy/config#settings)). Set that to give sessions more or less memory. `tifa.SetSessionStore(nil)` brings the memory store back after a store was set.
+The store Tifa uses when `OnStart` sets none keeps records in the memory of the process, up to `session.memory_limit` bytes (see [Configuration](/docs/reference/settings)). Set that to give sessions more or less memory. `tifa.SetSessionStore(nil)` brings the memory store back after a store was set.
 
 - `session.memory_limit` counts, for each record, its key, its data and a fixed cost. When the store is full, a `Put` drops the records that expire first. A record that alone costs more than the limit makes `Put` return an error, so `SetSession` fails.
 - It runs a goroutine that removes expired records once a minute, and the server stops it. The store keeps working after that, as `Get` never returns an expired record.
@@ -124,7 +124,7 @@ Each failure message names the rule. A store that has no `ctx.Err()` check at th
     Delete with a canceled context deleted the record
 ```
 
-A store on a database client that takes a `ctx` returns these errors by itself. The test app [test/apps/session](https://github.com/liustack/tifa/blob/v0.5.2/test/apps/session/hooks_test.go) runs this test on a store that keeps its records in a file.
+A store on a database client that takes a `ctx` returns these errors by itself. The test app [test/apps/session](https://github.com/liustack/tifa/blob/v0.7.3/test/apps/session/hooks_test.go) runs this test on a store that keeps its records in a file.
 
 ## Where to call what
 
@@ -144,7 +144,7 @@ On a page with `Cache` the GET and HEAD requests are anonymous: `Session` is nil
 
 Tifa stores the session. Your app or a library checks who the user is: password hashes (bcrypt, argon2), the OAuth code flow and its `state` check (`golang.org/x/oauth2`), two-step verification. When that succeeds, call `tifa.SetSession`. The temporary state of such a library, an OAuth `state` for instance, goes in a short cookie of the library's own. Check access in Go by reading `tifa.Session`.
 
-Writes from other sites are refused before any of this runs (see [Cross-site writes](/docs/build-and-deploy/config#cross-site-writes)), and the cookie is `SameSite=Lax`, so a form on another site cannot sign a user out or act for them. For that to hold, make sure GET, HEAD and OPTIONS never change anything: sign out with a POST.
+Writes from other sites are refused before any of this runs (see [Cross-site writes](/docs/build-and-deploy/headers-and-origins#cross-site-writes)), and the cookie is `SameSite=Lax`, so a form on another site cannot sign a user out or act for them. For that to hold, make sure GET, HEAD and OPTIONS never change anything: sign out with a POST. What else Tifa guards and what is left to you is in [Security](/docs/guides/security).
 
 ## Checks at build time
 
@@ -208,7 +208,7 @@ An answer that carries the session must say `Cache-Control: no-store`, or `priva
 
 `data-session` is an attribute Tifa keeps on `<html>`. A root Layout whose `documentHead.htmlAttributes` sets it stops the server when it starts (the VMs fail to prewarm, and `tifa dev` shows the error), and a route whose `htmlAttributes` sets it fails the render.
 
-**Content Security Policy.** The script and the style are inline and the same on every page. With `server.csp`, Tifa puts their hashes into the policy of each page itself (see [Content-Security-Policy](/docs/build-and-deploy/config#content-security-policy)). With a CSP in a `<meta>` tag they are not affected, since they come before the tag. With a CSP of your own in a header, allow their hashes:
+**Content Security Policy.** The script and the style are inline and the same on every page. With `server.csp`, Tifa puts their hashes into the policy of each page itself (see [Content-Security-Policy](/docs/build-and-deploy/headers-and-origins#content-security-policy)). With a CSP in a `<meta>` tag they are not affected, since they come before the tag. With a CSP of your own in a header, allow their hashes:
 
 ```text
 script-src 'sha256-NWjzg1BGj/5CJBw80xzDV4Gmw6vQUG2ExZLUcX4mWkE='

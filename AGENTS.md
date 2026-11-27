@@ -1,24 +1,25 @@
 # Notes for coding agents
 
 <!-- tifa:begin -->
-<!-- Written by Tifa v0.5.2 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
+<!-- Written by Tifa v0.7.3 with go tool tifa agents. After an upgrade run it again: it refreshes the text between these markers and leaves the rest of this file alone. Put your own notes outside it. -->
 
 This is a [Tifa](https://github.com/liustack/tifa) app. Go routes requests, loads data and runs the hooks. React pages render to HTML inside the Go process (beastjs, no Node at run time), and TanStack Router takes over in the browser. The build bundles the front end with Vite, on Node, and makes one executable that needs no Node.
 
-Before you change code, read the docs that apply. [Docs](#docs) at the end of this block lists them, and they are those of the Tifa version in `go.mod`. Do not read the docs on GitHub, which belong to the main branch.
+Before you change code, read the docs that apply. [Docs](#docs) at the end of this block names them, and `go tool tifa docs` says what each one covers. They are those of the Tifa version in `go.mod`. Do not read the docs on GitHub, which belong to the main branch.
 
 ## Commands
 
 | Command | What it does |
 | --- | --- |
 | `pnpm install` | Install the npm packages, then run `go tool tifa gen`. Keep `@tanstack/react-router` at the version in `package.json`: `tifa build` refuses another |
-| `go tool tifa gen` | Write the generated code into `.tifa/`, so editors and `tsc` see its types |
-| `go tool tifa dev --background` | Start the dev server detached (plain `tifa dev` holds the terminal) and return once it answers at http://127.0.0.1:9527. Then `go tool tifa dev status`, `go tool tifa dev logs` and `go tool tifa dev stop`. Stop it when you finish |
+| `go mod tidy` | After you add or remove a Go import. Until then `go build` and `go tool tifa` stop with "missing go.sum entry" |
+| `go tool tifa gen` | Write the generated types into `.tifa/`. Run it once after a batch of Go changes, before the TS that uses them. `tifa dev` does it itself |
+| `go tool tifa dev --background` | Start the dev server detached (plain `tifa dev` holds the terminal) and return once it answers at http://127.0.0.1:9527. Then `go tool tifa dev status`, `logs` and `stop`. Stop it when you finish |
 | `go tool tifa errors` | While `tifa dev` runs, print the errors since the last build, those of the browser too. Run it after a change and after you open the pages you changed. Exits with 1 when there are errors |
 | `go tool tifa check` | The one command to run before you finish: the routing conventions, `.tifa/`, `go vet ./...`, `go test ./...` and the TypeScript check. It stops at the first step that fails |
 | `go tool tifa build` | Generate `.tifa/`, bundle the front end and build `bin/` |
-| `go tool tifa routes` | List the routes and their URLs |
-| `go tool tifa docs` | Print the docs folder of this Tifa version and its docs |
+| `go tool tifa routes` | List the routes, their URLs and the addresses Tifa answers itself |
+| `go tool tifa docs` | Print the docs folder of this Tifa version and what each doc covers |
 | `go tool tifa agents` | Write this block and the skill in `.claude/skills/tifa/` again for the Tifa in `go.mod` |
 | `go tool tifa upgrade [version]` | Move the app to a newer Tifa (not a hand-made `go get`) and print the `Upgrading:` notes to act on |
 
@@ -33,21 +34,21 @@ Never edit `.tifa/`. It is generated.
 
 ## Go side
 
-- Return `tifa.Redirect(url, status)` to redirect. Return `tifa.ErrNotFound`, `tifa.Error{Status, Message}` or `tifa.Fields{"field": "message"}` (422) for an error that a page shows in the nearest `ErrorBoundary` as a `TifaError` and a handler answers as JSON. Any other error or a panic goes to `OnError`, or a logged 500. See `docs/pages-and-data/routes.md`.
+- Return `tifa.Redirect(url, status)` to redirect. Return `tifa.ErrNotFound`, `tifa.Error{Status, Message}` or `tifa.Fields{"field": "message"}` (422) for an error that a page shows in the nearest `ErrorBoundary` as a `TifaError` and a handler answers as JSON. Any other error or a panic goes to `OnError`, or a logged 500. See `docs/pages-and-data/errors.md`.
 - A typed handler: `func POST(c *tifa.Ctx, in AddInput) (Todo, error)`. Tifa decodes `in` from a JSON or form body (the query string for `GET` and `DELETE`), runs `in.Validate()` when it exists and writes the result as JSON. `func POST(c *tifa.Ctx) error` writes its own answer.
 - Data, inputs and results travel as JSON, and Tifa writes their TypeScript types. No interfaces, funcs or channels. A Go slice or map can be `null`, so write `?? []`. An integer above 9007199254740991 is refused where a page reads it: add `json:",string"` or send milliseconds.
-- The build fails with the file and line when `Load` or `Layout`:
-  - calls `c.Param`, `c.Query` or `c.QueryValues` other than directly with a constant string, such as `c.Query("tab")`,
+- The build fails with the file and line when `Load` or `Layout`, or a helper it passes `c` to:
+  - calls `c.Query`, `c.QueryValues`, `c.Bind` or `c.BindQuery` (take `q Filter`, a struct, as the second parameter),
+  - calls `c.JSON`, `c.Text` or `c.NoContent` (return the data or an error),
   - calls `tifa.Use` with anything but a package-level `Layout` that wraps the caller,
-  - passes `c` anywhere but a plain function or method of this module or of Tifa,
-  - calls `c.Request()`, `c.Writer()`, `c.Bind` or `c.BindQuery`.
+  - calls `c.Path()` in a `Layout`.
 
-  `c.JSON`, `c.Text` and `c.NoContent` return an error there. Headers and cookies are fine. Pass `c.Context()` when a function needs only the context. See "How Load may use Ctx" in `docs/pages-and-data/routes.md`.
+  Do not keep `c` after the function returns, and wait for your goroutines, as in `net/http`. There `c.Request()` is a copy with only the declared query parameters and no body. See "How Load may use Ctx" in `docs/pages-and-data/loading-data.md`.
 
 ## React side
 
-- Import from the generated `./route.gen` of the folder: `page.useLoaderData()`, `layout.useLoaderData()`, the `PageData` and `LayoutData` types, and one function per handler, such as `POST({ params, input })`. A page reads the data of an enclosing Layout from the `route.gen` of that folder, such as `../route.gen`.
-- A handler function throws `TifaError` (`status`, `message`, `fields`) for an error answer. It never reloads page data: after a write, call `router.invalidate()`. See `docs/pages-and-data/pages.md#calling-method-handlers-from-the-browser`.
+- Import from the generated `./route.gen` of the folder: `page.useLoaderData()`, `layout.useLoaderData()`, the `PageData` and `LayoutData` types, their Go structs by name (`Item`), and one function per handler, such as `POST({ params, input })`. A page reads the data of an enclosing Layout from the `route.gen` of that folder, such as `../route.gen`.
+- A handler function throws `TifaError` (`status`, `message`, `fields`) for an error answer. It never reloads page data: after a write, call `router.invalidate()`. See `docs/pages-and-data/handlers.md#calling-method-handlers-from-the-browser`.
 - Components that need the browser at import time go in `*.client.tsx` and load with `clientOnly` from `tifa/client`. See `docs/pages-and-data/server-render.md`.
 - `page.tsx` may also export `head` and `ErrorBoundary`. Styles are CSS files imported from TSX, see `docs/pages-and-data/styles.md`.
 
@@ -65,56 +66,19 @@ Never edit `.tifa/`. It is generated.
 ## Settings and data
 
 - `tifa.yaml` lists every setting at its default, and `options.go` holds the options of the app. See `docs/build-and-deploy/config.md`.
-- `schema.sql` runs at every start, so keep its statements safe to repeat (`CREATE TABLE IF NOT EXISTS`).
 - `db.go` opens SQLite with `_txlock=immediate`, so a transaction takes the write lock at `BEGIN` and never fails halfway with `database is locked`. Keep it, and start a transaction that only reads with `sql.TxOptions{ReadOnly: true}`. See `docs/guides/database.md`.
 - The option `db.backup` (`DB_BACKUP`), empty by default, copies every commit to S3 or R2 and restores a missing database at start. See "Back it up" in `docs/guides/database.md`.
 - Under `tifa dev`, a page that fails answers with the whole error: `curl -i` the page, or run `go tool tifa errors`.
 
 ## Docs
 
-The paths below are relative to the folder of the Tifa module in `go.mod`, which `go tool tifa docs` prints. Open the files there. Each has a Chinese copy beside it, `<name>.zh-CN.md`.
+`go tool tifa docs` prints the folder of the Tifa module in `go.mod` and one line on each doc. Open the files that apply. Each has a Chinese copy beside it, `<name>.zh-CN.md`.
 
-`docs/start/`
-- `tutorial.md`: A getting-started tutorial: `tifa new`, `tifa dev`, a page, a form, tests, one executable
-- `app.md`: How to start a Tifa app: route.go, page.tsx, layout.tsx, URLs, `public/`, Next.js or Remix code
-- `philosophy.md`: The ideas behind how a Tifa app is organized and what each one gives you: domains, hand-wired dependencies, small starts
-- `structure.md`: Where the files of a Tifa app go: app/ domains, hooks, shared resources, package imports
-- `agents.md`: How to work on a Tifa app with a coding agent: AGENTS.md, Tifa skill, Claude Code, Cursor, Codex, `tifa agents`, `tifa dev --background`
-
-`docs/pages-and-data/`
-- `routes.md`: How to write the Go side of a route in route.go: Load, method handlers, typed input, errors, Ctx, JSON rules
-- `pages.md`: How to write the React side of a route: page.tsx, route.gen, Link types, head, 404s, ErrorBoundary
-- `styles.md`: How to add CSS, Tailwind CSS and shadcn/ui to an app
-- `content.md`: How an app keeps its writing as Markdown under content/: content.go, front matter, slugs, drafts, remark, `tifa build`
-- `sessions.md`: How sessions work in a Tifa app: cookie, memory store, Redis or SQL store, `tifa.SetSessionStore`
-- `hooks.md`: How to set up the whole app in hooks.go and setup.ts: OnStart, OnShutdown, OnRequest, OnError, middleware
-- `server-render.md`: What the server render has and lacks: beastjs APIs, Node modules, Intl, Temporal, hydration
-- `ssr-and-cache.md`: How a page is rendered and kept: SSR, Memo, Cache, Cache-Control, CDN, private pages
-- `testing-apps.md`: How to test an app with go test: tifatest.NewCtx, tifatest.Start, Load, OnRequest, clock
-
-`docs/guides/`
-- `forms.md`: How to build a form in a Tifa app: method handler, tifa.Fields errors, useActionState, useOptimistic
-- `database.md`: How to keep data in a Tifa app with SQLite: migrations, `database is locked`, `db.backup` to R2 or S3, Postgres
-- `sign-in.md`: How to sign users in and out in a Tifa app with Tifa sessions: argon2id, SetSession, guarding pages, signing out
-- `uploads.md`: How to let visitors upload a file in a Tifa app: file input, body limit, type check, storage, tests
-- `email.md`: How to send email from a Tifa app over SMTP with a pure Go library: SMTP, mail.go, background job, same transaction
-- `jobs.md`: How to do work outside a request in a Tifa app: OnStart loops, OnShutdown, timers, SQLite jobs table with retries
-- `i18n.md`: How to put a Tifa site in several languages: _locales, i18n.default, hreflang, i18next, translated slugs
-- `seo.md`: How a Tifa site gets found by search engines and read by language models: site.url, /sitemap.xml, /robots.txt, /llms.txt, og tags, `tifa.SetSitemap`
-- `streaming.md`: How to send an answer while it is being made in a Tifa app: server-sent events, streamed replies, Memo, Cache
-- `environment.md`: How a value from the environment reaches a page: Load, `import.meta.env.VITE_*`, `process.env`
-- `logs.md`: Where the logs of a Tifa app are and how to write them: `tifa dev`, `log/slog`, format, level, `tifa.SetHTTPHandler`
-
-`docs/build-and-deploy/`
-- `dev.md`: How to use `tifa dev`: pages, build errors, `tifa errors`, `--background`, `status`, `logs`, `stop`
-- `build.md`: How to create, build, check and upgrade an app with `tifa` commands: `tifa new`, `build`, `check`, `gen`, `upgrade`, `agents`, .tifa/, go.mod
-- `deploy.md`: How to put a Tifa app on a server: `tifa deploy`, ssh, systemd, GitHub Actions, Cloudflare, health check, Prometheus
-- `config.md`: What each setting of a Tifa app means and where to set it: tifa.yaml, flags, environment, .env, server.csp, HTTPS, cross-origin writes
-
-`docs/reference/`
-- `memo.md`: What the render memo is and how it differs from Cache: `ssr.memo_size`, ETag, query parameters, signed-in pages, limits
-- `performance.md`: What a Tifa app serves on one core and how to size it: Next.js, TanStack Start, CPUs, `ssr.vms`, memory, overload, compression
-- `compatibility.md`: What Tifa v0.1 keeps stable for apps and what may change: packages, file conventions, commands, settings, HTTP names
+- `docs/start/`: `tutorial.md`, `app.md`, `philosophy.md`, `structure.md`, `agents.md`
+- `docs/pages-and-data/`: `routing.md`, `layouts.md`, `loading-data.md`, `handlers.md`, `navigation.md`, `head.md`, `errors.md`, `styles.md`, `content.md`, `sessions.md`, `hooks.md`, `server-render.md`, `ssr-and-cache.md`, `testing-apps.md`, `testing-pages.md`
+- `docs/guides/`: `forms.md`, `database.md`, `sign-in.md`, `uploads.md`, `email.md`, `jobs.md`, `i18n.md`, `seo.md`, `streaming.md`, `environment.md`, `logs.md`, `security.md`, `sign-up.md`, `password-reset.md`, `oauth.md`, `flash-messages.md`, `cors.md`, `websocket.md`, `commands.md`
+- `docs/build-and-deploy/`: `create-app.md`, `dev.md`, `dev-reloads.md`, `dev-errors.md`, `dev-scripts.md`, `debugging.md`, `check.md`, `build.md`, `upgrade.md`, `deploy.md`, `deploy-setup.md`, `deploy-github-actions.md`, `deploy-cloudflare.md`, `deploy-proxy.md`, `deploy-operate.md`, `deploy-by-hand.md`, `config.md`, `tuning.md`, `https.md`, `headers-and-origins.md`, `kubernetes.md`, `deploy-harden.md`, `deploy-several-servers.md`
+- `docs/reference/`: `conventions.md`, `memo.md`, `performance.md`, `compatibility.md`, `ctx.md`, `json.md`, `settings.md`, `generated-files.md`, `build-output.md`, `route-modules.md`, `route-tree.md`, `data-protocol.md`, `page-requests.md`, `server-program.md`, `i18next.md`
 
 <!-- tifa:end -->
 

@@ -10,7 +10,7 @@ order: 1
 
 一本留言簿。访客输入名字和留言，Go 一侧检查并保存留言，页面显示它。做完之后，表单会在每个错误的输入下面显示错误，发送时禁用按钮，立刻显示新留言，并在服务器回答之后加载真实的列表。
 
-这些代码是照写出来的样子运行过的。一共两个文件。参考文档说明了每个调用做什么：[方法处理函数](/docs/pages-and-data/routes#method-handlers-with-input-and-result)、[从浏览器调用它们](/docs/pages-and-data/pages#calling-method-handlers-from-the-browser)。
+这些代码是照写出来的样子运行过的。一共两个文件。参考文档说明了每个调用做什么：[方法处理函数](/docs/pages-and-data/handlers#method-handlers-with-input-and-result)、[从浏览器调用它们](/docs/pages-and-data/handlers#calling-method-handlers-from-the-browser)。
 
 ## Go 一侧 {#the-go-side}
 
@@ -80,7 +80,7 @@ func POST(c *tifa.Ctx, in SignInput) (Message, error) {
 }
 ```
 
-- `Validate` 是规则唯一放的地方。它对每个调用者都运行，不只是你的页面。`tifa.Fields` 以 422 响应，带 `{"error": ..., "fields": {"name": "..."}}`，键是输入的 json 名字。`Validate` 返回的任何其他错误以 400 响应，把它的文字作为消息，所以当某条消息属于某个输入时，请用 `tifa.Fields`。
+- `Validate` 是规则唯一放的地方。它对每个调用者都运行，不只是你的页面。`tifa.Fields` 以 422 响应，带 `{"error": ..., "fields": {"name": "..."}}`，键是输入的 json 名字。`Validate` 返回的任何其他错误算应用自己出的错，以 500 响应，不带它的文字。所以属于某个输入的消息用 `tifa.Fields`，其他要给访客看的消息用 `tifa.Error`。
 - 先收集所有的消息，最后用 `fields.Err()` 结束。这样访客能一次看到每个错误。你什么都没加的时候，`Err` 是 nil。
 - 在浏览器里也检查（`required` 属性、一个 schema）只能省一次往返。不要因此跳过 Go 里的检查。
 
@@ -196,7 +196,7 @@ function Field({ label, name, state }: { label: string; name: 'name' | 'text'; s
 1. React 在一个 transition 里，用表单数据调用你给 `useActionState` 的函数。`useFormStatus` 报告 `pending`，所以按钮被禁用，并显示「Sending…」。
 2. `addOptimistic` 把新留言放在列表最上面，调暗显示。它必须在 action 里调用（见 [useOptimistic](https://react.dev/reference/react/useOptimistic)）。
 3. `POST` 把输入作为 JSON 发出。如果 Go 拒绝了它，这个调用会抛出 `TifaError`。`e.fields` 放着 `tifa.Fields` 的消息，每个输入一条，`e.message` 是其他任何错误的文字。
-4. 成功时，`router.invalidate({ sync: true })` 重新加载页面数据，并在页面显示它时完成。到那时 action 才结束，调暗的留言被真实的留言替换。见 [重新加载页面数据](/docs/pages-and-data/pages#pagetsx)。
+4. 成功时，`router.invalidate({ sync: true })` 重新加载页面数据，并在页面显示它时完成。到那时 action 才结束，调暗的留言被真实的留言替换。见 [重新加载页面数据](/docs/pages-and-data/loading-data#pagetsx)。
 5. 失败时，action 返回输入的值和消息。乐观的留言会自己消失，因为 action 结束时没有新的页面数据。
 
 ## 取舍 {#decisions}

@@ -36,12 +36,31 @@
   }
 }
 
-/* Code blocks of the docs are plain <pre class="shiki"> from the build, not Fumadocs' CodeBlock. */
-pre.shiki {
+/* Code blocks of the docs are plain <pre> from the build, not Fumadocs' CodeBlock. Shiki adds
+   class="shiki" only to a fence that names a language, so the rules are keyed to .prose pre:
+   a fence with no language (the output of a command) must be one box too. */
+.prose pre {
   @apply my-6 overflow-x-auto rounded-lg border border-fd-border bg-fd-card py-3 text-[13px] leading-6;
 }
-pre.shiki code {
-  @apply block w-max min-w-full border-0 bg-transparent p-0 text-[inherit];
+.prose pre code {
+  @apply block w-max min-w-full border-0 bg-transparent px-4 py-0 text-[inherit];
+}
+/* Fumadocs pads each Shiki line by these two variables. The side padding is on the code element
+   instead, so a block with no lines (no language) gets it too, from one place. */
+.prose pre.shiki {
+  --padding-left: 0px;
+  --padding-right: 0px;
+}
+
+/* The body of a doc sits in one wrapper element (<div data-tifa-html>) inside .prose. The
+   typography rule that takes the margin off the first and last child of .prose then meets the
+   wrapper, not the paragraph in it, and the paragraph keeps its top margin as a gap under the
+   header row. The same rule, one level down. */
+.prose > [data-tifa-html] > :first-child {
+  margin-top: 0;
+}
+.prose > [data-tifa-html] > :last-child {
+  margin-bottom: 0;
 }
 
 /* A wide table of a doc or a page of Markdown scrolls sideways inside its own box. */

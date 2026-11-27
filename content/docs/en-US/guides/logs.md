@@ -1,6 +1,6 @@
 ---
 title: Logs
-description: Where the logs of a Tifa app are and how to write them
+description: Where the logs are and how to write them
 source: docs/guides/logs.md
 group: Guides
 groupOrder: 3
@@ -8,7 +8,7 @@ order: 11
 ---
 
 
-Tifa writes its own messages with `log/slog`, and your code uses the same logger. One call to `slog.SetDefault` in `OnStart` changes where all of it goes, in what format and from which level. Tifa does not log each request and has no log level setting of its own. The [request log](#logging-each-request) below is about twenty lines of your own.
+Tifa writes its own messages with `log/slog`, and your code uses the same logger. One call to `slog.SetDefault` in `OnStart` changes where all of it goes, in what format and from which level. A built program does not log each request, and Tifa has no log level setting of its own. The [request log](#logging-each-request) below is about twenty lines of your own. Under `tifa dev` the app writes a line for each request without it, see [Log](/docs/build-and-deploy/dev-errors#log).
 
 ## What Tifa logs
 
@@ -17,7 +17,7 @@ Every message starts with `tifa:`. The fields are the `slog` attributes of the l
 - `ERROR` `tifa: request failed`, with `method`, `path` and `err`: a route returned an error and the app has no `OnError`. With an `OnError`, Tifa logs nothing for it. Report the error there (see [Hooks](/docs/pages-and-data/hooks)).
 - `ERROR` `tifa: request failed after the response was written`, with `method`, `path` and `err`: the error came too late to change the answer. This one is logged with or without `OnError`.
 - `ERROR` lines for a page that could not be rendered for anyone (`a render failed and no request waits for it`, `the page with the error failed too`), for a session that could not be written to the answer, and for a mistake in `tifa.SetSitemap` (`SetSitemap: <kind>`).
-- `WARN` `tifa: refused a cross-site write`, with `method`, `path`, `reason`, `origin`, `sec_fetch_site` and `host`. See [Cross-site writes](/docs/build-and-deploy/config#cross-site-writes).
+- `WARN` `tifa: refused a cross-site write`, with `method`, `path`, `reason`, `origin`, `sec_fetch_site` and `host`. See [Cross-site writes](/docs/build-and-deploy/headers-and-origins#cross-site-writes).
 - `WARN` `tifa: dropping a session`, with `why`, `method` and `path`: the stored session of a request could not be used (it expired, is damaged or does not fit the type that reads it), so the visitor is signed out.
 - `WARN` once, when a sign-in comes over plain HTTP and the browser will drop the Secure cookie.
 - `WARN` and `ERROR` lines from the render (`tifa: ssr:`): `WARN` for a call to `Intl` without a locale (see [Warnings in `tifa dev`](/docs/pages-and-data/server-render#warnings-in-tifa-dev)) and for a VM that was replaced, with the reason. `ERROR` when the garbage collection of a VM failed, or a VM could not be replaced.
@@ -69,7 +69,7 @@ func OnStart(ctx context.Context) error {
 
 ## Logging each request
 
-Tifa has no request log. Wrap the app with `tifa.SetHTTPHandler` in `OnStart` (see [Hooks](/docs/pages-and-data/hooks#setting-up-in-onstart)). The wrapper times the request and reads the route template from `r.Pattern` once the app has answered:
+A built program has no request log (`tifa dev` writes lines of its own, see [Log](/docs/build-and-deploy/dev-errors#log)). Wrap the app with `tifa.SetHTTPHandler` in `OnStart` (see [Hooks](/docs/pages-and-data/hooks#setting-up-in-onstart)). The wrapper times the request and reads the route template from `r.Pattern` once the app has answered:
 
 ```go
 type statusWriter struct {
@@ -110,7 +110,7 @@ Then in `OnStart`: `tifa.SetHTTPHandler(logRequests)`.
 
 ## Where the logs go
 
-- **`tifa dev`**: the terminal. With `--background`, all output goes to `.tifa/dev.log`: read it with `go tool tifa dev logs`, and follow it with `-f` (see [Logs](/docs/build-and-deploy/dev#logs)).
-- **A server set up with `tifa deploy`**: stdout and stderr go to systemd's journal. `go tool tifa deploy logs` prints the last 100 lines, `-n 500` for more and `-f` for the new ones. On the server, `journalctl --user -u tifa-<app>` as the user `tifa` does the same (see [Logs, status and remove](/docs/build-and-deploy/deploy#logs-status-and-remove)).
+- **`tifa dev`**: the terminal. With `--background`, all output goes to `.tifa/dev.log`: read it with `go tool tifa dev logs`, and follow it with `-f` (see [Logs](/docs/build-and-deploy/dev-scripts#logs)).
+- **A server set up with `tifa deploy`**: stdout and stderr go to systemd's journal. `go tool tifa deploy logs` prints the last 100 lines, `-n 500` for more and `-f` for the new ones. On the server, `journalctl --user -u tifa-<app>` as the user `tifa` does the same (see [Logs, status and remove](/docs/build-and-deploy/deploy-operate#logs-status-and-remove)).
 - **How long the server keeps them**: that is the journald setup of the server, not Tifa. The limits are in `/etc/systemd/journald.conf`, such as `SystemMaxUse` for the disk it may use and `MaxRetentionSec` for the age. `journalctl --disk-usage` shows what it uses now. A journal kept in memory (`Storage=volatile`) is gone after a restart of the server.
 - **A container**: stdout and stderr. The runtime of the container, such as Docker or Kubernetes, collects them. Send the log to stdout, as the example of [Format and level](#format-and-level) does, and keep it out of files in the container.

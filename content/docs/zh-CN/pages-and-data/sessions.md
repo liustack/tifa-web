@@ -4,7 +4,7 @@ description: Tifa 应用里的会话怎样工作
 source: docs/pages-and-data/sessions.zh-CN.md
 group: 页面与数据
 groupOrder: 2
-order: 5
+order: 10
 ---
 
 
@@ -43,7 +43,7 @@ err := tifa.ClearSession(c)
 
 ## Cookie {#the-cookie}
 
-cookie 是 `__Host-tifa_session`，带 `HttpOnly`、`Secure`、`SameSite=Lax`、`Path=/`，没有 `Domain`。会话从 `SetSession` 起持续 30 天。它不会续期，所以请求从不写存储。名字和有效期可以用 `session.cookie` 和 `session.max_age` 修改（见[配置](/docs/build-and-deploy/config#settings)）。在 `tifa dev` 下，cookie 是 `tifa_session`，没有 `Secure`，因为 dev 在 localhost 上提供的是普通 HTTP。浏览器会丢弃通过普通 HTTP 从 localhost 以外的地方来的 `Secure` cookie，所以在 `http://<IP>:9527` 登录看起来成功了，用户在下一个请求就被退出登录。第一次响应这类请求的 `SetSession` 会记录一条警告，每个进程只记一次。它在请求通过 TLS 到达，或带有 `X-Forwarded-Proto: https` 或 `Forwarded: proto=https` 时，把请求算作 HTTPS，在它的主机是 `localhost`、某个 `.localhost` 名字或回环地址时，算作本地。请通过 HTTPS 测试，或通过设置了该头的代理测试，或在 `http://localhost` 测试。cookie 不是由 43 个 `A-Z a-z 0-9 - _` 字符组成时，会被直接丢弃，不去问存储。cookie 对应的记录存储里已经没有了（因为过期了，或者进程用内存存储重启过），也会被丢弃，这个请求按未登录处理。
+cookie 是 `__Host-tifa_session`，带 `HttpOnly`、`Secure`、`SameSite=Lax`、`Path=/`，没有 `Domain`。会话从 `SetSession` 起持续 30 天。它不会续期，所以请求从不写存储。名字和有效期可以用 `session.cookie` 和 `session.max_age` 修改（见[配置](/docs/reference/settings)）。在 `tifa dev` 下，cookie 是 `tifa_session`，没有 `Secure`，因为 dev 在 localhost 上提供的是普通 HTTP。浏览器会丢弃通过普通 HTTP 从 localhost 以外的地方来的 `Secure` cookie，所以在 `http://<IP>:9527` 登录看起来成功了，用户在下一个请求就被退出登录。第一次响应这类请求的 `SetSession` 会记录一条警告，每个进程只记一次。它在请求通过 TLS 到达，或带有 `X-Forwarded-Proto: https` 或 `Forwarded: proto=https` 时，把请求算作 HTTPS，在它的主机是 `localhost`、某个 `.localhost` 名字或回环地址时，算作本地。请通过 HTTPS 测试，或通过设置了该头的代理测试，或在 `http://localhost` 测试。cookie 不是由 43 个 `A-Z a-z 0-9 - _` 字符组成时，会被直接丢弃，不去问存储。cookie 对应的记录存储里已经没有了（因为过期了，或者进程用内存存储重启过），也会被丢弃，这个请求按未登录处理。
 
 设置或丢弃 cookie 的响应，不管应用设置了什么，都会以 `Cache-Control: no-store` 发出，不带 `ETag` 或 `Last-Modified`，并保持它的状态码：它永远不会变成 304。
 
@@ -79,7 +79,7 @@ type SessionStore interface {
 
 ### 内存存储 {#the-memory-store}
 
-`OnStart` 没有设置存储时，Tifa 用的存储把记录放在进程的内存里，上限是 `session.memory_limit` 字节（见[配置](/docs/build-and-deploy/config#settings)）。设置它可以让会话占用更多或更少的内存。设置过存储之后，`tifa.SetSessionStore(nil)` 可以换回内存存储。
+`OnStart` 没有设置存储时，Tifa 用的存储把记录放在进程的内存里，上限是 `session.memory_limit` 字节（见[配置](/docs/reference/settings)）。设置它可以让会话占用更多或更少的内存。设置过存储之后，`tifa.SetSessionStore(nil)` 可以换回内存存储。
 
 - `session.memory_limit` 对每条记录统计它的键、数据和一笔固定开销。存储满了的时候，`Put` 会丢弃最早过期的记录。单条记录的开销就超过上限时，`Put` 会返回错误，于是 `SetSession` 失败。
 - 它会运行一个 goroutine，每分钟清理一次过期的记录，服务器会让它停下。停下之后存储照常工作，因为 `Get` 从不返回已过期的记录。
@@ -124,7 +124,7 @@ func TestRedisStoreIsAValidStore(t *testing.T) {
     Delete with a canceled context deleted the record
 ```
 
-基于接受 `ctx` 的数据库客户端的存储，会自己返回这些错误。测试应用 [test/apps/session](https://github.com/liustack/tifa/blob/v0.5.2/test/apps/session/hooks_test.go) 对一个把记录放在文件里的存储运行了这个测试。
+基于接受 `ctx` 的数据库客户端的存储，会自己返回这些错误。测试应用 [test/apps/session](https://github.com/liustack/tifa/blob/v0.7.3/test/apps/session/hooks_test.go) 对一个把记录放在文件里的存储运行了这个测试。
 
 ## 在哪里调用什么 {#where-to-call-what}
 
@@ -144,7 +144,7 @@ func TestRedisStoreIsAValidStore(t *testing.T) {
 
 会话由 Tifa 存储。用户是谁，由你的应用或某个库来检查：密码哈希（bcrypt、argon2）、OAuth 授权码流程及其 `state` 检查（`golang.org/x/oauth2`）、两步验证。检查成功后，调用 `tifa.SetSession`。这类库的临时状态，比如 OAuth 的 `state`，放在库自己的一个短期 cookie 里。要在 Go 里检查访问权限，就读 `tifa.Session`。
 
-来自其他站点的写入，会在这一切运行之前就被拒绝（见[跨站写入](/docs/build-and-deploy/config#cross-site-writes)），而且 cookie 是 `SameSite=Lax`，所以另一个站点上的表单无法让用户退出登录，也无法代表用户行事。要让这一点成立，请确保 GET、HEAD 和 OPTIONS 永远不改变任何东西：退出登录要用 POST。
+来自其他站点的写入，会在这一切运行之前就被拒绝（见[跨站写入](/docs/build-and-deploy/headers-and-origins#cross-site-writes)），而且 cookie 是 `SameSite=Lax`，所以另一个站点上的表单无法让用户退出登录，也无法代表用户行事。要让这一点成立，请确保 GET、HEAD 和 OPTIONS 永远不改变任何东西：退出登录要用 POST。 Tifa 还防了什么、还有什么留给你，见[安全](/docs/guides/security)。
 
 ## 构建时的检查 {#checks-at-build-time}
 
@@ -208,7 +208,7 @@ function Header() {
 
 `data-session` 是 Tifa 在 `<html>` 上维护的属性。根布局的 `documentHead.htmlAttributes` 如果设置了它，服务器启动时就会停下（VM 预热失败，`tifa dev` 会显示错误），路由的 `htmlAttributes` 如果设置了它，渲染就会失败。
 
-**Content Security Policy。** 这段脚本和样式是内联的，每个页面都一样。设置了 `server.csp` 时，Tifa 会自己把它们的哈希放进每个页面的策略里（见 [Content-Security-Policy](/docs/build-and-deploy/config#content-security-policy)）。用 `<meta>` 标签里的 CSP 时它们不受影响，因为它们出现在这个标签之前。如果你在响应头里放了自己的 CSP，请允许它们的哈希：
+**Content Security Policy。** 这段脚本和样式是内联的，每个页面都一样。设置了 `server.csp` 时，Tifa 会自己把它们的哈希放进每个页面的策略里（见 [Content-Security-Policy](/docs/build-and-deploy/headers-and-origins#content-security-policy)）。用 `<meta>` 标签里的 CSP 时它们不受影响，因为它们出现在这个标签之前。如果你在响应头里放了自己的 CSP，请允许它们的哈希：
 
 ```text
 script-src 'sha256-NWjzg1BGj/5CJBw80xzDV4Gmw6vQUG2ExZLUcX4mWkE='

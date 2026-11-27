@@ -1,6 +1,6 @@
 ---
 title: Sign in and sign out
-description: How to sign users in and out in a Tifa app with Tifa sessions
+description: Sign users in and out with Tifa sessions
 source: docs/guides/sign-in.md
 group: Guides
 groupOrder: 3
@@ -102,7 +102,7 @@ func CheckHash(password, hash string) (bool, error) {
 }
 ```
 
-The text it makes looks like `$argon2id$v=19$m=19456,t=2,p=1$<salt>$<key>`, which is the usual way to write an argon2 hash. The parameters travel with the hash, so you can raise them later and old hashes still check. Run `HashPassword` when someone registers or changes their password, and keep the result in your users table. This guide has no registration page.
+The text it makes looks like `$argon2id$v=19$m=19456,t=2,p=1$<salt>$<key>`, which is the usual way to write an argon2 hash. The parameters travel with the hash, so you can raise them later and old hashes still check. Run `HashPassword` when someone registers or changes their password, and keep the result in your users table. [Sign up and confirm an e-mail address](/docs/guides/sign-up) shows the registration page and [Reset a password](/docs/guides/password-reset) the reset.
 
 ## Checking the sign-in
 
@@ -297,7 +297,9 @@ func SignInRedirect(next string) error {
 
 `c.Path()` is the path of the page as the visitor sees it in the address bar: the language prefix is in it, and the query is not. It is the same when the page is loaded whole and when a link click asks for its data, and for a handler it is the path of the handler. `c.Request()` is not for this: `Load` may not call it, and on a link click the request is a data request, not the page. `RequireUser` works in `OnRequest`, in a `Load` and in the functions they call.
 
-The query is left out of the `next` that `RequireUser` makes. A page that keeps its state in query parameters puts them back in its own `Load`, such as `signin.SignInRedirect(c.Path()+"?tab="+url.QueryEscape(c.Query("tab")))`. A guard shared by many pages cannot do it for all of them, because `Load` may only read the query parameters it names (see [How Load may use Ctx](/docs/pages-and-data/routes#how-load-may-use-ctx)). `OnRequest` is different: a hook may read the request, so the guard below keeps the whole query. The server takes `_tifa`, the parameter of a data request, off the URL before `OnRequest` runs, so `c.Request().URL.RawQuery` is the query the visitor wrote for a page load and for a link click alike.
+The query is left out of the `next` that `RequireUser` makes. A page that keeps its state in query parameters puts them back in its own `Load`, such as `signin.SignInRedirect(c.Path()+"?tab="+url.QueryEscape(q.Tab))`. A guard shared by many pages cannot do it for all of them, because a `Load` only has the query parameters its own struct names (see [Query parameters](/docs/pages-and-data/loading-data#query-parameters)). `OnRequest` is different: a hook may read the request, so the guard below keeps the whole query. The server takes `_tifa`, the parameter of a data request, off the URL before `OnRequest` runs, so `c.Request().URL.RawQuery` is the query the visitor wrote for a page load and for a link click alike.
+
+The `Layout` function of the root Layout runs for every URL, the 404 page and the sign-in page included, and a guard that names paths in `OnRequest` does not cover them. Return nothing from it that a visitor who is not signed in may not see, or read the session in it first. See [Decide who may do what](/docs/guides/security#decide-who-may-do-what).
 
 ## The hooks
 
@@ -333,7 +335,8 @@ func OnStart(context.Context) error {
 // page, which sends them back afterwards. It runs for page loads and for the data requests of
 // link clicks alike.
 func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
-	if path := c.Path(); (path == "/account" || strings.HasPrefix(path, "/account/")) && tifa.Session[Session](c) == nil {
+	if route := c.Pattern(); (route == "/account" || strings.HasPrefix(route, "/account/")) && tifa.Session[Session](c) == nil {
+		path := c.Path()
 		if query := c.Request().URL.RawQuery; query != "" {
 			path += "?" + query
 		}
@@ -342,6 +345,8 @@ func OnRequest(c *tifa.Ctx, next func(*tifa.Ctx) error) error {
 	return next(c)
 }
 ```
+
+The guard asks which route matched, with `c.Pattern()`, such as `/account` or `/account/orders/{order}`. Do not compare the text of the URL (`c.Path()` or `c.Request().URL.Path`) to decide who gets in. One route has many spellings: `/%61ccount` is `/account`, and a page in several languages also answers at `/en-US/account`. A guard that compares the text lets those through, and the route still runs. `c.Path()` is only for the `next` address.
 
 `tifa.Session[Session](c)` is nil when nobody is signed in. The server reads the session before `OnRequest`, so every hook, `Load` and handler can ask.
 
@@ -367,8 +372,13 @@ type View struct {
 	Next string `json:"next"`
 }
 
-func Load(c *tifa.Ctx) (View, error) {
-	return View{Next: safeNext(c.Query("next"))}, nil
+// Query is the query string of the page.
+type Query struct {
+	Next string `json:"next"`
+}
+
+func Load(c *tifa.Ctx, q Query) (View, error) {
+	return View{Next: safeNext(q.Next)}, nil
 }
 
 // Credentials is the form.
@@ -796,9 +806,9 @@ func TestSignInAndOut(t *testing.T) {
 
 **How long a session lasts.** 30 days from sign-in, set by `session.max_age`. It does not renew. Shorten it for an app with money or private data in it.
 
-**OAuth, magic links, two-step codes.** They replace the password check, not the rest. When the check succeeds, call `tifa.SetSession` as above. The temporary state of those flows goes in a short cookie of the library's own (see [Sign-in libraries](/docs/pages-and-data/sessions#sign-in-libraries)).
+**OAuth, magic links, two-step codes.** They replace the password check, not the rest. When the check succeeds, call `tifa.SetSession` as above. [Sign in with Google or GitHub](/docs/guides/oauth) shows the OAuth flow. The temporary state of those flows goes in a short cookie of the library's own (see [Sign-in libraries](/docs/pages-and-data/sessions#sign-in-libraries)).
 
-**Registration and password reset.** Not shown. Both end in `HashPassword` and a write to your users table.
+**Registration, e-mail confirmation and password reset.** See [Sign up and confirm an e-mail address](/docs/guides/sign-up) and [Reset a password](/docs/guides/password-reset). Both end in `HashPassword` and a write to your users table.
 
 ## Check it
 

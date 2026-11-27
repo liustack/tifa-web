@@ -8,7 +8,7 @@ order: 4
 ---
 
 
-这一页说明应用里每个文件该放在哪里。为什么这样组织，见 [理念](/docs/start/philosophy)。Tifa 自己内部是怎么工作的，见 [架构](https://github.com/liustack/tifa/blob/v0.5.2/docs/internals/architecture.md)。
+这一页说明应用里每个文件该放在哪里。为什么这样组织，见 [理念](/docs/start/philosophy)。Tifa 读取的每个文件名和文件夹名，都列在一页里：[约定](/docs/reference/conventions)。Tifa 自己内部是怎么工作的，见 [架构](https://github.com/liustack/tifa/blob/v0.7.3/docs/internals/architecture.md)。
 
 ## 1. 域是 app/ 下的一个文件夹 {#1-a-domain-is-a-folder-under-app}
 
@@ -17,11 +17,12 @@ order: 4
 ```text
 myapp/
   go.mod
-  hooks.go                  OnStart, OnShutdown, OnRequest, OnError
+  hooks.go                  OnStart, OnShutdown, OnRequest, OnError, OnCommand
   setup.ts                  top-level code of the JavaScript side: i18next formatters and other setup
   options.go                the options of the app: var DBPath = tifa.String(...)
   db.go                     var DB, opened in OnStart and closed in OnShutdown
-  schema.sql                the tables of every domain
+  migrations/               the tables of every domain, one numbered goose SQL file per change, run by db.go
+  schema.sql                the tables as the migrations leave them, written by a test
   content.go                the content collections: var Blog = content.Define[Post](...)
   content/                  the Markdown files of the collections
   app/
@@ -40,8 +41,8 @@ myapp/
             route.go  page.tsx
 ```
 
-- **代码放哪里。** 一个域在它的文件夹里有一个以它命名的文件：`app/projects/project.go` 里是 `package projects`。当一个域有列表页和每项一个页面时，它的代码放在列表文件夹（`orders/`）里，不放在单个条目的文件夹（`order+/`）里。列表文件夹不需要有页面：在 [examples/shop](https://github.com/liustack/tifa/blob/v0.5.2/examples/shop) 里，订单列在项目页面上，`orders/` 里有这个域，以及创建订单的 `POST`。
-- **包名。** 字面的文件夹用它自己的名字（`projects`、`orders`）。参数文件夹用参数名（`project+` 里是 `package project`），和 [app.md](/docs/start/app#urls-come-from-folders) 里一样。
+- **代码放哪里。** 一个域在它的文件夹里有一个以它命名的文件：`app/projects/project.go` 里是 `package projects`。当一个域有列表页和每项一个页面时，它的代码放在列表文件夹（`orders/`）里，不放在单个条目的文件夹（`order+/`）里。列表文件夹不需要有页面：在 [examples/shop](https://github.com/liustack/tifa/blob/v0.7.3/examples/shop) 里，订单列在项目页面上，`orders/` 里有这个域，以及创建订单的 `POST`。
+- **包名。** 字面的文件夹用它自己的名字（`projects`、`orders`）。参数文件夹用参数名（`project+` 里是 `package project`），和 [app.md](/docs/pages-and-data/routing#urls-come-from-folders) 里一样。
 - **页面使用域。** 同一个文件夹里的页面是同一个包，直接调用域。下面的页面则导入它：
 
   ```go

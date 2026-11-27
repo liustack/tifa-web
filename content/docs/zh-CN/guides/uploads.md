@@ -10,7 +10,7 @@ order: 4
 
 一个让访客上传带标题的图片、并看到它们列表的页面。处理函数检查标题、大小和文件种类，把文件保存在一个文件夹里，再把它提供回去。
 
-这些代码是照写出来的样子运行过的：它就是 Tifa 仓库里的应用 `test/apps/upload`，端到端测试会构建它并在浏览器里操作它。这里用到的调用的参考文档：[输入里的文件](/docs/pages-and-data/routes#files-in-the-input)、[路由的请求体上限和读取时间](/docs/pages-and-data/routes#body-limit-and-read-time-of-a-route)、[应用的选项](/docs/build-and-deploy/config#options-of-the-app)。
+这些代码是照写出来的样子运行过的：它就是 Tifa 仓库里的应用 `test/apps/upload`，端到端测试会构建它并在浏览器里操作它。这里用到的调用的参考文档：[输入里的文件](/docs/pages-and-data/handlers#files-in-the-input)、[路由的请求体上限和读取时间](/docs/pages-and-data/handlers#body-limit-and-read-time-of-a-route)、[应用的选项](/docs/build-and-deploy/config#options-of-the-app)。
 
 ## 文件如何到达处理函数 {#how-a-file-gets-to-the-handler}
 
@@ -387,7 +387,7 @@ export default function Photos() {
 - 留空的文件输入框仍然会给 `FormData` 一个名字为空的 `File`。这时页面发送 `null`，`Validate` 会要求一张图片。
 - 被拒绝时会抛出 `TifaError`。`e.fields` 放着 `tifa.Fields` 的消息，按输入的 `json` 名字。413 没有字段，所以页面给出它自己的消息。
 - 浏览器自己的 `accept` 过滤只是给文件选择器的提示，不是检查。决定权在 Go 一侧。
-- 对自己站点的调用是同源的写请求，所以 [跨站检查](/docs/build-and-deploy/config#cross-site-writes) 会放行它。来自另一个站点的表单会以 403 响应。
+- 对自己站点的调用是同源的写请求，所以 [跨站检查](/docs/build-and-deploy/headers-and-origins#cross-site-writes) 会放行它。来自另一个站点的表单会以 403 响应。
 - 调用不会重新加载页面数据，所以页面在得到成功的响应之后调用 `router.invalidate({ sync: true })`。
 
 ## 测试处理函数 {#testing-the-handler}
@@ -441,7 +441,13 @@ func TestPOSTRefusesText(t *testing.T) {
 
 **多久。** 读取时间是你服务的最慢的访客发送你接受的最大文件可能花的时间。4 MiB 在 1 Mbit/s 的线路上大约要 34 秒，所以 5 分钟留有余地。时间长会让慢客户端占住连接那么久，所以不要把它给不需要的路由。
 
-**接受什么。** 一份种类的名单，由字节来决定。对文档，用它们自己的类型做同样的事，并用 `Content-Disposition: attachment` 来提供它们，让浏览器保存而不是打开它们。
+**接受什么。** 一份种类的名单，由字节来决定。对文档，用它们自己的类型做同样的事，并用 `Content-Disposition: attachment` 来提供它们，让浏览器保存而不是打开它们。头里要带文件名时，让 `mime.FormatMediaType` 来写。用 `fmt.Sprintf` 把名字拼进字符串，名字里的引号或换行就能结束这个值并加上别的参数。你自己定的名字（比如记录的 id）比访客给的名字更安全。
+
+```go
+name := "report-" + id + ".pdf" // 不用访客发来的名字
+disposition := mime.FormatMediaType("attachment", map[string]string{"filename": name})
+c.Writer().Header().Set("Content-Disposition", disposition)
+```
 
 ## 检查一下 {#check-it}
 
