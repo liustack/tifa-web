@@ -44,7 +44,7 @@
       "lead": "No Node in production, no process manager, no reverse proxy, no Redis. The browser bundle, styles and server renderer are embedded in the executable.",
       "usual": "The usual stack",
       "with": "With Tifa",
-      "vps": "1 CPU / 1 GB VPS",
+      "vps": "1 CPU / 512 MB VPS",
       "binary": "bin/myapp",
       "one": "one executable",
       "rows": [
@@ -93,7 +93,7 @@
       "memory_hint": "lower is better",
       "cpu": "CPU per page view",
       "cpu_hint": "lower is better",
-      "caption": "Each framework as shipped and warmed up with the same visits, one process on one core of a Google Cloud `t2d-standard-4` VM (AMD EPYC 7B13), 8 concurrent sessions with no think time, the median of 3 rounds, 2026-11-18. Tifa v0.1.0 with slowjs v0.31.6, Next.js 16.4.6, TanStack Start 1.169.3, Node 24.13.0. Not yet measured on a 1 CPU / 1 GB VPS.",
+      "caption": "Each framework as shipped and warmed up with the same visits, one process on one core of a Google Cloud `t2d-standard-4` VM (AMD EPYC 7B13), 8 concurrent sessions with no think time, the median of 3 rounds, 2026-11-18. Tifa v0.1.0 with slowjs v0.31.6, Next.js 16.4.6, TanStack Start 1.169.3, Node 24.13.0. Not compared side by side on a small VPS yet. Tifa alone on 1 CPU / 512 MB: see [Performance](/docs/reference/performance#a-server-with-512-mb).",
       "method": "How this was measured",
       "lighthouse": {
         "title": "This page in Lighthouse",

@@ -105,7 +105,7 @@
       "lead": "线上不需要 Node，不需要进程管理器、反向代理和 Redis。浏览器包、样式和服务端渲染器都嵌在可执行文件里。",
       "usual": "常见的一套",
       "with": "用 Tifa",
-      "vps": "1 核 1G 的 VPS",
+      "vps": "1 核 512 MB 的 VPS",
       "binary": "bin/myapp",
       "one": "一个可执行文件",
       "rows": [
@@ -154,7 +154,7 @@
       "memory_hint": "越低越好",
       "cpu": "每个页面的 CPU 时间",
       "cpu_hint": "越低越好",
-      "caption": "每个框架都是出厂设置，先吃同样的预热。每个服务器只用 Google Cloud `t2d-standard-4` 虚拟机（AMD EPYC 7B13）的一个核，8 个并发、页面之间不停顿，3 轮取中位数，2026-11-18。Tifa v0.1.0，slowjs v0.31.6，Next.js 16.4.6，TanStack Start 1.169.3，Node 24.13.0。还没有在 1 核 1 GB 的 VPS 上测过。",
+      "caption": "每个框架都是出厂设置，先吃同样的预热。每个服务器只用 Google Cloud `t2d-standard-4` 虚拟机（AMD EPYC 7B13）的一个核，8 个并发、页面之间不停顿，3 轮取中位数，2026-11-18。Tifa v0.1.0，slowjs v0.31.6，Next.js 16.4.6，TanStack Start 1.169.3，Node 24.13.0。还没有在小 VPS 上和别的框架并排比过。Tifa 单独在 1 核 512 MB 上的实测见[性能](/docs/reference/performance#a-server-with-512-mb)。",
       "method": "测量方法",
       "lighthouse": {
         "title": "这个页面的 Lighthouse 分数",
