@@ -8,23 +8,23 @@ order: 3
 ---
 
 
-This doc has the numbers for sizing a machine: how many requests a Tifa app answers per core, how much memory it needs, and how it compares with Next.js and TanStack Start on the same app. The full tables and methods are in [Capacity measurements](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/capacity.md), and how rendering got faster in [Optimizations](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/optimizations.md).
+This doc has the numbers for sizing a machine: how many requests a Tifa app answers per core, how much memory it needs, and how it compares with Next.js and TanStack Start on the same app. The full tables and methods are in [Capacity measurements](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/capacity.md), and how rendering got faster in [Optimizations](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/optimizations.md).
 
 ## At a glance
 
 - **A whole site on one core** (2026-11-18): Tifa answers 118.8 page views a second, Next.js 28.3 and TanStack Start 94.7, each as shipped. See [whole visits](#whole-visits-to-the-shop-2026-11-18).
-- **Every request renders, one at a time** (2026-11-18): Next.js answers 1.17 times as many page requests as Tifa and TanStack Start 1.57 times, at 7 and 6 times Tifa's peak memory. See [the study](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/nextjs-and-tanstack-start.md#conclusions).
+- **Every request renders, one at a time** (2026-11-18): Next.js answers 1.17 times as many page requests as Tifa and TanStack Start 1.57 times, at 7 and 6 times Tifa's peak memory. See [the study](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/nextjs-and-tanstack-start.md#conclusions).
 - **Sizing for every request rendering** (render memo off): plan on about 42 page requests a second per physical core for pages like the shop's workbench.
 - **Cores**: 3 physical cores answer 2.94 times as many requests as one.
 - **Memory**: one VM serving the whole shop levels at about 105 MiB for the process. Each more VM adds 9 MiB when it starts and up to about 40 MiB once it has rendered many pages.
 
 ## Against Next.js and TanStack Start
 
-The shop built three ways: as Tifa and as a Next.js and a TanStack Start app, all with the same React components. The Node apps run a TypeScript port of the Go code that loads each page's data. Tests check that the three show the same text on every page and do the same work for each request. [The study](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/nextjs-and-tanstack-start.md) has the method and [what is not equal](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/nextjs-and-tanstack-start.md#what-is-not-equal). To measure again, see [Testing](https://github.com/liustack/tifa/blob/v0.8.0/docs/internals/testing.md#comparison-with-nextjs-and-tanstack-start-testcompare).
+The shop built three ways: as Tifa and as a Next.js and a TanStack Start app, all with the same React components. The Node apps run a TypeScript port of the Go code that loads each page's data. Tests check that the three show the same text on every page and do the same work for each request. [The study](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/nextjs-and-tanstack-start.md) has the method and [what is not equal](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/nextjs-and-tanstack-start.md#what-is-not-equal). To measure again, see [Testing](https://github.com/liustack/tifa/blob/v0.8.2/docs/internals/testing.md#comparison-with-nextjs-and-tanstack-start-testcompare).
 
 ### Whole visits to the shop (2026-11-18)
 
-Real browsers were recorded visiting the shop on each framework, and the recorded visits were played back against each server. The storefront and the back office are one site: shoppers browse, search, add to the cart and check out, staff edit the back office, and crawlers fetch the public pages, at once. Each framework runs as shipped, one process on one core of a Google Cloud `t2d-standard-4` VM (AMD EPYC 7B13), after the same warm-up. Tifa v0.1.0 with slowjs v0.31.6, Next.js 16.4.6, TanStack Start 1.169.3, Node 24.13.0. [The traffic and the method](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/capacity.md#whole-visits-the-traffic-and-the-method).
+Real browsers were recorded visiting the shop on each framework, and the recorded visits were played back against each server. The storefront and the back office are one site: shoppers browse, search, add to the cart and check out, staff edit the back office, and crawlers fetch the public pages, at once. Each framework runs as shipped, one process on one core of a Google Cloud `t2d-standard-4` VM (AMD EPYC 7B13), after the same warm-up. Tifa v0.1.0 with slowjs v0.31.6, Next.js 16.4.6, TanStack Start 1.169.3, Node 24.13.0. [The traffic and the method](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/capacity.md#whole-visits-the-traffic-and-the-method).
 
 Throughput, 8 concurrent sessions with no think time, the median of 3 rounds:
 
@@ -70,7 +70,7 @@ A full page load spends most of its CPU on rendering, and one render takes longe
 
 Keep the usual arrival rate below what the machine renders. By default 32 renders may wait for a VM, each for at most 3 seconds. Past that, Go answers 503 with `Retry-After: 1` without using a VM. See [Render queue](/docs/build-and-deploy/tuning#render-queue).
 
-At 1.5 times its capacity, the shop rejected 34% of the requests and answered the rest with a P50 of about 390 ms. At 3 times, it rejected 68%, the P50 of the rest stayed at about 395 ms, and memory did not grow. Watch the latency of successful requests: the latency of all requests looks low when most are rejected quickly. [The steps](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/capacity.md#overload).
+At 1.5 times its capacity, the shop rejected 34% of the requests and answered the rest with a P50 of about 390 ms. At 3 times, it rejected 68%, the P50 of the rest stayed at about 395 ms, and memory did not grow. Watch the latency of successful requests: the latency of all requests looks low when most are rejected quickly. [The steps](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/capacity.md#overload).
 
 ### Memory
 
@@ -81,14 +81,24 @@ At 1.5 times its capacity, the shop rejected 34% of the requests and answered th
 - **`ssr.vm_memory`** (128 MiB by default) limits each VM. The pool replaces a VM in the background when it holds more than half of that after a collection, so an app that leaks keeps at most 64 MiB in each VM. Set it lower to replace sooner. If the log says a fresh VM does not fit, raise it.
 - **Idle VMs give free memory back** to the system after a second without a render.
 
-How a VM is collected and replaced, and what each number was measured with: [Memory](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/capacity.md#memory).
+How a VM is collected and replaced, and what each number was measured with: [Memory](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/capacity.md#memory).
+
+### A server with 512 MB
+
+The shop runs on a cloud server with 1 CPU and 512 MB (458 MB for the system, about 280 MB free after the start) with the default settings. With 64 requests in flight for 30 minutes over the 1,638 pages of its storefront, the process held 160 to 175 MB, the server kept about 150 MB free, and nothing was killed for want of memory (2026-11-28). On such a server:
+
+- **Keep `ssr.vms` at 1.** It is the default on 1 CPU. On 2 CPUs and 512 MB the default is 2 VMs: under the same load the process grew to about 190 MB and the kernel killed it. Set `ssr.vms: 1` there.
+- **Set `GOMEMLIMIT` as a ceiling**, such as `150MiB` with `go tool tifa deploy env set GOMEMLIMIT`. Go lets its heap grow to about twice what it holds before it collects, and the render memo is part of the heap, so a full memo of 64 MiB takes the process to about 180 MB. Below the limit nothing changes: the shop stayed under 150 MiB and ran as it did without one. Near the limit Go collects more often: with `120MiB` the shop held 153 MB in place of 173 MB and answered about a tenth fewer requests. See [.env](/docs/build-and-deploy/config#env) for `GOMEMLIMIT` in `.env`.
+- **Keep `ssr.memo_size` big enough for the pages asked again and again.** With `32MiB` the memo held 1,086 of the 1,638 pages, a third of the requests rendered again, and the one VM answered 28% of them with 503. Lower it only when the memory still runs out with `GOMEMLIMIT`.
+- **Stop fwupd on a cloud server with Ubuntu.** Its timer starts the firmware update service a few times a day. It took 200 MB and kept it, and the kernel killed the app 9 times in 13 minutes. A virtual machine has no firmware for it to update: `sudo systemctl mask --now fwupd.service fwupd-refresh.timer`. Keep the automatic security updates: they ran during the test without trouble.
+- **Avoid plans with burstable CPU**, such as Amazon Lightsail and EC2 T instances. They give a share of each CPU (5% on the 512 MB Lightsail plan) and save credits to go above it. Under steady load the credits ran out within minutes, then every render ran past `ssr.timeout` and the program answered 503 until the load fell.
 
 ## Compression
 
-[`server.compress`](/docs/reference/settings) is on by default. Compressing a page costs 1% to 2% of its render time and makes it about 6 times smaller. The browser bundle goes out as the gzip files the build wrote, at no CPU. A page from the render memo is kept in its gzip form, so answering it compressed costs less than uncompressed. [The tables](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/capacity.md#compression).
+[`server.compress`](/docs/reference/settings) is on by default. Compressing a page costs 1% to 2% of its render time and makes it about 6 times smaller. The browser bundle goes out as the gzip files the build wrote, at no CPU. A page from the render memo is kept in its gzip form, so answering it compressed costs less than uncompressed. [The tables](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/capacity.md#compression).
 
 `server.csp` adds about 0.1% to a render.
 
 ## Measuring again
 
-[Testing](https://github.com/liustack/tifa/blob/v0.8.0/docs/internals/testing.md#performance-comparisons) has the commands, and [Capacity measurements](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/capacity.md#measuring-again) the rules that keep numbers comparable. Compare two builds on the same machine in alternating rounds: only ratios from the same rounds compare.
+[Testing](https://github.com/liustack/tifa/blob/v0.8.2/docs/internals/testing.md#performance-comparisons) has the commands, and [Capacity measurements](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/capacity.md#measuring-again) the rules that keep numbers comparable. Compare two builds on the same machine in alternating rounds: only ratios from the same rounds compare.

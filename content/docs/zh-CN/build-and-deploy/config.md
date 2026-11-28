@@ -71,6 +71,7 @@ GREETING="Hello # not a comment\n"
 - 以 `#` 开头的行和空行会跳过。不带引号的值在空格或制表符之后的 `#` 处结束，并去掉两边的空格，所以 `TLS_CERT= # none` 是空的，`COLOR=#fff` 是 `#fff`。
 - 双引号里的值可以包含 `\n`、`\t`、`\"` 和 `\\`。单引号里的值原样取用。带引号的值必须在一行里。
 - 读不了的行会让程序停止，并给出它的行号。
+- `GOMEMLIMIT`、`GOGC` 和 `GOMAXPROCS` 写在 `.env` 里和写在环境变量里效果一样。Go 在程序读 `.env` 之前就读这几个名字，所以程序启动时先自己把它们设上，`ssr.vms` 也会跟着 `.env` 里的 `GOMAXPROCS` 走。Go 不接受的值会让程序停止。Go 读的其他名字（比如 `GODEBUG`）只在真正的环境变量里有效。
 - `tifa deploy` 也从这个文件读它的输入：`TIFA_DEPLOY_HOST` 用来知道服务器，其他以 `TIFA_DEPLOY_` 开头的名字也一样。程序会忽略它们。没有 `TIFA_DEPLOY_HOST` 时，`tifa deploy` 用它记在 `~/.tifa/config.yaml` 里的服务器，`TIFA_HOME` 可以移动这个文件夹（见[用 tifa deploy 部署](/docs/build-and-deploy/deploy)）。
 
 `tifa dev` 在应用根目录里运行应用，所以应用读取那里的 `.env`，`.env` 变了会让应用重新启动。Vite 不读 `.env`（`envDir: false`）：页面从它的 `Load` 拿它需要的值。
