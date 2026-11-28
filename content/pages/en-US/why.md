@@ -25,4 +25,4 @@ Go + React SSR has been tried before: [go-starter-kit](https://github.com/olebed
 ## Comparisons
 
 - [Against Next.js and TanStack Start](/docs/reference/performance#against-nextjs-and-tanstack-start)
-- [Next.js and TanStack Start, the study on GitHub](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/nextjs-and-tanstack-start.md)
+- [Next.js and TanStack Start, the study on GitHub](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/nextjs-and-tanstack-start.md)

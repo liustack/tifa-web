@@ -61,7 +61,7 @@ i18n.services.formatter?.addCached('currency', (lng, options) => {
 
 用 i18next 翻译一次，在 beastjs 里要花几十微秒，商店的一个店面页面每次渲染要做约 126 次，大多数是每次都相同的文本和相同的值。所以 Tifa 插件在 SSR 包里给 i18next 加了一个缓存。`getFixedT` 返回的 `t`（react-i18next 的 `useTranslation` 把它交出来）会保存它给出的每个字符串，之后用同样的键和选项调用，不用再翻译一次就能得到那个字符串。每个 VM 有它自己的缓存。它默认是开启的。在项目文件里设置 `build.i18next_cache: false` 可以关闭它，包就和没有这个缓存时一模一样，一个字节都不差。
 
-一次调用按实例、语言、命名空间、键和选项来查找，只有值都是普通值的调用才会被保存，其余的照旧翻译。应用通过 i18next 的 API 改变翻译时（添加资源、再次 `init`、加载命名空间或语言、`use` 等），缓存会清空，每个 VM 里它最多保存约 1 MB。调用很少被缓存答中的键，会不再使用缓存。完整的规则见 [i18next 缓存](https://github.com/liustack/tifa/blob/v0.8.0/docs/internals/ssr-bundle-rewrites.md#the-i18next-cache)。
+一次调用按实例、语言、命名空间、键和选项来查找，只有值都是普通值的调用才会被保存，其余的照旧翻译。应用通过 i18next 的 API 改变翻译时（添加资源、再次 `init`、加载命名空间或语言、`use` 等），缓存会清空，每个 VM 里它最多保存约 1 MB。调用很少被缓存答中的键，会不再使用缓存。完整的规则见 [i18next 缓存](https://github.com/liustack/tifa/blob/v0.8.2/docs/internals/ssr-bundle-rewrites.md#the-i18next-cache)。
 
 运行应用的格式化器（用 `services.formatter.add` 或 `addCached` 添加的），或后处理器（比如 i18next-sprintf-postprocessor）的调用，和其他的调用一样被保存，i18next 自己的格式化器的调用也一样。这样的代码对相同的语言、选项和值必须给出相同的文本，就像 React 组件对相同的 props 必须给出相同的输出一样：它不读时间，不读随机数，也不读任何随请求而变的东西。请求的值，比如用户的时区或当前时间，放进调用的选项里，选项是每个条目的一部分。当在 `add` 或 `addCached` 里就地写出的格式化器自己调用了 `Date.now()`、`Date()`、不带参数的 `new Date()`、`Math.random()`、`performance.now()`、`crypto.randomUUID()` 或 `crypto.getRandomValues()` 时，构建会失败，并点出文件和行。格式化器所调用的函数里的这类调用，它看不到。
 
@@ -73,6 +73,6 @@ i18n.services.formatter?.addCached('currency', (lng, options) => {
 
 这样的应用的页面，可能会显示改动之前的文本，或另一个请求得到的文本，直到缓存因为别的原因清空。
 
-在商店上，它使用适配器的那一个实例，并在 `setup.ts` 里给它自己的钱和日期的格式化器，十个店面页面的渲染耗时是原来的 0.778，HTML 相同。用 i18next 的其他方式收益更小，而每个请求用 `cloneInstance` 做一个实例的应用没有收益。测量结果见 [i18next 缓存](https://github.com/liustack/tifa/blob/v0.8.0/docs/internals/ssr-bundle-rewrites.md#the-i18next-cache)。
+在商店上，它使用适配器的那一个实例，并在 `setup.ts` 里给它自己的钱和日期的格式化器，十个店面页面的渲染耗时是原来的 0.778，HTML 相同。用 i18next 的其他方式收益更小，而每个请求用 `cloneInstance` 做一个实例的应用没有收益。测量结果见 [i18next 缓存](https://github.com/liustack/tifa/blob/v0.8.2/docs/internals/ssr-bundle-rewrites.md#the-i18next-cache)。
 
 插件认识 i18next 25.5 到 27.0 的代码。对于其他版本，或某个版本改动了缓存所需要的代码时，构建会打印警告，包就是没有缓存的那个。用 `build.i18next_cache: false` 构建这样的应用，就没有这条警告。

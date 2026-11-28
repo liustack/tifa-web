@@ -1,4 +1,4 @@
-<!-- Written by Tifa v0.8.0 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
+<!-- Written by Tifa v0.8.2 with go tool tifa agents. Run it again after you upgrade Tifa. It overwrites edits to this file. -->
 # Build, configure and deploy
 
 Contents: `tifa dev`, `tifa build`, go.mod and package setup, settings, search engines and language models, `tifa deploy`, building for Linux, running the program, a Dockerfile and Kubernetes manifests, HTTPS, running behind a CDN or proxy, sizing, license notices.
@@ -137,6 +137,7 @@ deploy:
 
 ```sh
 go tool tifa deploy setup      # prints a plan (add, change, remove, a count of what is right, and what you must do), asks, applies. --yes skips the question, --all lists what is right. Exits non-zero when something is left for you. Run it again after changing tifa.yaml
+go tool tifa deploy setup --plan   # only looks: prints the plan, changes and asks nothing, installs nothing on this machine, works without a terminal. Read the exit code: 0 all matches tifa.yaml, 2 something to do or something for the user, 1 the plan could not be made. --json prints one object (keys in docs/build-and-deploy/deploy-setup.md#only-look-at-the-plan). Not with --yes
 go tool tifa deploy            # build for the server, upload, restart, check /healthz, clear the CDN cache
 go tool tifa deploy rollback   # back to the release before
 go tool tifa deploy logs       # the journal of the app on the server, -n 500 for more lines, -f to follow until Ctrl-C

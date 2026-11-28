@@ -25,4 +25,4 @@ Go 加 React 服务端渲染以前有人做过：[go-starter-kit](https://github
 ## 对比
 
 - [对比 Next.js 和 TanStack Start](/docs/reference/performance#against-nextjs-and-tanstack-start)
-- [Next.js 和 TanStack Start 的对比研究（GitHub，英文）](https://github.com/liustack/tifa/blob/v0.8.0/docs/studies/nextjs-and-tanstack-start.md)
+- [Next.js 和 TanStack Start 的对比研究（GitHub，英文）](https://github.com/liustack/tifa/blob/v0.8.2/docs/studies/nextjs-and-tanstack-start.md)
