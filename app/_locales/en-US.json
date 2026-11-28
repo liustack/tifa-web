@@ -26,7 +26,7 @@
   "hero": {
     "tagline": "Full-stack Go web framework with React pages.",
     "sub": "The whole app compiles into one executable. It runs on one server, down to 1 CPU and 1 GB, with no Node, no Redis and no reverse proxy, and `tifa deploy` puts it live.",
-    "description": "The whole app compiles into one executable. It runs on one server, down to 1 CPU and 1 GB, with no Node, no Redis and no reverse proxy, and tifa deploy puts it live.",
+    "description": "The whole app compiles into one executable. It runs on one server, down to 1 CPU and 512 MB, with no Node, no Redis and no reverse proxy, and tifa deploy puts it live.",
     "start": "Get started",
     "github": "GitHub",
     "status": "very early: APIs will change",
